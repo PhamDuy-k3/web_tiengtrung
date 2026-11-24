@@ -8,8 +8,7 @@ import { shuffleArray } from "@/lib/shuffle";
 import { RotateCcw, Keyboard, Grid, Sparkles, AlertCircle } from "lucide-react";
 import {
   getLevelDifficultyConfig,
-  getLookalikeDistractors,
-  LEVEL_DISTRACTOR_POOLS,
+  getSmartTileDistractors,
 } from "@/lib/difficulty";
 
 export const ListenWordOrderQuestion: React.FC<QuestionComponentProps> = ({
@@ -41,39 +40,12 @@ export const ListenWordOrderQuestion: React.FC<QuestionComponentProps> = ({
       ? question.correctAnswer
       : question.tiles || [];
 
-    // 2. Lookalike distractors (形近字 / 近音字)
-    const lookalikes = getLookalikeDistractors(correctTiles);
-
-    // 3. Explicit or level pool distractors
-    const existingSet = new Set(correctTiles);
-    const explicitDistractors = (
-      question.distractorTiles ||
-      question.distractors ||
-      []
-    ).filter((d) => !existingSet.has(d));
-
-    const levelPool =
-      LEVEL_DISTRACTOR_POOLS[question.hskLevel]?.tiles ||
-      LEVEL_DISTRACTOR_POOLS[1].tiles;
-
-    // Build final distractors prioritizing lookalikes first
-    const finalDistractors: string[] = [];
-    for (const lk of lookalikes) {
-      if (!existingSet.has(lk) && !finalDistractors.includes(lk)) {
-        finalDistractors.push(lk);
-      }
-    }
-    for (const exp of explicitDistractors) {
-      if (!existingSet.has(exp) && !finalDistractors.includes(exp)) {
-        finalDistractors.push(exp);
-      }
-    }
-    for (const poolItem of levelPool) {
-      if (!existingSet.has(poolItem) && !finalDistractors.includes(poolItem)) {
-        finalDistractors.push(poolItem);
-      }
-      if (finalDistractors.length >= diffConfig.distractorTilesCount) break;
-    }
+    // 2. Smart distractors: bẫy từ đồng âm, hình gần, cú pháp ngữ pháp chuẩn tiếng Trung
+    const finalDistractors = getSmartTileDistractors(
+      question,
+      correctTiles,
+      diffConfig.distractorTilesCount
+    );
 
     const allTileTexts = [...correctTiles, ...finalDistractors];
     const mapped = allTileTexts.map((t, idx) => ({

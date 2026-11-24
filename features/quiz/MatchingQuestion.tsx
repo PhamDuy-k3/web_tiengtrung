@@ -6,7 +6,7 @@ import { soundService } from "@/lib/sound";
 import { shuffleArray } from "@/lib/shuffle";
 import {
   getLevelDifficultyConfig,
-  LEVEL_DISTRACTOR_POOLS,
+  getSmartMatchingDistractors,
 } from "@/lib/difficulty";
 import { AlertCircle } from "lucide-react";
 
@@ -29,30 +29,20 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
     // 1. Correct right answers
     const correctRights = pairs.map((p) => ({ id: `correct-${p.id}`, text: p.right }));
 
-    // 2. Distractor right answers (from question.distractors or level distractor pool)
+    // 2. Themed smart distractor right answers (cùng trường từ vựng / chủ đề với câu hỏi)
     const existingRights = new Set(pairs.map((p) => p.right.trim()));
-    const explicitDistractors = (question.distractors || []).filter(
-      (d) => !existingRights.has(d.trim())
+    const finalDistractors = getSmartMatchingDistractors(
+      question,
+      existingRights,
+      diffConfig.matchingDistractorsCount
     );
-
-    const levelPool =
-      LEVEL_DISTRACTOR_POOLS[question.hskLevel]?.matching ||
-      LEVEL_DISTRACTOR_POOLS[1].matching;
-
-    const finalDistractors: string[] = [...explicitDistractors];
-    for (const fb of levelPool) {
-      if (!existingRights.has(fb.trim()) && !finalDistractors.includes(fb)) {
-        finalDistractors.push(fb);
-      }
-      if (finalDistractors.length >= diffConfig.matchingDistractorsCount) break;
-    }
 
     const distractorItems = finalDistractors.map((d, idx) => ({
       id: `distractor-${idx}`,
       text: d,
     }));
 
-    // Combine correct items + 3-8 distractors -> ratio 5 vs 8-13
+    // Combine correct items + smart distractors -> đúng chuẩn chủ đề
     const combined = [...correctRights, ...distractorItems];
     setShuffledRights(shuffleArray(combined));
   }, [

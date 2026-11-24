@@ -3,7 +3,12 @@
 import React, { useState, useMemo } from "react";
 import { QuestionComponentProps } from "./WordOrderQuestion";
 import { soundService } from "@/lib/sound";
-import { getLevelDifficultyConfig, LOOKALIKE_CHARACTERS_MAP } from "@/lib/difficulty";
+import {
+  getLevelDifficultyConfig,
+  LOOKALIKE_CHARACTERS_MAP,
+  HOMOPHONE_TRAPS_MAP,
+  SYNTAX_TRAP_MAP,
+} from "@/lib/difficulty";
 import { Keyboard, Grid, Sparkles, AlertCircle } from "lucide-react";
 
 export const FillInBlankQuestion: React.FC<QuestionComponentProps> = ({
@@ -23,18 +28,34 @@ export const FillInBlankQuestion: React.FC<QuestionComponentProps> = ({
 
   const baseOptions = question.options || [];
 
-  // Inject deceptive lookalike distractors into options if available
+  // Inject deceptive lookalike distractors, homophones, and syntax traps into options
   const correctStr = String(question.correctAnswer || "").trim();
   const options = useMemo(() => {
     const list = [...baseOptions];
+    const addDistractor = (cand: string) => {
+      if (cand && !list.includes(cand) && list.length < 6) {
+        list.push(cand);
+      }
+    };
+
+    // 1. Kiểm tra toàn bộ chuỗi đáp án đúng
+    if (SYNTAX_TRAP_MAP[correctStr]) {
+      SYNTAX_TRAP_MAP[correctStr].forEach(addDistractor);
+    }
+    if (HOMOPHONE_TRAPS_MAP[correctStr]) {
+      HOMOPHONE_TRAPS_MAP[correctStr].forEach(addDistractor);
+    }
+
+    // 2. Kiểm tra từng ký tự trong chuỗi đáp án đúng
     for (const char of correctStr) {
-      const lookalikes = LOOKALIKE_CHARACTERS_MAP[char];
-      if (lookalikes) {
-        for (const lk of lookalikes) {
-          if (!list.includes(lk) && list.length < 6) {
-            list.push(lk);
-          }
-        }
+      if (LOOKALIKE_CHARACTERS_MAP[char]) {
+        LOOKALIKE_CHARACTERS_MAP[char].forEach(addDistractor);
+      }
+      if (HOMOPHONE_TRAPS_MAP[char]) {
+        HOMOPHONE_TRAPS_MAP[char].forEach(addDistractor);
+      }
+      if (SYNTAX_TRAP_MAP[char]) {
+        SYNTAX_TRAP_MAP[char].forEach(addDistractor);
       }
     }
     return list;
