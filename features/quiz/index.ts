@@ -10,3 +10,4 @@ export * from "./ShortTranslateQuestion";
 export * from "./QuizRenderer";
 export * from "./QuestionPalette";
 export * from "./QuizTimer";
+export * from "./AnswerDiffViewer";

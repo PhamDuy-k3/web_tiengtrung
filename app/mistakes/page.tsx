@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { repository } from "@/services";
 import { MistakeEntry, LevelId } from "@/types";
-import { AudioButton } from "@/features/quiz";
+import { AudioButton, AnswerDiffViewer } from "@/features/quiz";
 
 export default function MistakesPage() {
   const [mistakes, setMistakes] = useState<MistakeEntry[]>([]);
@@ -394,43 +394,11 @@ export default function MistakesPage() {
                 </div>
 
                 {/* Answers comparison: User answer vs Correct answer */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {/* User Wrong Answer (if available) */}
-                  {item.lastUserAnswer !== undefined && item.lastUserAnswer !== null && (
-                    <div className="p-3 bg-vermillion-light/60 rounded-2xl border border-vermillion-soft text-xs space-y-1">
-                      <div className="flex items-center gap-1.5 text-vermillion-deep font-bold">
-                        <XCircle size={14} />
-                        <span>Câu trả lời bạn đã chọn:</span>
-                      </div>
-                      <p className="font-semibold text-ink line-through opacity-85">
-                        {Array.isArray(item.lastUserAnswer)
-                          ? item.lastUserAnswer.join(" ")
-                          : typeof item.lastUserAnswer === "object"
-                          ? Object.values(item.lastUserAnswer).join(", ")
-                          : String(item.lastUserAnswer)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Correct Answer */}
-                  <div
-                    className={`p-3 bg-celadon-50 rounded-2xl border border-celadon-200 text-xs space-y-1 ${
-                      item.lastUserAnswer ? "" : "sm:col-span-2"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 text-celadon-dark font-bold">
-                      <CheckCircle2 size={14} />
-                      <span>Đáp án chính xác:</span>
-                    </div>
-                    <p className="font-bold text-celadon-dark text-sm">
-                      {Array.isArray(q.correctAnswer)
-                        ? q.correctAnswer.join(" ")
-                        : typeof q.correctAnswer === "object"
-                        ? Object.values(q.correctAnswer).join(", ")
-                        : String(q.correctAnswer)}
-                    </p>
-                  </div>
-                </div>
+                <AnswerDiffViewer
+                  question={q}
+                  userAnswer={item.lastUserAnswer}
+                  isCorrect={false}
+                />
 
                 {/* Explanation */}
                 {q.explanation && (
