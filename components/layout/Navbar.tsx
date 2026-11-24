@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X } from "lucide-react";
+import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X, Compass } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 
 export const Navbar: React.FC = () => {
@@ -20,6 +20,7 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { href: "/",         label: "Học tập",    icon: BookOpen   },
+    { href: "/roadmap",  label: "Lộ trình",   icon: Compass    },
     { href: "/mistakes", label: "Sổ lỗi sai", icon: ShieldCheck },
     { href: "/stats",    label: "Thống kê",   icon: BarChart2  },
     { href: "/sources",  label: "Nguồn tham khảo", icon: null  },

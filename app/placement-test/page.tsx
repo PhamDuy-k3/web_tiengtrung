@@ -8,271 +8,416 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  XCircle,
   Award,
   Sparkles,
+  RotateCcw,
+  BookOpen,
+  Calendar,
+  AlertTriangle,
+  HelpCircle,
 } from "lucide-react";
 import { repository } from "@/services";
-import { Exam, LevelId, QuestionResult } from "@/types";
+import { LevelId, QuestionResult, Question } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
-import { gradeQuestion } from "@/lib/grading";
 import { triggerConfetti } from "@/components/ui/Confetti";
 import { soundService } from "@/lib/sound";
 import { useUserStore } from "@/store/useUserStore";
+import {
+  generateAssessmentTest,
+  evaluateAssessmentTest,
+  AssessmentQuestion,
+  EvaluateTestResponse,
+} from "@/lib/assessmentEngine";
+
+// Map AssessmentQuestion sang định dạng Question của ứng dụng
+function mapAssessmentToQuizQuestion(aq: AssessmentQuestion): Question {
+  return {
+    id: `assess-${aq.id}`,
+    type: "multiple_choice",
+    hskLevel: Math.min(6, Math.max(1, aq.level)) as any,
+    topicId: `hsk-${aq.level}-${aq.skill}`,
+    tags: [aq.skill, aq.topicTag || `HSK_${aq.level}`],
+    prompt: aq.question,
+    pinyin: aq.pinyin,
+    options: Object.values(aq.options),
+    correctAnswer: aq.options[aq.answer],
+    explanation: aq.explanation,
+  };
+}
 
 export default function PlacementTestPage() {
   const router = useRouter();
   const { profile, loadProfile } = useUserStore();
 
-  const [exam, setExam] = useState<Exam | null>(null);
+  const [rawQuestions, setRawQuestions] = useState<AssessmentQuestion[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<{
-    score: number;
-    correctCount: number;
-    recommendedLevel: LevelId;
-    levelName: string;
-  } | null>(null);
+
+  // Assessment Evaluation Result
+  const [evalResult, setEvalResult] = useState<EvaluateTestResponse | null>(null);
+
+  const initTest = () => {
+    setLoading(true);
+    setAnswers({});
+    setCurrentIndex(0);
+    setEvalResult(null);
+
+    // Tạo bài test 12 câu (HSK 1 đến HSK 4, mỗi cấp 3 câu đủ từ vựng, ngữ pháp, đọc hiểu)
+    const testData = generateAssessmentTest({
+      questions_per_level: 3,
+      max_level: 4,
+      script: "giản thể",
+      hsk_system: "HSK 2.0",
+    });
+
+    setRawQuestions(testData.questions);
+    setQuizQuestions(testData.questions.map(mapAssessmentToQuizQuestion));
+    setLoading(false);
+  };
 
   useEffect(() => {
     loadProfile();
-    async function load() {
-      try {
-        const test = await repository.generatePlacementTest();
-        setExam(test);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    initTest();
   }, [loadProfile]);
-
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-charcoal/60">
-        <div className="animate-spin w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-        Đang khởi tạo đề kiểm tra xếp lớp 30 câu...
-      </div>
-    );
-  }
-
-  if (!exam) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        Không tải được bài kiểm tra.
-      </div>
-    );
-  }
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    let correct = 0;
-    for (const q of exam.questions) {
-      if (gradeQuestion(q, answers[q.id])) {
-        correct++;
-      }
-    }
-    const score = Math.round((correct / exam.questions.length) * 100);
-
-    // Determine recommended level:
-    // Score < 50% -> Cơ bản (HSK 1-2)
-    // Score 50% - 79% -> Trung cấp (HSK 3-4)
-    // Score >= 80% -> Nâng cao (HSK 5-6)
-    let recommended: LevelId = "basic";
-    let name = "Cơ bản (HSK 1-2)";
-    if (score >= 80) {
-      recommended = "advanced";
-      name = "Nâng cao (HSK 5-6)";
-    } else if (score >= 50) {
-      recommended = "intermediate";
-      name = "Trung cấp (HSK 3-4)";
-    }
-
-    // Auto-unlock recommended level in user profile and save mistakes
     try {
-      const answersResult: Record<string, QuestionResult> = {};
-      for (const q of exam.questions) {
-        const uAns = answers[q.id];
-        const isCorrect = gradeQuestion(q, uAns);
-        answersResult[q.id] = {
-          userAnswer: uAns,
+      // Map user answers sang A/B/C/D
+      const mappedUserAnswers: Record<number, string> = {};
+      const answersResultForRepo: Record<string, QuestionResult> = {};
+
+      quizQuestions.forEach((q, idx) => {
+        const rawQ = rawQuestions[idx];
+        const userChoice = answers[q.id];
+
+        // Tìm key A, B, C, D
+        let choiceKey = "";
+        for (const [k, v] of Object.entries(rawQ.options)) {
+          if (v === userChoice) {
+            choiceKey = k;
+            break;
+          }
+        }
+        if (choiceKey) {
+          mappedUserAnswers[rawQ.id] = choiceKey;
+        }
+
+        const isCorrect = choiceKey === rawQ.answer;
+        answersResultForRepo[q.id] = {
+          userAnswer: userChoice,
           isCorrect,
           question: q,
         };
-      }
-      await repository.updateMistakes(answersResult, {
-        examId: "placement-test",
-        examTitle: "Bài kiểm tra xếp lớp đầu vào",
-        levelId: recommended,
       });
 
-      const unlocked = ["basic" as LevelId];
-      if (recommended === "intermediate") unlocked.push("intermediate");
-      if (recommended === "advanced") {
-        unlocked.push("intermediate");
-        unlocked.push("advanced");
+      // Đánh giá theo quy chuẩn HSK (đạt khi đúng >= 2/3 số câu)
+      const evaluation = evaluateAssessmentTest(rawQuestions, mappedUserAnswers);
+      setEvalResult(evaluation);
+
+      // Lưu kết quả đánh giá vào localStorage
+      try {
+        localStorage.setItem("hanyu:assessment_result", JSON.stringify(evaluation));
+      } catch {}
+
+      // Tự động mở khóa cấp độ đạt được trong profile
+      try {
+        const unlocked: LevelId[] = ["basic"];
+        if (evaluation.verified_level >= 3) unlocked.push("intermediate");
+        if (evaluation.verified_level >= 5) unlocked.push("advanced");
+
+        await repository.saveProfile({
+          unlockedLevels: unlocked,
+        });
+        await loadProfile();
+
+        // Ghi nhận câu sai vào Sổ lỗi sai
+        await repository.updateMistakes(answersResultForRepo, {
+          examId: "placement-test-standard",
+          examTitle: "Bài kiểm tra xếp lớp chuẩn HSK",
+          levelId: evaluation.verified_level <= 2 ? "basic" : evaluation.verified_level <= 4 ? "intermediate" : "advanced",
+        });
+      } catch (e) {
+        console.error(e);
       }
-      await repository.saveProfile({
-        unlockedLevels: unlocked,
-      });
-      await loadProfile();
-    } catch {}
 
-    triggerConfetti();
-    soundService.playFanfare();
-
-    setResult({
-      score,
-      correctCount: correct,
-      recommendedLevel: recommended,
-      levelName: name,
-    });
-    setIsSubmitting(false);
+      if (evaluation.verified_level >= 2) {
+        triggerConfetti();
+        soundService.playFanfare();
+      } else {
+        soundService.playSuccess();
+      }
+    } catch (e) {
+      console.error("Lỗi chấm bài:", e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (result) {
+  if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8 animate-fadeIn text-center">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-cream-300 shadow-card space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center text-4xl shadow-md border border-amber-200">
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-ink-muted">
+        <div className="animate-spin w-10 h-10 border-4 border-celadon border-t-transparent rounded-full mx-auto mb-3"></div>
+        Đang khởi tạo bài kiểm tra xếp lớp đa cấp độ (HSK 1 - 4)...
+      </div>
+    );
+  }
+
+  // ==================== KẾT QUẢ ĐÁNH GIÁ TRÌNH ĐỘ (MODE 2) ====================
+  if (evalResult) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-fadeIn">
+        <div className="bg-white rounded-3xl p-6 sm:p-10 border border-parchment-300 shadow-card text-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-celadon-100 text-celadon-dark mx-auto flex items-center justify-center text-4xl shadow-soft border border-celadon-200">
             🎯
           </div>
 
           <div className="space-y-2">
-            <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider">
-              Kết quả xếp lớp của bạn
+            <span className="px-3.5 py-1 rounded-full bg-celadon-100 text-celadon-dark text-xs font-black uppercase tracking-wider border border-celadon-200">
+              Kết quả đánh giá trình độ
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black text-charcoal">
-              Trình độ đề xuất: {result.levelName}
+            <h1 className="text-3xl sm:text-4xl font-black text-ink">
+              Trình độ xác nhận:{" "}
+              <span className="text-celadon-dark">
+                {evalResult.verified_level === 0
+                  ? "Mới bắt đầu (HSK 0)"
+                  : `HSK ${evalResult.verified_level}`}
+              </span>
             </h1>
-            <p className="text-sm sm:text-base text-charcoal/70 max-w-md mx-auto">
-              Bạn đạt được <strong>{result.score}%</strong> ({result.correctCount}/30 câu đúng). Hệ thống đã tự động mở khóa lộ trình phù hợp nhất cho bạn!
+            <p className="text-sm sm:text-base text-ink-muted max-w-lg mx-auto leading-relaxed">
+              {evalResult.message}
             </p>
           </div>
 
+          {/* Điểm số theo từng cấp độ (Quy tắc 2/3) */}
+          <div className="max-w-xl mx-auto bg-parchment-50 p-5 rounded-2xl border border-parchment-200 text-left space-y-3">
+            <div className="text-xs font-bold text-ink-muted uppercase tracking-wider">
+              Kết quả chi tiết từng cấp độ (Yêu cầu đúng ≥ 2/3 số câu):
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {Object.entries(evalResult.score_by_level).map(([lvl, score]) => {
+                const [c, t] = score.split("/").map(Number);
+                const passed = c / t >= 2 / 3;
+                return (
+                  <div
+                    key={lvl}
+                    className={`p-3 rounded-xl border text-center ${
+                      passed
+                        ? "bg-celadon-50 border-celadon-300 text-celadon-dark font-bold"
+                        : "bg-white border-parchment-300 text-ink-muted"
+                    }`}
+                  >
+                    <div className="text-xs">HSK {lvl}</div>
+                    <div className="text-lg font-black">{score}</div>
+                    <div className="text-[10px] mt-0.5 font-bold">
+                      {passed ? "✓ Đạt" : "✗ Chưa đạt"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Phân tích Điểm mạnh & Điểm yếu */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto text-xs sm:text-sm">
+            {/* Strengths */}
+            <div className="p-4 bg-celadon-50/60 rounded-2xl border border-celadon-200 space-y-2">
+              <div className="font-bold text-celadon-dark flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>Điểm mạnh đã xác nhận:</span>
+              </div>
+              <ul className="space-y-1 text-ink-light">
+                {evalResult.strengths.map((s, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="text-celadon-dark font-bold">•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Weak points */}
+            <div className="p-4 bg-vermillion-light/40 rounded-2xl border border-vermillion-soft space-y-2">
+              <div className="font-bold text-vermillion-deep flex items-center gap-1.5">
+                <AlertTriangle size={16} />
+                <span>Lỗ hổng kiến thức cần bồi đắp:</span>
+              </div>
+              <ul className="space-y-1 text-ink-light">
+                {evalResult.weak_points.length > 0 ? (
+                  evalResult.weak_points.map((wp, idx) => (
+                    <li key={idx} className="flex items-start gap-1.5">
+                      <span className="text-vermillion-deep font-bold">•</span>
+                      <span>{wp}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-ink-muted">Chưa ghi nhận điểm yếu lớn nào.</li>
+                )}
+              </ul>
+            </div>
+          </div>
+
+          {/* Action buttons */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href={`/levels/${result.recommendedLevel}`}
-              className="px-8 py-3.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-base shadow-duo-coral active:translate-y-1 transition-all flex items-center gap-2"
+              href="/roadmap"
+              className="px-8 py-3.5 rounded-2xl bg-celadon hover:bg-celadon-600 text-white font-bold text-base shadow-soft hover:shadow-md active:translate-y-0.5 transition-all flex items-center gap-2"
             >
-              <span>Vào học cấp {result.levelName} ngay</span>
+              <Calendar size={18} />
+              <span>Xem Lộ trình học cá nhân hóa ngay</span>
               <ArrowRight size={18} />
             </Link>
 
-            <Link
-              href="/"
-              className="px-6 py-3.5 rounded-2xl bg-cream-200 hover:bg-cream-300 text-charcoal font-bold text-sm"
+            <button
+              type="button"
+              onClick={initTest}
+              className="px-6 py-3.5 rounded-2xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 text-ink font-bold text-sm transition-all flex items-center gap-2"
             >
-              Quay về trang chủ
-            </Link>
+              <RotateCcw size={16} />
+              <span>Làm bài kiểm tra lại</span>
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  const currentQuestion = exam.questions[currentIndex];
-  const totalQuestions = exam.questions.length;
+  // ==================== BÀI THI XẾP LỚP ĐANG LÀM ====================
+  const currentQuestion = quizQuestions[currentIndex];
+  const totalQuestions = quizQuestions.length;
   const currentAnswer = answers[currentQuestion.id];
   const answeredCount = Object.keys(answers).filter(
     (k) => answers[k] !== undefined && answers[k] !== "" && answers[k] !== null
   ).length;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6">
-      {/* Top Header */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="w-10 h-10 rounded-2xl bg-white border border-cream-300 flex items-center justify-center text-charcoal/70"
-        >
-          <ArrowLeft size={18} />
-        </Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Main Quiz Area */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Top Header */}
+          <div className="flex items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-3xl border border-parchment-300 shadow-soft">
+            <Link
+              href="/"
+              className="w-10 h-10 rounded-2xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 flex items-center justify-center text-ink-muted hover:text-ink transition-all"
+              title="Về trang chủ"
+            >
+              <ArrowLeft size={18} />
+            </Link>
 
-        <div className="flex-1 space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-amber-800 flex items-center gap-1">
-              <Compass size={15} />
-              Xếp lớp đầu vào: Câu {currentIndex + 1}/{totalQuestions}
-            </span>
-            <span className="text-charcoal/60">Đã làm: {answeredCount}/{totalQuestions}</span>
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-ink flex items-center gap-1.5 truncate">
+                  <Compass size={15} className="text-celadon-dark" />
+                  Xếp lớp chuẩn HSK · Câu {currentIndex + 1}/{totalQuestions}
+                </span>
+                <span className="text-ink-muted shrink-0 ml-2">
+                  Đã làm: <strong className="text-celadon-dark">{answeredCount}</strong>/{totalQuestions}
+                </span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-parchment-200 overflow-hidden">
+                <div
+                  className="h-full bg-celadon rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round(((currentIndex + 1) / totalQuestions) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <QuizTimer
+              initialSeconds={elapsedSeconds}
+              timeLimitSeconds={30 * 60}
+              onTick={(sec) => setElapsedSeconds(sec)}
+              onTimeUp={() => handleSubmit()}
+            />
+
+            {/* Mobile palette trigger */}
+            <button
+              type="button"
+              onClick={() => setIsPaletteOpen(true)}
+              className="lg:hidden p-2.5 rounded-2xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 text-ink shadow-sm flex items-center gap-1.5 text-xs font-bold transition-all"
+            >
+              <Compass size={16} className="text-celadon-dark" />
+              <span className="hidden sm:inline">Bảng câu</span>
+            </button>
           </div>
-          <div className="w-full h-3 rounded-full bg-cream-200 overflow-hidden">
-            <div
-              className="h-full bg-amber-500 rounded-full transition-all duration-300"
-              style={{ width: `${Math.round(((currentIndex + 1) / totalQuestions) * 100)}%` }}
-            ></div>
+
+          {/* Question Renderer */}
+          <QuizRenderer
+            question={currentQuestion}
+            value={currentAnswer}
+            onChange={(val) => setAnswers({ ...answers, [currentQuestion.id]: val })}
+          />
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
+              disabled={currentIndex === 0}
+              className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-1.5 transition-all ${
+                currentIndex === 0
+                  ? "opacity-40 cursor-not-allowed bg-parchment-200 text-ink-muted"
+                  : "bg-white border-2 border-parchment-300 hover:bg-parchment-100 text-ink shadow-soft"
+              }`}
+            >
+              <ArrowLeft size={16} />
+              <span>Câu trước</span>
+            </button>
+
+            {currentIndex < totalQuestions - 1 ? (
+              <button
+                type="button"
+                onClick={() => setCurrentIndex(currentIndex + 1)}
+                className="px-6 py-3 rounded-2xl bg-celadon hover:bg-celadon-600 text-white font-bold text-sm flex items-center gap-1.5 shadow-soft hover:shadow-md transition-all"
+              >
+                <span>Câu tiếp theo</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-8 py-3 rounded-2xl bg-vermillion hover:bg-vermillion-deep text-white font-bold text-base shadow-soft hover:shadow-md animate-pulse"
+              >
+                {isSubmitting ? "Đang chấm điểm..." : "NỘP BÀI XẾP LỚP"}
+              </button>
+            )}
           </div>
         </div>
 
-        <QuizTimer
-          initialSeconds={elapsedSeconds}
-          timeLimitSeconds={exam.timeLimitSeconds}
-          onTick={(sec) => setElapsedSeconds(sec)}
-          onTimeUp={() => handleSubmit()}
-        />
-
-        <button
-          type="button"
-          onClick={() => setIsPaletteOpen(true)}
-          className="p-2.5 rounded-2xl bg-white border border-cream-300 font-bold text-xs"
-        >
-          Bảng câu ({answeredCount}/{totalQuestions})
-        </button>
+        {/* Right Sticky Palette Sidebar */}
+        <div className="hidden lg:block lg:col-span-4 sticky top-24">
+          <QuestionPalette
+            questions={quizQuestions}
+            answers={answers}
+            currentIndex={currentIndex}
+            onSelectIndex={(idx) => setCurrentIndex(idx)}
+            mode="sidebar"
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       </div>
 
-      <QuizRenderer
-        question={currentQuestion}
-        value={currentAnswer}
-        onChange={(val) => setAnswers({ ...answers, [currentQuestion.id]: val })}
-      />
-
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
-          disabled={currentIndex === 0}
-          className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-1.5 ${
-            currentIndex === 0 ? "opacity-40 cursor-not-allowed bg-cream-200" : "bg-white border-2 border-cream-300"
-          }`}
-        >
-          <ArrowLeft size={16} />
-          <span>Câu trước</span>
-        </button>
-
-        {currentIndex < totalQuestions - 1 ? (
-          <button
-            type="button"
-            onClick={() => setCurrentIndex(currentIndex + 1)}
-            className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm flex items-center gap-1.5 shadow-duo-honey"
-          >
-            <span>Câu tiếp</span>
-            <ArrowRight size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-8 py-3 rounded-2xl bg-mint hover:bg-mint-dark text-white font-bold text-base shadow-duo-mint"
-          >
-            {isSubmitting ? "Đang xếp lớp..." : "HOÀN THÀNH XẾP LỚP"}
-          </button>
-        )}
-      </div>
-
+      {/* Mobile Palette Modal */}
       <QuestionPalette
-        questions={exam.questions}
+        questions={quizQuestions}
         answers={answers}
         currentIndex={currentIndex}
-        onSelectIndex={(idx) => setCurrentIndex(idx)}
+        onSelectIndex={(idx) => {
+          setCurrentIndex(idx);
+          setIsPaletteOpen(false);
+        }}
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
+        mode="dialog"
       />
     </div>
   );

@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Sparkles,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 import { repository } from "@/services";
@@ -164,16 +165,19 @@ export default function HomePage() {
 
               {/* CTA buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link href="/" className="btn-primary text-sm py-2.5 px-5 rounded-xl">
-                  <Sparkles size={16} />
-                  Luyện đề ngay
-                </Link>
                 <Link
                   href="/placement-test"
-                  className="btn-ghost text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                  className="btn-primary text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
                 >
                   <Compass size={16} />
-                  Kiểm tra trình độ
+                  Kiểm tra trình độ HSK
+                </Link>
+                <Link
+                  href="/roadmap"
+                  className="btn-ghost text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                >
+                  <Calendar size={16} />
+                  Lộ trình học theo tuần
                 </Link>
               </div>
             </div>
