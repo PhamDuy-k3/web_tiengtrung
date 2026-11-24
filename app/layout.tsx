@@ -30,10 +30,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-parchment-50 text-ink font-sans selection:bg-celadon/20 selection:text-celadon-dark">
-        <Navbar />
+        {/* <Navbar />
         <main className="flex-1 pb-16 md:pb-8">{children}</main>
         <Footer />
-        <BottomNav />
+        <BottomNav /> */}
       </body>
     </html>
   );
