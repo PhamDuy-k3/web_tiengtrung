@@ -1,25 +1,30 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ShieldAlert,
   RotateCcw,
   CheckCircle2,
   Trash2,
-  ArrowRight,
   Filter,
-  Volume2,
+  BookOpen,
+  XCircle,
+  HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import { repository } from "@/services";
-import { MistakeEntry } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { MistakeEntry, LevelId } from "@/types";
 import { AudioButton } from "@/features/quiz";
 
 export default function MistakesPage() {
   const [mistakes, setMistakes] = useState<MistakeEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "active" | "mastered">("active");
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "mastered">("active");
+  const [levelFilter, setLevelFilter] = useState<"all" | LevelId>("all");
+  const [selectedExamId, setSelectedExamId] = useState<string>("all");
 
   const loadData = async () => {
     try {
@@ -41,108 +46,256 @@ export default function MistakesPage() {
     await loadData();
   };
 
-  const filtered = mistakes.filter((m) => {
-    if (filter === "active") return !m.isMastered;
-    if (filter === "mastered") return m.isMastered;
-    return true;
-  });
+  // Helper to extract level from mistake entry
+  const getEntryLevel = (m: MistakeEntry): LevelId => {
+    if (m.levelId) return m.levelId;
+    if (m.question.hskLevel <= 2) return "basic";
+    if (m.question.hskLevel <= 4) return "intermediate";
+    return "advanced";
+  };
 
+  // Unique exams present in mistakes
+  const uniqueExams = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of mistakes) {
+      if (m.examId && m.examTitle) {
+        map.set(m.examId, m.examTitle);
+      }
+    }
+    return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
+  }, [mistakes]);
+
+  // Statistics
   const activeCount = mistakes.filter((m) => !m.isMastered).length;
   const masteredCount = mistakes.filter((m) => m.isMastered).length;
 
+  const basicCount = mistakes.filter((m) => getEntryLevel(m) === "basic" && !m.isMastered).length;
+  const intermediateCount = mistakes.filter((m) => getEntryLevel(m) === "intermediate" && !m.isMastered).length;
+  const advancedCount = mistakes.filter((m) => getEntryLevel(m) === "advanced" && !m.isMastered).length;
+
+  // Filtered mistakes list
+  const filtered = useMemo(() => {
+    return mistakes.filter((m) => {
+      // 1. Status filter
+      if (statusFilter === "active" && m.isMastered) return false;
+      if (statusFilter === "mastered" && !m.isMastered) return false;
+
+      // 2. Level filter
+      const mLevel = getEntryLevel(m);
+      if (levelFilter !== "all" && mLevel !== levelFilter) return false;
+
+      // 3. Exam filter
+      if (selectedExamId !== "all" && m.examId !== selectedExamId) return false;
+
+      return true;
+    });
+  }, [mistakes, statusFilter, levelFilter, selectedExamId]);
+
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-charcoal/60">
-        <div className="animate-spin w-8 h-8 border-4 border-coral border-t-transparent rounded-full mx-auto mb-3"></div>
+      <div className="max-w-5xl mx-auto px-4 py-20 text-center text-ink-muted">
+        <div className="animate-spin w-10 h-10 border-4 border-celadon border-t-transparent rounded-full mx-auto mb-3"></div>
         Đang tải sổ lỗi sai...
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
-      {/* Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-cream-300 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-2xl bg-coral/10 text-coral">
-              <ShieldAlert size={24} />
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
+      {/* ================= Header Banner ================= */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-2xl bg-vermillion-light text-vermillion-deep border border-vermillion-soft">
+              <ShieldAlert size={28} />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-charcoal">
-              Sổ tay câu hay sai
-            </h1>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-ink">
+                Sổ tay câu hay sai
+              </h1>
+              <p className="text-xs text-ink-muted">
+                Tự động lưu mọi câu làm sai theo đề &amp; cấp độ. Đúng 3 lần liên tiếp sẽ đánh dấu đã thuộc!
+              </p>
+            </div>
           </div>
-          <p className="text-xs sm:text-sm text-charcoal/70 max-w-xl">
-            Tự động lưu lại mọi câu bạn từng làm sai. Trả lời đúng liên tiếp 3 lần sẽ được đánh dấu <strong>Đã thuộc</strong>!
-          </p>
+
+          {/* Level counter chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-celadon-50 text-celadon-dark border border-celadon-200">
+              🌱 Cơ bản: <strong>{basicCount} câu</strong>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gilt-light text-gilt-deep border border-gilt-soft">
+              🌿 Trung cấp: <strong>{intermediateCount} câu</strong>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-vermillion-light text-vermillion-deep border border-vermillion-soft">
+              🔥 Nâng cao: <strong>{advancedCount} câu</strong>
+            </span>
+          </div>
         </div>
 
         {activeCount > 0 && (
           <Link
-            href="/practice/mistake-review-exam"
-            className="px-6 py-3.5 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-sm shadow-duo-coral active:translate-y-1 transition-all flex items-center gap-2 shrink-0"
+            href={
+              levelFilter === "basic"
+                ? "/practice/mistake-review-exam-basic"
+                : levelFilter === "intermediate"
+                ? "/practice/mistake-review-exam-intermediate"
+                : levelFilter === "advanced"
+                ? "/practice/mistake-review-exam-advanced"
+                : "/practice/mistake-review-exam"
+            }
+            className="px-6 py-3.5 rounded-2xl bg-vermillion hover:bg-vermillion-deep text-white font-bold text-sm shadow-soft hover:shadow-md active:translate-y-0.5 transition-all flex items-center gap-2 shrink-0"
           >
             <RotateCcw size={18} />
-            <span>Luyện {activeCount} câu này ngay</span>
+            <span>
+              {levelFilter === "basic"
+                ? `Luyện ${basicCount} câu Cơ bản`
+                : levelFilter === "intermediate"
+                ? `Luyện ${intermediateCount} câu Trung cấp`
+                : levelFilter === "advanced"
+                ? `Luyện ${advancedCount} câu Nâng cao`
+                : `Luyện ${activeCount} câu này ngay`}
+            </span>
           </Link>
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 bg-cream-100 p-1.5 rounded-2xl border border-cream-200 max-w-md">
-        <button
-          type="button"
-          onClick={() => setFilter("active")}
-          className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-            filter === "active"
-              ? "bg-white text-coral shadow-sm"
-              : "text-charcoal/60 hover:text-charcoal"
-          }`}
-        >
-          Cần ôn ({activeCount})
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter("mastered")}
-          className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-            filter === "mastered"
-              ? "bg-white text-mint-dark shadow-sm"
-              : "text-charcoal/60 hover:text-charcoal"
-          }`}
-        >
-          Đã thuộc ({masteredCount})
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter("all")}
-          className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-            filter === "all"
-              ? "bg-white text-charcoal shadow-sm"
-              : "text-charcoal/60 hover:text-charcoal"
-          }`}
-        >
-          Tất cả ({mistakes.length})
-        </button>
+      {/* ================= Filter Controls Section ================= */}
+      <div className="bg-white rounded-3xl p-5 border border-parchment-300 shadow-soft space-y-4">
+        {/* Row 1: Level Tabs */}
+        <div>
+          <label className="block text-xs font-bold text-ink-muted mb-2 uppercase tracking-wider">
+            Phân loại theo cấp độ:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setLevelFilter("all")}
+              className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border ${
+                levelFilter === "all"
+                  ? "bg-ink text-white border-ink shadow-sm"
+                  : "bg-parchment-50 text-ink-light border-parchment-300 hover:bg-parchment-100"
+              }`}
+            >
+              Tất cả cấp độ ({mistakes.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevelFilter("basic")}
+              className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border ${
+                levelFilter === "basic"
+                  ? "bg-celadon text-white border-celadon shadow-sm"
+                  : "bg-celadon-50 text-celadon-dark border-celadon-200 hover:bg-celadon-100"
+              }`}
+            >
+              🌱 Cơ bản (HSK 1-2)
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevelFilter("intermediate")}
+              className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border ${
+                levelFilter === "intermediate"
+                  ? "bg-gilt text-white border-gilt shadow-sm"
+                  : "bg-gilt-light text-gilt-deep border-gilt-soft hover:bg-gilt-soft"
+              }`}
+            >
+              🌿 Trung cấp (HSK 3-4)
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevelFilter("advanced")}
+              className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border ${
+                levelFilter === "advanced"
+                  ? "bg-vermillion text-white border-vermillion shadow-sm"
+                  : "bg-vermillion-light text-vermillion-deep border-vermillion-soft hover:bg-vermillion-soft"
+              }`}
+            >
+              🔥 Nâng cao (HSK 5-6)
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Status & Exam Filter */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-parchment-200">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 bg-parchment-100 p-1 rounded-2xl border border-parchment-200">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("active")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                statusFilter === "active"
+                  ? "bg-white text-vermillion-deep shadow-sm"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              Cần ôn ({activeCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("mastered")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                statusFilter === "mastered"
+                  ? "bg-white text-celadon-dark shadow-sm"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              Đã thuộc ({masteredCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                statusFilter === "all"
+                  ? "bg-white text-ink shadow-sm"
+                  : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              Tất cả
+            </button>
+          </div>
+
+          {/* Exam Filter Dropdown */}
+          {uniqueExams.length > 0 && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-ink-muted font-bold shrink-0 flex items-center gap-1">
+                <BookOpen size={14} />
+                Đề thi:
+              </span>
+              <select
+                value={selectedExamId}
+                onChange={(e) => setSelectedExamId(e.target.value)}
+                className="bg-parchment-50 border border-parchment-300 text-ink rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:border-celadon max-w-xs"
+              >
+                <option value="all">Tất cả các đề thi ({uniqueExams.length})</option>
+                {uniqueExams.map((ex) => (
+                  <option key={ex.id} value={ex.id}>
+                    {ex.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Mistakes list */}
+      {/* ================= Mistakes Cards List ================= */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-cream-300 shadow-sm space-y-3">
-          <div className="text-4xl">🎉</div>
-          <h3 className="text-lg font-bold text-charcoal">
-            {filter === "active"
-              ? "Tuyệt vời! Không còn câu sai nào cần ôn."
-              : "Chưa có câu nào trong mục này."}
+        <div className="bg-white rounded-3xl p-12 text-center border border-parchment-300 shadow-soft space-y-3">
+          <div className="text-5xl">🎉</div>
+          <h3 className="text-lg font-bold text-ink">
+            {statusFilter === "active"
+              ? "Tuyệt vời! Không có câu sai nào trong mục đã chọn."
+              : "Chưa có câu nào trong danh sách."}
           </h3>
-          <p className="text-xs sm:text-sm text-charcoal/60">
-            Hãy tiếp tục luyện các đề mới để hệ thống theo dõi tiến độ của bạn.
+          <p className="text-xs sm:text-sm text-ink-muted max-w-md mx-auto">
+            Hệ thống sẽ tự động lưu lại các câu bạn chọn sai khi làm bài tập hoặc bài kiểm tra.
           </p>
           <div className="pt-2">
             <Link
               href="/"
-              className="inline-block px-6 py-2.5 rounded-xl bg-coral text-white font-bold text-xs"
+              className="inline-block px-6 py-2.5 rounded-2xl bg-celadon text-white font-bold text-xs shadow-soft hover:shadow-md transition-all"
             >
-              Vào làm đề mới
+              Vào làm đề mới ngay
             </Link>
           </div>
         </div>
@@ -150,22 +303,54 @@ export default function MistakesPage() {
         <div className="space-y-4">
           {filtered.map((item) => {
             const q = item.question;
+            const entryLevel = getEntryLevel(item);
+
+            const levelBadge =
+              entryLevel === "basic" ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-celadon-100 text-celadon-dark text-[11px] font-bold border border-celadon-200">
+                  🌱 Cơ bản (HSK {q.hskLevel})
+                </span>
+              ) : entryLevel === "intermediate" ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-gilt-light text-gilt-deep text-[11px] font-bold border border-gilt-soft">
+                  🌿 Trung cấp (HSK {q.hskLevel})
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full bg-vermillion-light text-vermillion-deep text-[11px] font-bold border border-vermillion-soft">
+                  🔥 Nâng cao (HSK {q.hskLevel})
+                </span>
+              );
 
             return (
               <div
                 key={item.questionId}
-                className="bg-white rounded-3xl p-6 border-2 border-cream-300 hover:border-amber-200 shadow-card space-y-4"
+                className="bg-white rounded-3xl p-6 border border-parchment-300 hover:border-celadon/50 shadow-soft transition-all space-y-4"
               >
-                <div className="flex items-start justify-between gap-3 border-b border-cream-200 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                {/* Card Top: Exam title + Level badge + Wrong count + Delete */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-parchment-200 pb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Level */}
+                    {levelBadge}
+
+                    {/* Exam origin badge */}
+                    {item.examTitle && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-parchment-100 text-ink-light text-[11px] font-semibold border border-parchment-200">
+                        <BookOpen size={11} className="text-celadon-dark" />
+                        {item.examTitle}
+                      </span>
+                    )}
+
+                    {/* Wrong count */}
+                    <span className="px-2.5 py-0.5 rounded-full bg-vermillion-light text-vermillion-deep text-[11px] font-bold">
                       Sai {item.timesWrong} lần
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-xs font-bold">
+
+                    {/* Consecutive correct */}
+                    <span className="px-2.5 py-0.5 rounded-full bg-parchment-200 text-ink text-[11px] font-semibold">
                       Đúng liên tiếp: {item.consecutiveCorrect}/3
                     </span>
+
                     {item.isMastered && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-mint-light text-mint-dark text-xs font-bold border border-mint">
+                      <span className="px-2.5 py-0.5 rounded-full bg-celadon-100 text-celadon-dark text-[11px] font-bold border border-celadon-300">
                         ✓ Đã thuộc
                       </span>
                     )}
@@ -174,30 +359,31 @@ export default function MistakesPage() {
                   <button
                     type="button"
                     onClick={() => handleReset(item.questionId)}
-                    title="Xóa khỏi sổ sai"
-                    className="p-1.5 rounded-lg text-charcoal/40 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    title="Xóa câu này khỏi sổ sai"
+                    className="p-1.5 rounded-xl text-ink-muted hover:text-vermillion hover:bg-vermillion-light transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
 
                 {/* Question Prompt */}
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-charcoal/50 uppercase">
+                <div className="space-y-3">
+                  <div className="text-xs font-bold text-ink-muted uppercase">
                     HSK {q.hskLevel} • {q.tags?.[0]?.replace(/_/g, " ") || "Ngữ pháp"}
                   </div>
-                  <h3 className="font-bold text-base sm:text-lg text-charcoal">
+                  <h3 className="font-bold text-base sm:text-lg text-ink leading-relaxed">
                     {q.prompt}
                   </h3>
 
+                  {/* Chinese Hanzi & Pinyin */}
                   {q.chineseText && (
-                    <div className="p-3 bg-cream-50 rounded-2xl flex items-center justify-between gap-3">
+                    <div className="p-4 bg-parchment-50 rounded-2xl border border-parchment-200 flex items-center justify-between gap-3">
                       <div>
-                        <div className="font-chinese text-xl font-bold text-charcoal">
+                        <div className="font-chinese text-2xl font-bold text-ink">
                           {q.chineseText}
                         </div>
                         {q.pinyin && (
-                          <div className="text-xs font-semibold text-coral-dark">
+                          <div className="text-xs font-semibold text-celadon-dark mt-0.5">
                             {q.pinyin}
                           </div>
                         )}
@@ -207,24 +393,53 @@ export default function MistakesPage() {
                   )}
                 </div>
 
-                {/* Correct answer & explanation */}
-                <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200/70 text-xs sm:text-sm space-y-1">
-                  <div className="text-charcoal">
-                    <strong className="text-charcoal/60">Đáp án chuẩn: </strong>
-                    <span className="font-bold text-coral-deep">
+                {/* Answers comparison: User answer vs Correct answer */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* User Wrong Answer (if available) */}
+                  {item.lastUserAnswer !== undefined && item.lastUserAnswer !== null && (
+                    <div className="p-3 bg-vermillion-light/60 rounded-2xl border border-vermillion-soft text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 text-vermillion-deep font-bold">
+                        <XCircle size={14} />
+                        <span>Câu trả lời bạn đã chọn:</span>
+                      </div>
+                      <p className="font-semibold text-ink line-through opacity-85">
+                        {Array.isArray(item.lastUserAnswer)
+                          ? item.lastUserAnswer.join(" ")
+                          : typeof item.lastUserAnswer === "object"
+                          ? Object.values(item.lastUserAnswer).join(", ")
+                          : String(item.lastUserAnswer)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Correct Answer */}
+                  <div
+                    className={`p-3 bg-celadon-50 rounded-2xl border border-celadon-200 text-xs space-y-1 ${
+                      item.lastUserAnswer ? "" : "sm:col-span-2"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-celadon-dark font-bold">
+                      <CheckCircle2 size={14} />
+                      <span>Đáp án chính xác:</span>
+                    </div>
+                    <p className="font-bold text-celadon-dark text-sm">
                       {Array.isArray(q.correctAnswer)
                         ? q.correctAnswer.join(" ")
                         : typeof q.correctAnswer === "object"
                         ? Object.values(q.correctAnswer).join(", ")
                         : String(q.correctAnswer)}
-                    </span>
-                  </div>
-                  {q.explanation && (
-                    <p className="text-charcoal/80 pt-1 leading-relaxed">
-                      💡 {q.explanation}
                     </p>
-                  )}
+                  </div>
                 </div>
+
+                {/* Explanation */}
+                {q.explanation && (
+                  <div className="p-3 bg-parchment-100 rounded-2xl border border-parchment-200 text-xs text-ink-light space-y-1">
+                    <p className="leading-relaxed">
+                      💡 <strong>Giải thích chi tiết:</strong> {q.explanation}
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}

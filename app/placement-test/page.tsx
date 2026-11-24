@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { repository } from "@/services";
-import { Exam, LevelId } from "@/types";
+import { Exam, LevelId, QuestionResult } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { triggerConfetti } from "@/components/ui/Confetti";
@@ -93,8 +93,24 @@ export default function PlacementTestPage() {
       name = "Trung cấp (HSK 3-4)";
     }
 
-    // Auto-unlock recommended level in user profile
+    // Auto-unlock recommended level in user profile and save mistakes
     try {
+      const answersResult: Record<string, QuestionResult> = {};
+      for (const q of exam.questions) {
+        const uAns = answers[q.id];
+        const isCorrect = gradeQuestion(q, uAns);
+        answersResult[q.id] = {
+          userAnswer: uAns,
+          isCorrect,
+          question: q,
+        };
+      }
+      await repository.updateMistakes(answersResult, {
+        examId: "placement-test",
+        examTitle: "Bài kiểm tra xếp lớp đầu vào",
+        levelId: recommended,
+      });
+
       const unlocked = ["basic" as LevelId];
       if (recommended === "intermediate") unlocked.push("intermediate");
       if (recommended === "advanced") {

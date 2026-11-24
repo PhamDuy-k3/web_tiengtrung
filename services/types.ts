@@ -42,7 +42,15 @@ export interface IRepository {
 
   // Mistakes & Spaced Repetition
   getMistakes(): Promise<MistakeEntry[]>;
-  updateMistakes(answers: Record<string, QuestionResult>): Promise<void>;
+  updateMistakes(
+    answers: Record<string, QuestionResult>,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void>;
+  recordSingleMistake?(
+    question: Question,
+    userAnswer: any,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void>;
   resetMistake(questionId: string): Promise<void>;
 
   // Progress & Profile

@@ -228,103 +228,129 @@ export default function LevelTestPage() {
   ).length;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6">
-      {/* Top Header */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href={`/levels/${levelId}`}
-          className="w-10 h-10 rounded-2xl bg-white border border-cream-300 hover:bg-cream-200 flex items-center justify-center text-charcoal/70"
-          title="Rời bài thi"
-        >
-          <ArrowLeft size={18} />
-        </Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Main Quiz */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Top Header */}
+          <div className="flex items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-3xl border border-parchment-300 shadow-soft">
+            <Link
+              href={`/levels/${levelId}`}
+              className="w-10 h-10 rounded-2xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 flex items-center justify-center text-ink-muted hover:text-ink transition-all"
+              title="Rời bài thi"
+            >
+              <ArrowLeft size={18} />
+            </Link>
 
-        {/* Progress & Title */}
-        <div className="flex-1 space-y-1">
-          <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-coral flex items-center gap-1">
-              <Award size={15} />
-              Thi lên cấp: Câu {currentIndex + 1}/{totalQuestions}
-            </span>
-            <span className="text-charcoal/60">Đã làm: {answeredCount}/{totalQuestions}</span>
+            {/* Progress & Title */}
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-vermillion-deep flex items-center gap-1 truncate">
+                  <Award size={15} />
+                  Thi lên cấp: Câu {currentIndex + 1}/{totalQuestions}
+                </span>
+                <span className="text-ink-muted shrink-0 ml-2">
+                  Đã làm: <strong className="text-celadon-dark">{answeredCount}</strong>/{totalQuestions}
+                </span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-parchment-200 overflow-hidden">
+                <div
+                  className="h-full bg-vermillion rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round(((currentIndex + 1) / totalQuestions) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Countdown Timer */}
+            <QuizTimer
+              initialSeconds={elapsedSeconds}
+              timeLimitSeconds={exam.timeLimitSeconds}
+              onTick={(sec) => setElapsedSeconds(sec)}
+              onTimeUp={() => handleSubmit()}
+            />
+
+            {/* Mobile Question Palette Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsPaletteOpen(true)}
+              className="lg:hidden p-2.5 rounded-2xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 text-ink shadow-sm flex items-center gap-1.5 text-xs font-bold transition-all"
+            >
+              <Award size={16} className="text-vermillion" />
+              <span className="hidden sm:inline">Bảng câu</span>
+            </button>
           </div>
-          <div className="w-full h-3 rounded-full bg-cream-200 overflow-hidden">
-            <div
-              className="h-full bg-coral rounded-full transition-all duration-300"
-              style={{ width: `${Math.round(((currentIndex + 1) / totalQuestions) * 100)}%` }}
-            ></div>
+
+          {/* Question Renderer */}
+          <QuizRenderer
+            question={currentQuestion}
+            value={currentAnswer}
+            onChange={(val) => setAnswers({ ...answers, [currentQuestion.id]: val })}
+          />
+
+          {/* Control Buttons */}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
+              disabled={currentIndex === 0}
+              className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-1.5 transition-all ${
+                currentIndex === 0
+                  ? "opacity-40 cursor-not-allowed bg-parchment-200 text-ink-muted"
+                  : "bg-white border-2 border-parchment-300 hover:bg-parchment-100 text-ink shadow-soft"
+              }`}
+            >
+              <ArrowLeft size={16} />
+              <span>Câu trước</span>
+            </button>
+
+            {currentIndex < totalQuestions - 1 ? (
+              <button
+                type="button"
+                onClick={() => setCurrentIndex(currentIndex + 1)}
+                className="px-6 py-3 rounded-2xl bg-vermillion hover:bg-vermillion-deep text-white font-bold text-sm flex items-center gap-1.5 shadow-soft hover:shadow-md transition-all"
+              >
+                <span>Câu tiếp theo</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-8 py-3 rounded-2xl bg-celadon hover:bg-celadon-600 text-white font-bold text-base shadow-soft hover:shadow-md animate-pulse"
+              >
+                {isSubmitting ? "Đang chấm điểm..." : "NỘP BÀI THI LÊN CẤP"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* 40 Min Countdown Timer */}
-        <QuizTimer
-          initialSeconds={elapsedSeconds}
-          timeLimitSeconds={exam.timeLimitSeconds}
-          onTick={(sec) => setElapsedSeconds(sec)}
-          onTimeUp={() => handleSubmit()}
-        />
-
-        {/* Question Palette */}
-        <button
-          type="button"
-          onClick={() => setIsPaletteOpen(true)}
-          className="p-2.5 rounded-2xl bg-white border border-cream-300 text-charcoal font-bold text-xs"
-        >
-          Bảng câu ({answeredCount}/{totalQuestions})
-        </button>
+        {/* Right Sticky Sidebar Question Palette */}
+        <div className="hidden lg:block lg:col-span-4 sticky top-24">
+          <QuestionPalette
+            questions={exam.questions}
+            answers={answers}
+            currentIndex={currentIndex}
+            onSelectIndex={(idx) => setCurrentIndex(idx)}
+            mode="sidebar"
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       </div>
 
-      {/* Question Renderer */}
-      <QuizRenderer
-        question={currentQuestion}
-        value={currentAnswer}
-        onChange={(val) => setAnswers({ ...answers, [currentQuestion.id]: val })}
-      />
-
-      {/* Control Buttons */}
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
-          disabled={currentIndex === 0}
-          className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-1.5 ${
-            currentIndex === 0
-              ? "opacity-40 cursor-not-allowed bg-cream-200"
-              : "bg-white border-2 border-cream-300 text-charcoal shadow-duo"
-          }`}
-        >
-          <ArrowLeft size={16} />
-          <span>Câu trước</span>
-        </button>
-
-        {currentIndex < totalQuestions - 1 ? (
-          <button
-            type="button"
-            onClick={() => setCurrentIndex(currentIndex + 1)}
-            className="px-6 py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-sm flex items-center gap-1.5 shadow-duo-coral"
-          >
-            <span>Câu tiếp theo</span>
-            <ArrowRight size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-8 py-3 rounded-2xl bg-mint hover:bg-mint-dark text-white font-bold text-base shadow-duo-mint animate-pulse"
-          >
-            {isSubmitting ? "Đang chấm điểm..." : "NỘP BÀI THI LÊN CẤP"}
-          </button>
-        )}
-      </div>
-
+      {/* Mobile Dialog Palette */}
       <QuestionPalette
         questions={exam.questions}
         answers={answers}
         currentIndex={currentIndex}
-        onSelectIndex={(idx) => setCurrentIndex(idx)}
+        onSelectIndex={(idx) => {
+          setCurrentIndex(idx);
+          setIsPaletteOpen(false);
+        }}
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
+        mode="dialog"
       />
     </div>
   );

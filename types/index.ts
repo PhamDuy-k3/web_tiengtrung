@@ -101,6 +101,11 @@ export interface MistakeEntry {
   consecutiveCorrect: number;
   lastWrongAt: string;
   isMastered: boolean;
+  examId?: string;
+  examTitle?: string;
+  levelId?: LevelId;
+  levelName?: string;
+  lastUserAnswer?: any;
 }
 
 export interface Badge {

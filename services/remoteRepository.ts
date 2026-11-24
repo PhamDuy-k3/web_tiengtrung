@@ -10,6 +10,7 @@ import {
   OverallStats,
   LevelProgressInfo,
   QuestionResult,
+  Question,
 } from "@/types";
 
 /**
@@ -106,8 +107,20 @@ export class RemoteRepository implements IRepository {
     throw new Error("Remote API chưa được kết nối.");
   }
 
-  async updateMistakes(answers: Record<string, QuestionResult>): Promise<void> {
-    // TODO: post(`${this.baseUrl}/mistakes/update`, { answers })
+  async updateMistakes(
+    answers: Record<string, QuestionResult>,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void> {
+    // TODO: post(`${this.baseUrl}/mistakes/update`, { answers, context })
+    throw new Error("Remote API chưa được kết nối.");
+  }
+
+  async recordSingleMistake(
+    question: Question,
+    userAnswer: any,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void> {
+    // TODO: post(`${this.baseUrl}/mistakes/single`, { question, userAnswer, context })
     throw new Error("Remote API chưa được kết nối.");
   }
 

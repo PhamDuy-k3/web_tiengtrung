@@ -10,6 +10,7 @@ import {
   OverallStats,
   LevelProgressInfo,
   QuestionResult,
+  Question,
   Badge,
 } from "@/types";
 import {
@@ -151,6 +152,10 @@ class LocalRepository implements IRepository {
     if (examId === "mistake-review-exam") {
       return this.generateMistakeExam();
     }
+    if (examId.startsWith("mistake-review-exam-")) {
+      const levelId = examId.replace("mistake-review-exam-", "") as LevelId;
+      return this.generateMistakeExam(levelId);
+    }
 
     return null;
   }
@@ -189,10 +194,18 @@ class LocalRepository implements IRepository {
     };
   }
 
-  async generateMistakeExam(): Promise<Exam | null> {
+  async generateMistakeExam(levelId?: LevelId): Promise<Exam | null> {
     await this.artificialDelay(150);
     const store = this.loadStorage();
-    const mistakes = Object.values(store.mistakes).filter((m) => !m.isMastered);
+    let mistakes = Object.values(store.mistakes).filter((m) => !m.isMastered);
+
+    if (levelId) {
+      mistakes = mistakes.filter((m) => {
+        if (m.levelId) return m.levelId === levelId;
+        const qLvl = m.question.hskLevel <= 2 ? "basic" : m.question.hskLevel <= 4 ? "intermediate" : "advanced";
+        return qLvl === levelId;
+      });
+    }
 
     if (mistakes.length === 0) {
       return null;
@@ -202,12 +215,21 @@ class LocalRepository implements IRepository {
     const sorted = [...mistakes].sort((a, b) => b.timesWrong - a.timesWrong);
     const questions = sorted.slice(0, 15).map((m) => m.question);
 
+    const levelTitle =
+      levelId === "basic"
+        ? "Cơ bản"
+        : levelId === "intermediate"
+        ? "Trung cấp"
+        : levelId === "advanced"
+        ? "Nâng cao"
+        : "Tổng hợp";
+
     return {
       id: "mistake-review-exam",
       topicId: "mistake-topic",
-      levelId: questions[0]?.hskLevel <= 2 ? "basic" : questions[0]?.hskLevel <= 4 ? "intermediate" : "advanced",
-      title: "Luyện tập: Ôn lại các câu hay sai",
-      description: `Đề luyện chuyên biệt gồm ${questions.length} câu bạn từng làm sai nhiều nhất trong sổ tay lỗi sai. Hãy chinh phục lại chúng!`,
+      levelId: levelId || (questions[0]?.hskLevel <= 2 ? "basic" : questions[0]?.hskLevel <= 4 ? "intermediate" : "advanced"),
+      title: `Luyện tập: Ôn lại các câu hay sai (${levelTitle})`,
+      description: `Đề luyện chuyên biệt gồm ${questions.length} câu bạn từng làm sai nhiều nhất trong sổ tay lỗi sai (${levelTitle}). Hãy chinh phục lại chúng!`,
       questions,
       isMistakeReview: true,
       timeLimitSeconds: 20 * 60,
@@ -318,8 +340,12 @@ class LocalRepository implements IRepository {
       });
     }
 
-    // Update mistakes
-    await this.updateMistakes(payload.answers);
+    // Update mistakes with exam info & level
+    await this.updateMistakes(payload.answers, {
+      examId: payload.examId,
+      examTitle: payload.examTitle,
+      levelId: payload.levelId,
+    });
 
     this.saveStorage(store);
     return attempt;
@@ -343,13 +369,31 @@ class LocalRepository implements IRepository {
     return Object.values(store.mistakes);
   }
 
-  async updateMistakes(answers: Record<string, QuestionResult>): Promise<void> {
+  async updateMistakes(
+    answers: Record<string, QuestionResult>,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void> {
     const store = this.loadStorage();
     const now = new Date().toISOString();
 
     for (const qId of Object.keys(answers)) {
       const res = answers[qId];
       const existing = store.mistakes[qId];
+
+      const resolvedLevelId: LevelId =
+        context?.levelId ||
+        (res.question.hskLevel <= 2
+          ? "basic"
+          : res.question.hskLevel <= 4
+          ? "intermediate"
+          : "advanced");
+
+      const resolvedLevelName =
+        resolvedLevelId === "basic"
+          ? "Cơ bản (HSK 1-2)"
+          : resolvedLevelId === "intermediate"
+          ? "Trung cấp (HSK 3-4)"
+          : "Nâng cao (HSK 5-6)";
 
       if (!res.isCorrect) {
         // Wrong answer
@@ -358,6 +402,11 @@ class LocalRepository implements IRepository {
           existing.consecutiveCorrect = 0;
           existing.lastWrongAt = now;
           existing.isMastered = false;
+          existing.lastUserAnswer = res.userAnswer;
+          if (context?.examId) existing.examId = context.examId;
+          if (context?.examTitle) existing.examTitle = context.examTitle;
+          existing.levelId = resolvedLevelId;
+          existing.levelName = resolvedLevelName;
         } else {
           store.mistakes[qId] = {
             questionId: qId,
@@ -366,6 +415,11 @@ class LocalRepository implements IRepository {
             consecutiveCorrect: 0,
             lastWrongAt: now,
             isMastered: false,
+            examId: context?.examId,
+            examTitle: context?.examTitle,
+            levelId: resolvedLevelId,
+            levelName: resolvedLevelName,
+            lastUserAnswer: res.userAnswer,
           };
         }
       } else {
@@ -377,6 +431,60 @@ class LocalRepository implements IRepository {
           }
         }
       }
+    }
+
+    this.saveStorage(store);
+  }
+
+  async recordSingleMistake(
+    question: Question,
+    userAnswer: any,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): Promise<void> {
+    const store = this.loadStorage();
+    const now = new Date().toISOString();
+    const qId = question.id;
+    const existing = store.mistakes[qId];
+
+    const resolvedLevelId: LevelId =
+      context?.levelId ||
+      (question.hskLevel <= 2
+        ? "basic"
+        : question.hskLevel <= 4
+        ? "intermediate"
+        : "advanced");
+
+    const resolvedLevelName =
+      resolvedLevelId === "basic"
+        ? "Cơ bản (HSK 1-2)"
+        : resolvedLevelId === "intermediate"
+        ? "Trung cấp (HSK 3-4)"
+        : "Nâng cao (HSK 5-6)";
+
+    if (existing) {
+      existing.timesWrong += 1;
+      existing.consecutiveCorrect = 0;
+      existing.lastWrongAt = now;
+      existing.isMastered = false;
+      existing.lastUserAnswer = userAnswer;
+      if (context?.examId) existing.examId = context.examId;
+      if (context?.examTitle) existing.examTitle = context.examTitle;
+      existing.levelId = resolvedLevelId;
+      existing.levelName = resolvedLevelName;
+    } else {
+      store.mistakes[qId] = {
+        questionId: qId,
+        question,
+        timesWrong: 1,
+        consecutiveCorrect: 0,
+        lastWrongAt: now,
+        isMastered: false,
+        examId: context?.examId,
+        examTitle: context?.examTitle,
+        levelId: resolvedLevelId,
+        levelName: resolvedLevelName,
+        lastUserAnswer: userAnswer,
+      };
     }
 
     this.saveStorage(store);
