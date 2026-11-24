@@ -13,10 +13,11 @@ const nunito = Nunito({
 });
 
 const notoSansSC = Noto_Sans_SC({
-  subsets: ["latin"],
+  subsets: ["chinese-simplified"],
   weight: ["400", "500", "700", "900"],
   variable: "--font-chinese",
   display: "swap",
+  preload: false,          // CJK fonts are huge – don't block page load
 });
 
 export const metadata: Metadata = {
