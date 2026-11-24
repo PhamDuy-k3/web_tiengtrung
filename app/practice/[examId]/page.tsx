@@ -95,32 +95,9 @@ export default function ExamPracticePage() {
     load();
   }, [examId, initExam]);
 
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-ink-muted">
-        <div className="animate-spin w-10 h-10 border-4 border-celadon border-t-transparent rounded-full mx-auto mb-3"></div>
-        Đang chuẩn bị đề luyện tập...
-      </div>
-    );
-  }
-
-  if (!exam || exam.questions.length === 0) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-ink">Không tìm thấy đề thi</h2>
-        <Link
-          href="/"
-          className="inline-block px-6 py-3 rounded-2xl bg-celadon text-white font-bold"
-        >
-          Quay về trang chủ
-        </Link>
-      </div>
-    );
-  }
-
-  const currentQuestion = exam.questions[currentIndex];
-  const totalQuestions = exam.questions.length;
-  const currentAnswer = savedAnswers[currentQuestion.id];
+  const totalQuestions = exam?.questions?.length || 0;
+  const currentQuestion = exam?.questions?.[currentIndex];
+  const currentAnswer = currentQuestion ? savedAnswers[currentQuestion.id] : undefined;
 
   const answeredCount = Object.keys(savedAnswers).filter(
     (k) =>
@@ -131,9 +108,10 @@ export default function ExamPracticePage() {
       (typeof savedAnswers[k] !== "object" || Object.keys(savedAnswers[k]).length > 0)
   ).length;
 
-  const progressPercent = Math.round(((currentIndex + 1) / totalQuestions) * 100);
+  const progressPercent = totalQuestions > 0 ? Math.round(((currentIndex + 1) / totalQuestions) * 100) : 0;
 
   const handleAnswerChange = (val: any) => {
+    if (!currentQuestion) return;
     setDraftAnswer(examId, currentQuestion.id, val);
     // Reset check state for this question when answer changes
     if (checkedFeedback[currentQuestion.id]) {
@@ -146,6 +124,7 @@ export default function ExamPracticePage() {
 
   // Check current question instant answer & auto save mistake if wrong
   const handleCheckCurrentQuestion = async () => {
+    if (!currentQuestion || !exam) return;
     if (currentAnswer === undefined || currentAnswer === null || currentAnswer === "") {
       return;
     }
@@ -172,6 +151,7 @@ export default function ExamPracticePage() {
 
   // When moving to another question, if an answer was provided and is wrong, auto save to mistakes
   const saveCurrentAnswerIfWrong = async (targetIndex: number) => {
+    if (!currentQuestion || !exam) return;
     if (
       currentAnswer !== undefined &&
       currentAnswer !== null &&
@@ -205,6 +185,7 @@ export default function ExamPracticePage() {
   };
 
   const handleSubmitAttempt = async () => {
+    if (!exam) return;
     setIsSubmitting(true);
     try {
       // Grade each question
@@ -248,7 +229,7 @@ export default function ExamPracticePage() {
     }
   };
 
-  const currentQCheck = checkedFeedback[currentQuestion.id];
+  const currentQCheck = currentQuestion ? checkedFeedback[currentQuestion.id] : undefined;
   const hasSelectedAnswer =
     currentAnswer !== undefined &&
     currentAnswer !== "" &&
@@ -258,6 +239,8 @@ export default function ExamPracticePage() {
 
   // Global Keyboard Shortcuts
   useEffect(() => {
+    if (!exam || !currentQuestion) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
@@ -289,7 +272,30 @@ export default function ExamPracticePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasSelectedAnswer, currentQCheck, currentIndex, totalQuestions, currentQuestion]);
+  }, [exam, currentQuestion, hasSelectedAnswer, currentQCheck, currentIndex, totalQuestions]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-ink-muted">
+        <div className="animate-spin w-10 h-10 border-4 border-celadon border-t-transparent rounded-full mx-auto mb-3"></div>
+        Đang chuẩn bị đề luyện tập...
+      </div>
+    );
+  }
+
+  if (!exam || !currentQuestion || exam.questions.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-ink">Không tìm thấy đề thi</h2>
+        <Link
+          href="/"
+          className="inline-block px-6 py-3 rounded-2xl bg-celadon text-white font-bold"
+        >
+          Quay về trang chủ
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6">
