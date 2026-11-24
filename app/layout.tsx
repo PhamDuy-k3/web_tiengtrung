@@ -20,8 +20,8 @@ const notoSansSC = Noto_Sans_SC({
 });
 
 export const metadata: Metadata = {
-  title: "Hanyu - Luyện tập tiếng Trung phản xạ chuẩn HSK",
-  description: "Website luyện tập tiếng Trung thực hành cho người Việt, giao diện trực quan phong cách Duolingo, bám sát khung chuẩn HSK 1-6.",
+  title: "汉语 Practice — Luyện tiếng Trung chuẩn HSK cho người Việt",
+  description: "Nền tảng thực hành tiếng Trung chuyên sâu dành riêng cho người Việt. Bám sát từ vựng & ngữ pháp HSK 1-6 chính thống, giao diện Á Đông hiện đại.",
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${nunito.variable} ${notoSansSC.variable}`}>
-      <body className="min-h-screen flex flex-col bg-cream-100 text-charcoal font-sans selection:bg-coral/20 selection:text-coral-dark">
+      <body className="min-h-screen flex flex-col bg-parchment-50 text-ink font-sans selection:bg-celadon/20 selection:text-celadon-dark">
         <Navbar />
         <main className="flex-1 pb-16 md:pb-8">{children}</main>
         <Footer />

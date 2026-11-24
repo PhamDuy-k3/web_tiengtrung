@@ -164,7 +164,7 @@ export function getLevelDifficultyConfig(hskLevel: number): LevelDifficultyConfi
       distractorTilesCount: 3,
       matchingDistractorsCount: 3,
       badgeLabel: "Cơ bản: Có Pinyin trợ giúp",
-      badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      badgeColor: "bg-celadon-100 text-celadon-dark border-celadon-200",
       instructionTip: "Xếp câu bằng các viên gạch, có Pinyin hỗ trợ nhận diện phát âm.",
     };
   }
@@ -178,7 +178,7 @@ export function getLevelDifficultyConfig(hskLevel: number): LevelDifficultyConfi
       distractorTilesCount: 5,
       matchingDistractorsCount: 6,
       badgeLabel: "Trung cấp: Ẩn Pinyin • Thử thách Hán tự & Bẫy ngữ pháp",
-      badgeColor: "bg-amber-50 text-amber-900 border-amber-300",
+      badgeColor: "bg-gilt-light text-gilt-deep border-gilt-soft",
       instructionTip: "Pinyin đã ẩn để rèn trí nhớ mặt chữ. Hỗ trợ tự gõ câu hoặc dùng viên gạch có chứa từ gây nhiễu.",
     };
   }
@@ -188,11 +188,11 @@ export function getLevelDifficultyConfig(hskLevel: number): LevelDifficultyConfi
     showPinyinByDefault: false,
     allowPinyinToggle: false,
     allowTypingMode: true,
-    defaultToTypingMode: true, // Defaults to typing mode so user actively recalls words
+    defaultToTypingMode: true,
     distractorTilesCount: 6,
-    matchingDistractorsCount: 8, // 5 left + 8 distractors = 13 right choices!
+    matchingDistractorsCount: 8,
     badgeLabel: "Nâng cao: Chuyên sâu • Bẫy chữ hình gần nghĩa gần • Gõ tay",
-    badgeColor: "bg-red-50 text-red-900 border-red-300",
+    badgeColor: "bg-vermillion-light text-vermillion-deep border-vermillion-soft",
     instructionTip: "Thử thách cực hạn: Chế độ tự gõ bàn phím (hoặc chọn viên gạch chứa bẫy chữ viết giống nhau 1 nét). Cột nối có tới 10-13 lựa chọn.",
   };
 }

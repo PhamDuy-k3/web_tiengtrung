@@ -10,61 +10,137 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: {
-          50: "#FFFDF9",
-          100: "#FFFBF5",
-          200: "#FDF4E7",
-          300: "#F7E8D3",
+        // === PRIMARY PALETTE: Celadon + Warm Parchment ===
+        // Nền tổng thể: kem giấy da xưa
+        parchment: {
+          50: "#FDFAF4",
+          100: "#F9F3E8",
+          200: "#F0E8D5",
+          300: "#E4D5B8",
+          400: "#CDB896",
         },
-        coral: {
-          light: "#FFA0A0",
-          DEFAULT: "#EF5B5B",
-          dark: "#D94141",
-          deep: "#B92B2B",
+        // Xanh celadon: màu men gốm Á Đông
+        celadon: {
+          50:  "#F0FAF6",
+          100: "#D6F2E6",
+          200: "#A8E0C8",
+          300: "#6EC9A8",
+          DEFAULT: "#3DB38A",
+          500: "#2E9A74",
+          600: "#1F7F5E",
+          dark:  "#165C44",
         },
-        honey: {
-          light: "#FFE382",
-          DEFAULT: "#FFC94A",
-          dark: "#E5AF30",
+        // Đỏ son truyền thống (thay coral Duolingo)
+        vermillion: {
+          light: "#FFEAEA",
+          soft:  "#F9A8A8",
+          DEFAULT: "#E05252",
+          dark:  "#C23B3B",
+          deep:  "#9B2626",
         },
-        mint: {
-          light: "#E8F8F0",
-          DEFAULT: "#10B981",
-          dark: "#059669",
+        // Tím lavender nhạt cho điểm nhấn
+        wisteria: {
+          light: "#F3EFFF",
+          soft:  "#C9BDF0",
+          DEFAULT: "#7C5CBF",
+          dark:  "#5B3FA0",
         },
+        // Vàng hoàng kim nhạt
+        gilt: {
+          light: "#FFFBEB",
+          soft:  "#FDE68A",
+          DEFAULT: "#F5C842",
+          dark:  "#D4A017",
+          deep:  "#9C6F0A",
+        },
+        // Mực đen cổ điển (thay charcoal)
+        ink: {
+          light: "#7A7A7A",
+          DEFAULT: "#2C2C2C",
+          dark:  "#1A1A1A",
+        },
+        // Cấp độ HSK
         hsk: {
-          basic: "#10B981",
-          basicDark: "#059669",
-          basicLight: "#ECFDF5",
-          inter: "#F59E0B",
-          interDark: "#D97706",
+          basic:      "#3DB38A",
+          basicLight: "#D6F2E6",
+          basicDark:  "#1F7F5E",
+          inter:      "#F5C842",
           interLight: "#FFFBEB",
-          adv: "#EF4444",
-          advDark: "#DC2626",
-          advLight: "#FEF2F2",
-        },
-        charcoal: {
-          light: "#636E72",
-          DEFAULT: "#2D3436",
-          dark: "#1E272E",
+          interDark:  "#D4A017",
+          adv:        "#E05252",
+          advLight:   "#FFEAEA",
+          advDark:    "#C23B3B",
         },
       },
       fontFamily: {
-        sans: ["var(--font-nunito)", "sans-serif"],
+        sans:    ["var(--font-inter)", "var(--font-nunito)", "sans-serif"],
+        display: ["var(--font-nunito)", "sans-serif"],
         chinese: ["var(--font-chinese)", "sans-serif"],
+        mono:    ["ui-monospace", "monospace"],
       },
       boxShadow: {
-        duo: "0 4px 0 #E2D9CC",
-        "duo-coral": "0 4px 0 #D94141",
-        "duo-honey": "0 4px 0 #E5AF30",
-        "duo-mint": "0 4px 0 #059669",
-        "duo-pressed": "0 1px 0 #D94141",
-        card: "0 6px 20px -2px rgba(45, 52, 54, 0.06)",
-        "card-hover": "0 12px 28px -4px rgba(45, 52, 54, 0.12)",
+        // Bóng mềm kiểu ứng dụng thiết kế cao cấp
+        "soft":       "0 2px 12px rgba(44,44,44,0.06), 0 1px 4px rgba(44,44,44,0.04)",
+        "medium":     "0 4px 20px rgba(44,44,44,0.09), 0 2px 6px rgba(44,44,44,0.05)",
+        "lifted":     "0 8px 32px rgba(44,44,44,0.12), 0 2px 8px rgba(44,44,44,0.06)",
+        "hover":      "0 12px 40px rgba(44,44,44,0.14), 0 4px 12px rgba(44,44,44,0.07)",
+        // Glow cho màu accent
+        "glow-green": "0 0 20px rgba(61,179,138,0.25)",
+        "glow-red":   "0 0 20px rgba(224,82,82,0.2)",
+        "glow-gold":  "0 0 20px rgba(245,200,66,0.25)",
+        // Underline button (kiểu Notion)
+        "btn-green":  "inset 0 -3px 0 rgba(31,127,94,0.5)",
+        "btn-red":    "inset 0 -3px 0 rgba(194,59,59,0.5)",
+        // inner
+        "inner-soft": "inset 0 1px 4px rgba(44,44,44,0.06)",
       },
       borderRadius: {
-        "2xl": "18px",
-        "3xl": "24px",
+        "2xl": "14px",
+        "3xl": "20px",
+        "4xl": "28px",
+      },
+      backgroundImage: {
+        // Gradient tinh tế nền parchment
+        "parchment-fade": "linear-gradient(135deg, #FDFAF4 0%, #F0E8D5 100%)",
+        "celadon-fade":   "linear-gradient(135deg, #F0FAF6 0%, #D6F2E6 100%)",
+        "gilt-fade":      "linear-gradient(135deg, #FFFBEB 0%, #FDE68A 50%, #FFFBEB 100%)",
+        "ink-fade":       "linear-gradient(135deg, #2C2C2C 0%, #1A1A1A 100%)",
+        // Texture nhẹ cho card nổi bật
+        "silk":           "linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(240,232,213,0.4) 100%)",
+      },
+      animation: {
+        "fade-up":    "fadeUp 0.22s ease-out forwards",
+        "fade-in":    "fadeIn 0.18s ease-out forwards",
+        "scale-in":   "scaleIn 0.2s ease-out forwards",
+        "shimmer":    "shimmer 1.6s linear infinite",
+        "pulse-soft": "pulseSoft 2s ease-in-out infinite",
+        "float":      "float 3s ease-in-out infinite",
+      },
+      keyframes: {
+        fadeUp: {
+          from: { opacity: "0", transform: "translateY(10px)" },
+          to:   { opacity: "1", transform: "translateY(0)" },
+        },
+        fadeIn: {
+          from: { opacity: "0" },
+          to:   { opacity: "1" },
+        },
+        scaleIn: {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to:   { opacity: "1", transform: "scale(1)" },
+        },
+        shimmer: {
+          "0%":   { backgroundPosition: "-400px 0" },
+          "100%": { backgroundPosition: "400px 0" },
+        },
+        pulseSoft: {
+          "0%, 100%": { opacity: "1" },
+          "50%":      { opacity: "0.65" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%":      { transform: "translateY(-6px)" },
+        },
       },
     },
   },

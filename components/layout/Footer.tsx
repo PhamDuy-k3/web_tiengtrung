@@ -1,92 +1,85 @@
 import React from "react";
 import Link from "next/link";
-import { ChineseCloud, ChineseLantern } from "@/components/ui/ChineseDecoration";
 
 export const Footer: React.FC = () => {
+  const year = new Date().getFullYear();
   return (
-    <footer className="bg-cream-100 border-t border-cream-300 pt-12 pb-24 md:pb-12 text-charcoal/70 relative overflow-hidden">
-      <div className="absolute right-4 top-4 opacity-15 pointer-events-none">
-        <ChineseCloud className="w-32 h-16 text-coral" />
+    <footer className="bg-parchment-100 border-t border-parchment-300 pt-12 pb-24 md:pb-12 relative overflow-hidden">
+      {/* Decorative background characters */}
+      <div
+        aria-hidden
+        className="absolute right-8 top-8 font-chinese text-9xl font-black text-ink/[0.025] select-none pointer-events-none"
+      >
+        漢
       </div>
-      <div className="absolute left-6 bottom-4 opacity-15 pointer-events-none">
-        <ChineseLantern className="w-16 h-28 text-coral" />
+      <div
+        aria-hidden
+        className="absolute left-6 bottom-6 font-chinese text-7xl font-black text-celadon/[0.07] select-none pointer-events-none"
+      >
+        語
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Column 1: Info */}
-          <div className="space-y-3 md:col-span-2">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-coral flex items-center justify-center text-white font-chinese font-bold text-lg">
-                汉
-              </span>
-              <span className="text-xl font-black text-charcoal">Hanyu Luyện Tập</span>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+          {/* Brand column */}
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-celadon to-celadon-600 flex items-center justify-center shadow-soft">
+                <span className="font-chinese text-white font-black text-lg">汉</span>
+              </div>
+              <div>
+                <div className="text-base font-black text-ink tracking-tight">汉语 Practice</div>
+                <div className="text-[11px] text-ink-light font-semibold uppercase tracking-widest">HSK Standard</div>
+              </div>
             </div>
-            <p className="text-sm leading-relaxed max-w-md">
-              Nền tảng thực hành tiếng Trung thuần bài tập theo phương pháp phản xạ Duolingo dành riêng cho người Việt. Bám sát danh mục từ vựng và ngữ pháp HSK 1 - 6 chính thống.
+            <p className="text-sm text-ink-light leading-relaxed max-w-xs">
+              Nền tảng thực hành tiếng Trung thuần bài tập dành riêng cho người Việt. Bám sát chuẩn từ vựng & ngữ pháp HSK 1-6 chính thống của Hanban / CTI.
             </p>
-            <div className="text-xs text-charcoal/50">
-              © {new Date().getFullYear()} Hanyu Practice Platform. All rights reserved.
+            {/* Accent bar */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="w-6 h-1 rounded-full bg-celadon"></span>
+              <span className="w-3 h-1 rounded-full bg-gilt"></span>
+              <span className="w-2 h-1 rounded-full bg-vermillion"></span>
             </div>
+            <p className="text-xs text-ink/40 font-medium">© {year} 汉语 Practice Platform</p>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div className="space-y-2.5">
-            <div className="font-bold text-charcoal text-sm uppercase tracking-wider">
-              Khám phá
-            </div>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/" className="hover:text-coral transition-colors">
-                  Cấp độ & Kho đề
-                </Link>
-              </li>
-              <li>
-                <Link href="/placement-test" className="hover:text-coral transition-colors">
-                  Bài kiểm tra đầu vào
-                </Link>
-              </li>
-              <li>
-                <Link href="/mistakes" className="hover:text-coral transition-colors">
-                  Sổ lỗi sai thông minh
-                </Link>
-              </li>
-              <li>
-                <Link href="/history" className="hover:text-coral transition-colors">
-                  Lịch sử làm bài
-                </Link>
-              </li>
-              <li>
-                <Link href="/stats" className="hover:text-coral transition-colors">
-                  Biểu đồ & Thống kê
-                </Link>
-              </li>
+          {/* Explore */}
+          <div className="space-y-3">
+            <div className="text-xs font-black text-ink uppercase tracking-widest">Khám phá</div>
+            <ul className="space-y-2 text-sm text-ink-light">
+              {[
+                { href: "/",               label: "Cấp độ & Kho đề"       },
+                { href: "/placement-test", label: "Kiểm tra đầu vào"      },
+                { href: "/mistakes",       label: "Sổ lỗi sai thông minh" },
+                { href: "/history",        label: "Lịch sử làm bài"       },
+                { href: "/stats",          label: "Biểu đồ & Thống kê"    },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="hover:text-celadon transition-colors hover:translate-x-0.5 inline-block">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Column 3: Standards & Sources */}
-          <div className="space-y-2.5">
-            <div className="font-bold text-charcoal text-sm uppercase tracking-wider">
-              Nguồn chính thống
-            </div>
-            <ul className="space-y-2 text-sm">
+          {/* Standards */}
+          <div className="space-y-3">
+            <div className="text-xs font-black text-ink uppercase tracking-widest">Nguồn chính thống</div>
+            <ul className="space-y-2 text-sm text-ink-light">
               <li>
-                <Link href="/sources" className="hover:text-coral transition-colors font-semibold text-coral">
-                  Xem tài liệu chuẩn tham khảo →
+                <Link href="/sources" className="text-celadon font-semibold hover:text-celadon-dark transition-colors">
+                  Xem tài liệu tham khảo →
                 </Link>
               </li>
-              <li>
-                <span className="text-xs text-charcoal/60">
-                  Khung chuẩn HSK 3.0 / HSK 2.0 (Hanban / CTI)
-                </span>
-              </li>
-              <li>
-                <span className="text-xs text-charcoal/60">
-                  HSK Standard Course (北京语言大学出版社)
-                </span>
-              </li>
+              <li className="text-xs leading-relaxed">Khung chuẩn HSK 3.0 / HSK 2.0 (Hanban / CTI)</li>
+              <li className="text-xs leading-relaxed">HSK Standard Course (北京语言大学出版社)</li>
+              <li className="text-xs leading-relaxed">Developing Chinese (外语教学与研究出版社)</li>
             </ul>
           </div>
+
         </div>
       </div>
     </footer>

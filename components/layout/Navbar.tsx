@@ -1,103 +1,143 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Sparkles, BookOpen, User, BarChart2, ShieldCheck } from "lucide-react";
+import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const { profile, isHydrated, loadProfile } = useUserStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!isHydrated) {
-      loadProfile();
-    }
+    if (!isHydrated) loadProfile();
   }, [isHydrated, loadProfile]);
 
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
   const navLinks = [
-    { href: "/", label: "Học tập", icon: BookOpen },
+    { href: "/",         label: "Học tập",    icon: BookOpen   },
     { href: "/mistakes", label: "Sổ lỗi sai", icon: ShieldCheck },
-    { href: "/stats", label: "Thống kê", icon: BarChart2 },
-    { href: "/sources", label: "Nguồn chuẩn", icon: null },
+    { href: "/stats",    label: "Thống kê",   icon: BarChart2  },
+    { href: "/sources",  label: "Nguồn tham khảo", icon: null  },
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-cream-300">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-coral flex items-center justify-center text-white font-chinese text-2xl font-black shadow-duo-coral group-hover:scale-105 transition-transform">
-            汉
-          </div>
-          <div>
-            <div className="text-xl sm:text-2xl font-black tracking-tight text-charcoal flex items-center gap-1.5">
-              <span>Hanyu</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-honey/30 text-amber-900 font-bold">
-                Duolingo
-              </span>
-            </div>
-            <div className="text-xs text-charcoal/50 font-medium hidden sm:block">
-              Luyện tiếng Trung chuẩn HSK
-            </div>
-          </div>
-        </Link>
+    <>
+      <header className="sticky top-0 z-40">
+        {/* Top bar: parchment nền, cạnh dưới ornament line */}
+        <div className="bg-parchment-50/95 backdrop-blur-xl border-b border-parchment-300">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1.5 bg-cream-100 p-1.5 rounded-2xl border border-cream-200">
-          {navLinks.map((item) => {
-            const isActive = pathname === item.href;
-            return (
+            {/* ── LOGO ── */}
+            <Link href="/" className="flex items-center gap-3 group shrink-0">
+              {/* Logo mark: vuông tròn góc, nền celadon, chữ Hán trắng */}
+              <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-celadon to-celadon-600 flex items-center justify-center shadow-soft group-hover:shadow-glow-green transition-all duration-200 group-hover:scale-105">
+                <span className="font-chinese text-white text-xl font-black leading-none">汉</span>
+                {/* Small dot accent */}
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-gilt border-2 border-parchment-50"></span>
+              </div>
+              <div className="leading-tight">
+                <div className="text-lg font-black tracking-tight text-ink flex items-baseline gap-1.5">
+                  <span>汉语</span>
+                  <span className="text-ink text-sm font-bold opacity-40 tracking-wide">PRACTICE</span>
+                </div>
+                <div className="text-[11px] text-ink-light font-semibold tracking-wider uppercase hidden sm:block">
+                  Luyện tiếng Trung chuẩn HSK
+                </div>
+              </div>
+            </Link>
+
+            {/* ── DESKTOP NAV ── */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                      isActive
+                        ? "text-celadon bg-celadon-100"
+                        : "text-ink-light hover:text-ink hover:bg-parchment-200/80"
+                    }`}
+                  >
+                    {item.label}
+                    {/* Active underline */}
+                    {isActive && (
+                      <span className="absolute bottom-0.5 left-4 right-4 h-0.5 rounded-full bg-celadon" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* ── RIGHT SLOT: stats + avatar + mobile menu ── */}
+            <div className="flex items-center gap-2">
+              {/* Streak pill */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gilt-light border border-gilt-soft text-gilt-deep font-bold text-sm">
+                <Flame size={16} className="fill-gilt text-gilt" />
+                <span>{isHydrated ? profile?.streak || 1 : 1}</span>
+              </div>
+
+              {/* XP pill – hidden on small */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-celadon-50 border border-celadon-200 text-celadon-600 font-bold text-sm">
+                <Zap size={15} className="fill-celadon-300 text-celadon" />
+                <span>{isHydrated ? profile?.totalXp || 0 : 0} XP</span>
+              </div>
+
+              {/* Avatar */}
               <Link
-                key={item.href}
-                href={item.href}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  isActive
-                    ? "bg-white text-coral shadow-sm"
-                    : "text-charcoal/70 hover:text-charcoal hover:bg-cream-200/60"
-                }`}
+                href="/profile"
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-celadon to-celadon-600 flex items-center justify-center text-white shadow-soft hover:shadow-glow-green transition-all"
               >
-                {item.label}
+                <User size={17} />
               </Link>
-            );
-          })}
-        </nav>
 
-        {/* User Stats & Profile Pill */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Streak Counter */}
-          <div
-            title={`Chuỗi ngày học liên tục: ${profile?.streak || 1} ngày`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 font-bold text-sm shadow-sm"
-          >
-            <Flame size={18} className="text-amber-500 fill-amber-500 animate-bounce" />
-            <span>{isHydrated ? profile?.streak || 1 : 1}</span>
-          </div>
-
-          {/* XP Counter */}
-          <div
-            title={`Tổng điểm kinh nghiệm: ${profile?.totalXp || 0} XP`}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-coral/10 border border-coral/20 text-coral font-bold text-sm shadow-sm"
-          >
-            <Sparkles size={16} className="text-coral" />
-            <span>{isHydrated ? profile?.totalXp || 0 : 0} XP</span>
-          </div>
-
-          {/* Profile Avatar / Link */}
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-2xl hover:bg-cream-200/80 border border-transparent hover:border-cream-300 transition-all"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-coral to-honey flex items-center justify-center text-white font-bold shadow-sm">
-              <User size={18} />
+              {/* Mobile menu toggle */}
+              <button
+                className="md:hidden w-9 h-9 rounded-xl bg-parchment-200 flex items-center justify-center text-ink-light hover:bg-parchment-300 transition-colors"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-label="Mở menu"
+              >
+                {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
             </div>
-            <span className="hidden lg:block text-sm font-bold text-charcoal truncate max-w-[120px]">
-              {isHydrated ? profile?.name || "Học viên" : "Học viên"}
-            </span>
-          </Link>
+          </div>
         </div>
-      </div>
-    </header>
+
+        {/* ── MOBILE DROPDOWN MENU ── */}
+        {mobileOpen && (
+          <div className="md:hidden absolute inset-x-0 top-16 bg-parchment-50/98 backdrop-blur-xl border-b border-parchment-300 shadow-lifted z-50 animate-fade-up">
+            <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+              {navLinks.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      isActive
+                        ? "bg-celadon-100 text-celadon"
+                        : "text-ink-light hover:bg-parchment-200 hover:text-ink"
+                    }`}
+                  >
+                    {Icon && <Icon size={18} />}
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-celadon" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+      </header>
+    </>
   );
 };

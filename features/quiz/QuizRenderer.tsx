@@ -21,6 +21,19 @@ interface QuizRendererProps {
   disabled?: boolean;
 }
 
+// Badge colour per HSK level (new colour system)
+function getLevelBadgeClass(hskLevel: number): string {
+  if (hskLevel <= 2) return "bg-celadon-100 text-celadon-dark border-celadon-200";
+  if (hskLevel <= 4) return "bg-gilt-light text-gilt-deep border-gilt-soft";
+  return "bg-vermillion-light text-vermillion-deep border-vermillion-soft";
+}
+
+function getLevelLabel(hskLevel: number): string {
+  if (hskLevel <= 2) return "Cơ bản";
+  if (hskLevel <= 4) return "Trung cấp";
+  return "Nâng cao";
+}
+
 export const QuizRenderer: React.FC<QuizRendererProps> = ({
   question,
   value,
@@ -33,81 +46,82 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
   const diffConfig = getLevelDifficultyConfig(question.hskLevel);
   const [showPinyinHint, setShowPinyinHint] = useState(diffConfig.showPinyinByDefault);
 
+  const badgeClass = getLevelBadgeClass(question.hskLevel);
+  const levelLabel = getLevelLabel(question.hskLevel);
+
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-cream-300 shadow-card space-y-6">
-      {/* Header Level Badge & Difficulty Indicator */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-cream-200 pb-4">
+    <div className="bg-parchment-50 rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-soft space-y-6">
+      {/* ── Header: level badge + tags + audio ── */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-parchment-200 pb-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Level Badge */}
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm ${diffConfig.badgeColor}`}
-          >
-            HSK {question.hskLevel} • {diffConfig.badgeLabel.split(":")[0]}
+          {/* Level badge */}
+          <span className={`badge border ${badgeClass}`}>
+            HSK {question.hskLevel} · {levelLabel}
           </span>
 
           {/* Tags */}
           {question.tags?.slice(0, 2).map((t, i) => (
             <span
               key={i}
-              className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200"
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-parchment-200 text-ink-light border border-parchment-300"
             >
               #{t.replace(/_/g, " ")}
             </span>
           ))}
         </div>
 
-        {/* Audio control for reading text if available */}
+        {/* Audio play button for non-listening types */}
         {!isListeningType && question.chineseText && (
           <AudioButton text={question.chineseText} size="sm" />
         )}
       </div>
 
-      {/* Main Prompt */}
-      <div className="space-y-3">
-        <h2 className="text-xl sm:text-2xl font-black text-charcoal leading-relaxed">
+      {/* ── Question prompt ── */}
+      <div className="space-y-4">
+        <h2 className="text-xl sm:text-2xl font-black text-ink leading-relaxed">
           {question.prompt}
         </h2>
 
-        {/* Hanzi Box with Adaptive Pinyin Control */}
+        {/* ── Hanzi box with adaptive Pinyin ── */}
         {!isListeningType && question.chineseText && (
-          <div className="p-4 sm:p-5 bg-cream-50 rounded-2xl border border-cream-200 space-y-2">
-            <div className="font-chinese text-2xl sm:text-3xl font-bold text-charcoal">
+          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-parchment-300 shadow-inner-soft space-y-2">
+            <div className="hanzi-box font-chinese text-2xl sm:text-3xl font-bold text-ink">
               {question.chineseText}
             </div>
 
-            {/* Pinyin display logic based on level */}
+            {/* Pinyin line */}
             {question.pinyin && (
               <div className="flex items-center gap-2 pt-1">
                 {diffConfig.showPinyinByDefault ? (
-                  <div className="text-sm font-semibold text-coral-dark font-sans tracking-wide">
+                  <div className="text-sm font-semibold text-celadon-dark font-sans tracking-wide">
                     {question.pinyin}
                   </div>
                 ) : diffConfig.allowPinyinToggle ? (
-                  <div className="flex items-center gap-2">
-                    {showPinyinHint ? (
-                      <div className="text-sm font-semibold text-coral-dark font-sans tracking-wide">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {showPinyinHint && (
+                      <div className="text-sm font-semibold text-celadon-dark font-sans tracking-wide">
                         {question.pinyin}
                       </div>
-                    ) : null}
+                    )}
                     <button
                       type="button"
                       onClick={() => setShowPinyinHint(!showPinyinHint)}
-                      className="px-2.5 py-1 rounded-lg bg-white border border-cream-300 hover:border-amber-400 text-charcoal/60 hover:text-charcoal text-xs font-bold inline-flex items-center gap-1 transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-parchment-100 border border-parchment-300 hover:border-celadon-200 text-ink-light hover:text-ink text-xs font-bold inline-flex items-center gap-1 transition-colors"
                     >
                       {showPinyinHint ? <EyeOff size={13} /> : <Eye size={13} />}
                       <span>{showPinyinHint ? "Ẩn Pinyin" : "Gợi ý Pinyin"}</span>
                     </button>
                   </div>
                 ) : (
-                  <span className="text-[11px] font-semibold text-charcoal/40 italic">
-                    (Cấp Nâng cao: Đọc hiểu thuần chữ Hán không kèm Pinyin)
+                  <span className="text-[11px] font-semibold text-ink/35 italic">
+                    (Nâng cao: Đọc thuần chữ Hán, không có Pinyin)
                   </span>
                 )}
               </div>
             )}
 
             {question.vietnamese && (
-              <div className="text-xs text-charcoal/60 italic pt-1 border-t border-cream-200/60">
+              <div className="text-xs text-ink-light italic pt-1.5 border-t border-parchment-200">
                 Nghĩa ngữ cảnh: {question.vietnamese}
               </div>
             )}
@@ -115,84 +129,28 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
         )}
       </div>
 
-      {/* Interactive Question Component Dispatcher */}
+      {/* ── Interactive question component ── */}
       <div className="pt-1">
         {(() => {
           switch (question.type) {
             case "word_order":
-              return (
-                <WordOrderQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <WordOrderQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "multiple_choice":
-              return (
-                <MultipleChoiceQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <MultipleChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "fill_in_blank":
-              return (
-                <FillInBlankQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <FillInBlankQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "matching":
-              return (
-                <MatchingQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <MatchingQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "listen_choice":
-              return (
-                <ListenChoiceQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <ListenChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "listen_word_order":
-              return (
-                <ListenWordOrderQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <ListenWordOrderQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "pinyin_choice":
-              return (
-                <PinyinChoiceQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <PinyinChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "short_translate":
-              return (
-                <ShortTranslateQuestion
-                  question={question}
-                  value={value}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              );
+              return <ShortTranslateQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             default:
-              return <div>Dạng câu hỏi chưa được hỗ trợ.</div>;
+              return <div className="text-ink-light text-sm">Dạng câu hỏi chưa được hỗ trợ.</div>;
           }
         })()}
       </div>
