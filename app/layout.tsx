@@ -1,21 +1,16 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
 
-// Nunito works fine with next/font
-const nunito = Nunito({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "600", "700", "800", "900"],
-  variable: "--font-nunito",
-  display: "swap",
-});
+// Both fonts loaded via <link> to avoid next/font Google Fonts fetch bug on Vercel (Next.js 14.2.x)
+// See: https://github.com/vercel/next.js/issues/55682
 
 export const metadata: Metadata = {
   title: "汉语 Practice — Luyện tiếng Trung chuẩn HSK cho người Việt",
-  description: "Nền tảng thực hành tiếng Trung chuyên sâu dành riêng cho người Việt. Bám sát từ vựng & ngữ pháp HSK 1-6 chính thống, giao diện Á Đông hiện đại.",
+  description:
+    "Nền tảng thực hành tiếng Trung chuyên sâu dành riêng cho người Việt. Bám sát từ vựng & ngữ pháp HSK 1-6 chính thống, giao diện Á Đông hiện đại.",
 };
 
 export default function RootLayout({
@@ -24,13 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={nunito.variable}>
+    <html lang="vi">
       <head>
-        {/* Noto Sans SC loaded via standard Google Fonts link (avoids next/font CJK subset issue) */}
+        {/* Google Fonts — loaded via link to bypass next/font CJK + Vietnamese subset bug on Vercel */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
           rel="stylesheet"
         />
       </head>
