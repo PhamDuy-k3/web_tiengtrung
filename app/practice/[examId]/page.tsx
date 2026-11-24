@@ -19,6 +19,7 @@ import { Exam, QuestionResult } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { soundService } from "@/lib/sound";
+import { speechService } from "@/lib/speech";
 import { useQuizDraftStore } from "@/store/useQuizDraftStore";
 
 export default function ExamPracticePage() {
@@ -32,6 +33,7 @@ export default function ExamPracticePage() {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [showSubmitWarning, setShowSubmitWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
 
   // Instant check feedback state for current question
   const [checkedFeedback, setCheckedFeedback] = useState<{
@@ -48,6 +50,35 @@ export default function ExamPracticePage() {
     setElapsed,
     clearDraft,
   } = useQuizDraftStore();
+
+  // Load bookmarks from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("hanyu:bookmarks");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setBookmarkedIds(new Set(parsed));
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handleToggleBookmark = (qid: string) => {
+    setBookmarkedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(qid)) {
+        next.delete(qid);
+      } else {
+        next.add(qid);
+        soundService.playSuccess();
+      }
+      try {
+        localStorage.setItem("hanyu:bookmarks", JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     initExam(examId);
@@ -225,8 +256,43 @@ export default function ExamPracticePage() {
     (!Array.isArray(currentAnswer) || currentAnswer.length > 0) &&
     (typeof currentAnswer !== "object" || Object.keys(currentAnswer).length > 0);
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (hasSelectedAnswer && !currentQCheck?.checked) {
+          handleCheckCurrentQuestion();
+        } else {
+          if (currentIndex < totalQuestions - 1) {
+            handleNext();
+          } else {
+            handleConfirmSubmit();
+          }
+        }
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      } else if (e.code === "Space") {
+        if (currentQuestion.chineseText) {
+          e.preventDefault();
+          speechService.speak(currentQuestion.chineseText, 0.95).catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [hasSelectedAnswer, currentQCheck, currentIndex, totalQuestions, currentQuestion]);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6">
       {/* 2-column layout: Left is main quiz, Right is sticky Question Palette sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* ================= LEFT COLUMN: MAIN QUIZ ================= */}
@@ -285,6 +351,8 @@ export default function ExamPracticePage() {
             question={currentQuestion}
             value={currentAnswer}
             onChange={handleAnswerChange}
+            isBookmarked={bookmarkedIds.has(currentQuestion.id)}
+            onToggleBookmark={() => handleToggleBookmark(currentQuestion.id)}
           />
 
           {/* Instant feedback card if checked */}
@@ -386,6 +454,7 @@ export default function ExamPracticePage() {
             mode="sidebar"
             onSubmit={handleConfirmSubmit}
             isSubmitting={isSubmitting}
+            bookmarkedIds={bookmarkedIds}
           />
         </div>
       </div>
@@ -402,7 +471,28 @@ export default function ExamPracticePage() {
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
         mode="dialog"
+        onSubmit={handleConfirmSubmit}
+        isSubmitting={isSubmitting}
+        bookmarkedIds={bookmarkedIds}
       />
+
+      {/* Floating Keyboard Shortcuts Legend Banner */}
+      <div className="max-w-7xl mx-auto px-4 py-2.5 bg-parchment-100/90 rounded-2xl border border-parchment-300 text-xs text-ink-muted flex items-center justify-center gap-3 flex-wrap shadow-soft">
+        <span className="font-bold text-ink flex items-center gap-1">
+          ⌨️ Phím tắt nhanh:
+        </span>
+        <span className="bg-white px-2 py-0.5 rounded-md border border-parchment-300 font-mono text-[11px] font-bold text-ink">[1-4 / A-D]</span>
+        <span>Chọn đáp án</span>
+        <span className="text-parchment-400">•</span>
+        <span className="bg-white px-2 py-0.5 rounded-md border border-parchment-300 font-mono text-[11px] font-bold text-ink">[↵ Enter]</span>
+        <span>Kiểm tra / Tiếp theo</span>
+        <span className="text-parchment-400">•</span>
+        <span className="bg-white px-2 py-0.5 rounded-md border border-parchment-300 font-mono text-[11px] font-bold text-ink">[Space]</span>
+        <span>Nghe phát âm</span>
+        <span className="text-parchment-400">•</span>
+        <span className="bg-white px-2 py-0.5 rounded-md border border-parchment-300 font-mono text-[11px] font-bold text-ink">[← →]</span>
+        <span>Chuyển câu</span>
+      </div>
 
       {/* Unanswered Warning Modal */}
       {showSubmitWarning && (

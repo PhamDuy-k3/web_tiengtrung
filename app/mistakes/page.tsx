@@ -12,13 +12,23 @@ import {
   XCircle,
   HelpCircle,
   Sparkles,
+  Bookmark,
+  Star,
 } from "lucide-react";
 import { repository } from "@/services";
-import { MistakeEntry, LevelId } from "@/types";
+import { MistakeEntry, LevelId, Question } from "@/types";
 import { AudioButton, AnswerDiffViewer } from "@/features/quiz";
 
+interface BookmarkedItem {
+  question: Question;
+  examTitle?: string;
+  examId?: string;
+}
+
 export default function MistakesPage() {
+  const [mainTab, setMainTab] = useState<"mistakes" | "bookmarks">("mistakes");
   const [mistakes, setMistakes] = useState<MistakeEntry[]>([]);
+  const [bookmarkedItems, setBookmarkedItems] = useState<BookmarkedItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -28,8 +38,41 @@ export default function MistakesPage() {
 
   const loadData = async () => {
     try {
-      const data = await repository.getMistakes();
-      setMistakes(data);
+      const [mistakesData, examsData] = await Promise.all([
+        repository.getMistakes(),
+        repository.getAllExams(),
+      ]);
+      setMistakes(mistakesData);
+
+      // Load bookmarks
+      let savedBookmarks: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("hanyu:bookmarks");
+          if (raw) savedBookmarks = JSON.parse(raw);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      if (Array.isArray(savedBookmarks) && savedBookmarks.length > 0) {
+        const bmSet = new Set(savedBookmarks);
+        const bms: BookmarkedItem[] = [];
+        for (const exam of examsData) {
+          for (const q of exam.questions) {
+            if (bmSet.has(q.id)) {
+              bms.push({
+                question: q,
+                examTitle: exam.title,
+                examId: exam.id,
+              });
+            }
+          }
+        }
+        setBookmarkedItems(bms);
+      } else {
+        setBookmarkedItems([]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -44,6 +87,18 @@ export default function MistakesPage() {
   const handleReset = async (questionId: string) => {
     await repository.resetMistake(questionId);
     await loadData();
+  };
+
+  const handleRemoveBookmark = (questionId: string) => {
+    try {
+      const raw = localStorage.getItem("hanyu:bookmarks");
+      let list: string[] = raw ? JSON.parse(raw) : [];
+      list = list.filter((id) => id !== questionId);
+      localStorage.setItem("hanyu:bookmarks", JSON.stringify(list));
+      setBookmarkedItems((prev) => prev.filter((item) => item.question.id !== questionId));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Helper to extract level from mistake entry
@@ -102,8 +157,39 @@ export default function MistakesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
-      {/* ================= Header Banner ================= */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      {/* ================= Mode Selector: Sổ lỗi sai vs Câu đã ghim ================= */}
+      <div className="flex items-center gap-3 bg-white p-2 rounded-3xl border border-parchment-300 shadow-soft w-fit">
+        <button
+          type="button"
+          onClick={() => setMainTab("mistakes")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all ${
+            mainTab === "mistakes"
+              ? "bg-vermillion text-white shadow-sm"
+              : "text-ink-muted hover:text-ink hover:bg-parchment-100"
+          }`}
+        >
+          <ShieldAlert size={18} />
+          <span>Sổ câu sai ({mistakes.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab("bookmarks")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold transition-all ${
+            mainTab === "bookmarks"
+              ? "bg-gilt text-white shadow-sm"
+              : "text-ink-muted hover:text-ink hover:bg-parchment-100"
+          }`}
+        >
+          <Bookmark size={18} className="fill-current" />
+          <span>Câu đã ghim ({bookmarkedItems.length})</span>
+        </button>
+      </div>
+
+      {mainTab === "mistakes" ? (
+        <div className="space-y-8">
+          {/* ================= Header Banner ================= */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="p-2.5 rounded-2xl bg-vermillion-light text-vermillion-deep border border-vermillion-soft">
@@ -411,6 +497,120 @@ export default function MistakesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+        </div>
+      ) : (
+        /* ================= Bookmarks View ================= */
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-2xl bg-gilt-light text-gilt-deep border border-gilt-soft">
+                  <Bookmark size={28} className="fill-current" />
+                </span>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-black text-ink">
+                    Câu hỏi đã ghim
+                  </h1>
+                  <p className="text-xs text-ink-muted">
+                    Các câu hỏi bạn đã đánh dấu để tiện xem lại và nghiên cứu sâu hơn.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {bookmarkedItems.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-parchment-300 shadow-soft space-y-3">
+              <div className="text-5xl">🔖</div>
+              <h3 className="text-lg font-bold text-ink">
+                Bạn chưa ghim câu hỏi nào
+              </h3>
+              <p className="text-xs sm:text-sm text-ink-muted max-w-md mx-auto">
+                Khi làm bài tập hoặc thi thử, bấm vào nút &quot;Ghim câu hỏi&quot; ở góc trên bài tập để lưu lại đây nhé!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {bookmarkedItems.map((item) => {
+                const q = item.question;
+                return (
+                  <div
+                    key={q.id}
+                    className="bg-white rounded-3xl p-6 border border-parchment-300 hover:border-gilt/50 shadow-soft transition-all space-y-4"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-parchment-200 pb-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-gilt-light text-gilt-deep text-[11px] font-bold border border-gilt-soft">
+                          HSK {q.hskLevel}
+                        </span>
+                        {item.examTitle && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-parchment-100 text-ink-light text-[11px] font-semibold border border-parchment-200">
+                            <BookOpen size={11} className="text-celadon-dark" />
+                            {item.examTitle}
+                          </span>
+                        )}
+                        <span className="text-xs text-ink-muted font-medium">
+                          Loại: {q.type}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveBookmark(q.id)}
+                        title="Bỏ ghim câu hỏi này"
+                        className="flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-bold text-gilt-deep bg-gilt-light hover:bg-gilt hover:text-white transition-all"
+                      >
+                        <Star size={14} className="fill-current" />
+                        <span>Bỏ ghim</span>
+                      </button>
+                    </div>
+
+                    {/* Question Prompt */}
+                    <div className="space-y-3">
+                      <h3 className="font-bold text-base sm:text-lg text-ink leading-relaxed">
+                        {q.prompt}
+                      </h3>
+
+                      {q.chineseText && (
+                        <div className="p-4 bg-parchment-50 rounded-2xl border border-parchment-200 flex items-center justify-between gap-3">
+                          <div>
+                            <div className="font-chinese text-2xl font-bold text-ink">
+                              {q.chineseText}
+                            </div>
+                            {q.pinyin && (
+                              <div className="text-xs font-semibold text-celadon-dark mt-0.5">
+                                {q.pinyin}
+                              </div>
+                            )}
+                          </div>
+                          <AudioButton text={q.chineseText} size="sm" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Correct answer display */}
+                    <AnswerDiffViewer
+                      question={q}
+                      userAnswer={null}
+                      isCorrect={false}
+                    />
+
+                    {/* Explanation */}
+                    {q.explanation && (
+                      <div className="p-3 bg-parchment-100 rounded-2xl border border-parchment-200 text-xs text-ink-light space-y-1">
+                        <p className="leading-relaxed">
+                          💡 <strong>Giải thích chi tiết:</strong> {q.explanation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

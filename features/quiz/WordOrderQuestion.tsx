@@ -138,15 +138,15 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
     <div className="space-y-5">
       {/* Mode Switcher for Intermediate and Advanced */}
       {diffConfig.allowTypingMode && (
-        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-cream-100 rounded-2xl border border-cream-300">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-parchment-100 rounded-2xl border border-parchment-300">
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => switchMode("tiles")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                 mode === "tiles"
-                  ? "bg-white text-coral shadow-sm border border-cream-300"
-                  : "text-charcoal/60 hover:text-charcoal"
+                  ? "bg-white text-celadon-dark shadow-sm border border-parchment-300"
+                  : "text-ink-muted hover:text-ink"
               }`}
             >
               <Grid size={14} />
@@ -158,8 +158,8 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
               onClick={() => switchMode("typing")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                 mode === "typing"
-                  ? "bg-white text-coral-deep shadow-sm border border-coral/30"
-                  : "text-charcoal/60 hover:text-charcoal"
+                  ? "bg-white text-vermillion-deep shadow-sm border border-vermillion-soft"
+                  : "text-ink-muted hover:text-ink"
               }`}
             >
               <Keyboard size={14} />
@@ -167,7 +167,7 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
             </button>
           </div>
 
-          <span className="text-[11px] font-semibold text-charcoal/50 pr-2 hidden sm:block">
+          <span className="text-[11px] font-semibold text-ink-muted pr-2 hidden sm:block">
             {question.hskLevel >= 5 ? "🔴 Khuyên dùng: Tự gõ tay" : "🟡 Thử thách chủ động"}
           </span>
         </div>
@@ -175,11 +175,11 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
 
       {/* TYPING MODE (Self-writing for high challenge) */}
       {mode === "typing" && (
-        <div className="space-y-3 p-5 bg-gradient-to-b from-amber-50/50 to-white rounded-3xl border-2 border-amber-200/90 shadow-sm">
-          <div className="flex items-start gap-2 text-xs text-amber-900 font-medium">
-            <Sparkles size={16} className="text-amber-600 shrink-0 mt-0.5" />
+        <div className="space-y-3 p-5 bg-gradient-to-b from-parchment-100 to-white rounded-3xl border-2 border-parchment-300 shadow-soft">
+          <div className="flex items-start gap-2 text-xs text-ink-muted font-medium">
+            <Sparkles size={16} className="text-gilt shrink-0 mt-0.5" />
             <div>
-              <strong className="block font-bold">Chế độ Thử thách: Tự gõ cả câu hoàn chỉnh</strong>
+              <strong className="block font-bold text-ink">Chế độ Thử thách: Tự gõ cả câu hoàn chỉnh</strong>
               Không có từ gợi ý sẵn. Bạn hãy tự nhớ và gõ câu tiếng Trung (chấp nhận cả chữ Hán hoặc Pinyin).
             </div>
           </div>
@@ -190,15 +190,15 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
             value={typedText}
             onChange={handleTypingChange}
             placeholder="Gõ câu trả lời của bạn vào đây (ví dụ: 我把作业做完了)..."
-            className="w-full p-4 rounded-2xl border-2 border-amber-200 focus:border-coral focus:ring-4 focus:ring-coral/15 bg-white text-charcoal font-chinese text-xl outline-none shadow-inner resize-none transition-all"
+            className="w-full p-4 rounded-2xl border-2 border-parchment-300 focus:border-celadon focus:ring-4 focus:ring-celadon/15 bg-white text-ink font-chinese text-xl outline-none shadow-inner-soft resize-none transition-all"
           />
 
-          <div className="flex items-center justify-between text-xs text-charcoal/50">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
             <span>Độ dài câu gợi ý: khoảng {expectedLength} từ</span>
             <button
               type="button"
               onClick={() => switchMode("tiles")}
-              className="text-coral hover:underline font-bold"
+              className="text-celadon-dark hover:underline font-bold"
             >
               Xem viên gạch gợi ý nếu thấy khó
             </button>
@@ -210,26 +210,26 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
       {mode === "tiles" && (
         <div className="space-y-5">
           {/* Challenge Banner */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-amber-50/80 rounded-2xl border border-amber-200 text-xs text-amber-900">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 bg-parchment-100 rounded-2xl border border-parchment-300 text-xs text-ink">
             <div className="flex items-center gap-1.5 font-bold">
-              <AlertCircle size={15} className="text-amber-700 shrink-0" />
+              <AlertCircle size={15} className="text-celadon-dark shrink-0" />
               <span>
                 Khay có {bankTiles.length + placedTiles.length} từ (gồm{" "}
                 {bankTiles.length + placedTiles.length - expectedLength} từ gây nhiễu, chữ gần giống)!
               </span>
             </div>
-            <div className="font-semibold text-charcoal/60">
-              Câu chuẩn cần: <strong className="text-coral">{expectedLength}</strong> từ
+            <div className="font-semibold text-ink-muted">
+              Câu chuẩn cần: <strong className="text-celadon-dark">{expectedLength}</strong> từ
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-charcoal/70">
+          <div className="flex items-center justify-between text-xs text-ink-muted">
             <span>Bấm vào từ để xếp vào câu, bấm lại từ đã xếp để trả về:</span>
             {placedTiles.length > 0 && (
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="flex items-center gap-1 text-xs font-bold text-coral hover:text-coral-dark"
+                className="flex items-center gap-1 text-xs font-bold text-vermillion hover:text-vermillion-deep"
               >
                 <RotateCcw size={13} />
                 <span>Xếp lại từ đầu</span>
@@ -238,9 +238,9 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
           </div>
 
           {/* Target Placement Area (Slot) */}
-          <div className="min-h-[90px] p-4 bg-white border-2 border-dashed border-amber-300 rounded-3xl flex flex-wrap items-center gap-2.5 shadow-inner transition-colors">
+          <div className="min-h-[90px] p-4 bg-white border-2 border-dashed border-celadon-300 rounded-3xl flex flex-wrap items-center gap-2.5 shadow-inner-soft transition-colors">
             {placedTiles.length === 0 ? (
-              <span className="text-charcoal/40 text-sm select-none italic px-2">
+              <span className="text-ink-muted/50 text-sm select-none italic px-2">
                 Chọn các từ đúng bên dưới để đưa vào đây (bỏ qua các từ nhiễu)...
               </span>
             ) : (
@@ -250,7 +250,7 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
                   type="button"
                   disabled={disabled}
                   onClick={() => handleTileClickToRemove(tile)}
-                  className="px-4 py-2.5 rounded-2xl bg-coral text-white font-chinese text-xl font-bold shadow-duo-coral hover:bg-coral-dark active:translate-y-1 active:shadow-duo-pressed transition-all transform hover:scale-105"
+                  className="px-4 py-2.5 rounded-2xl bg-celadon text-white font-chinese text-xl font-bold shadow-soft hover:bg-celadon-600 active:translate-y-0.5 transition-all transform hover:scale-105"
                 >
                   {tile.text}
                 </button>
@@ -259,11 +259,11 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
           </div>
 
           {/* Word Bank Area */}
-          <div className="p-5 bg-cream-200/70 rounded-3xl border border-cream-300 space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold text-charcoal/60 uppercase tracking-wider">
+          <div className="p-5 bg-parchment-100 rounded-3xl border border-parchment-300 space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-ink-muted uppercase tracking-wider">
               <span>Khay từ vựng ({bankTiles.length} từ còn lại):</span>
-              <span className="text-[11px] text-amber-700 font-semibold lowercase">
-                (chứa bẫy chữ viết khác nhau 1 chút)
+              <span className="text-[11px] text-vermillion font-semibold lowercase">
+                (chứa bẫy chữ viết gần giống)
               </span>
             </div>
             <div className="flex flex-wrap gap-2.5">
@@ -273,13 +273,13 @@ export const WordOrderQuestion: React.FC<QuestionComponentProps> = ({
                   type="button"
                   disabled={disabled}
                   onClick={() => handleTileClickToPlace(tile)}
-                  className="px-4 py-2.5 rounded-2xl bg-white text-charcoal font-chinese text-xl font-bold shadow-duo border border-amber-100 hover:border-amber-300 hover:bg-amber-50 active:translate-y-1 active:shadow-duo-pressed transition-all transform hover:scale-105"
+                  className="px-4 py-2.5 rounded-2xl bg-white text-ink font-chinese text-xl font-bold shadow-soft border border-parchment-300 hover:border-celadon-300 hover:bg-parchment-50 active:translate-y-0.5 transition-all transform hover:scale-105"
                 >
                   {tile.text}
                 </button>
               ))}
               {bankTiles.length === 0 && (
-                <span className="text-xs text-charcoal/40 italic">
+                <span className="text-xs text-ink-muted/50 italic">
                   Đã đưa tất cả các từ vào câu!
                 </span>
               )}

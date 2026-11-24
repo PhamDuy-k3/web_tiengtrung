@@ -101,12 +101,12 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
   };
 
   const colors = [
-    "border-coral bg-coral/10 text-coral-dark",
-    "border-honey-dark bg-honey/20 text-amber-900",
-    "border-mint bg-mint-light text-mint-dark",
-    "border-blue-400 bg-blue-50 text-blue-900",
-    "border-purple-400 bg-purple-50 text-purple-900",
-    "border-pink-400 bg-pink-50 text-pink-900",
+    "border-celadon bg-celadon-100/70 text-celadon-dark",
+    "border-gilt bg-gilt-light/80 text-gilt-deep",
+    "border-vermillion-soft bg-vermillion-light/70 text-vermillion-deep",
+    "border-parchment-400 bg-parchment-200 text-ink",
+    "border-celadon-400 bg-celadon-50 text-celadon-600",
+    "border-gilt-dark bg-gilt-soft text-gilt-deep",
   ];
 
   const matchedPairsCount = Object.keys(currentMatches).length;
@@ -115,30 +115,30 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
   return (
     <div className="space-y-6">
       {/* Challenge Notice */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3.5 bg-amber-50/90 rounded-2xl border border-amber-300 text-xs text-amber-950 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3.5 bg-parchment-100 rounded-2xl border border-parchment-300 text-xs text-ink shadow-soft">
         <div className="flex items-center gap-1.5 font-bold">
-          <AlertCircle size={16} className="text-amber-700 shrink-0" />
+          <AlertCircle size={16} className="text-celadon-dark shrink-0" />
           <span>
             Cột phải có {shuffledRights.length} lựa chọn (gồm{" "}
-            <strong className="text-coral underline">{distractorCount} đáp án nhiễu</strong> để tránh đoán mò)!
+            <strong className="text-vermillion underline">{distractorCount} đáp án nhiễu</strong> để tránh đoán mò)!
           </span>
         </div>
-        <div className="font-semibold text-charcoal/70">
-          Đã ghép: <span className="font-bold text-coral text-sm">{matchedPairsCount}</span>/{pairs.length} cặp
+        <div className="font-semibold text-ink-muted">
+          Đã ghép: <span className="font-bold text-celadon-dark text-sm">{matchedPairsCount}</span>/{pairs.length} cặp
         </div>
       </div>
 
-      <div className="text-xs text-charcoal/70">
-        <span className="font-bold text-coral">Bước 1:</span> Bấm vào từ tiếng Trung ở cột trái.
-        <span className="mx-2">•</span>
-        <span className="font-bold text-amber-700">Bước 2:</span> Chọn nghĩa đúng ở cột phải để nối. Bấm lại vào từ đã ghép để hủy nối.
+      <div className="text-xs text-ink-muted flex items-center gap-2 flex-wrap">
+        <span><strong className="text-celadon-dark">Bước 1:</strong> Bấm vào từ ở cột trái.</span>
+        <span>•</span>
+        <span><strong className="text-gilt-deep">Bước 2:</strong> Bấm chọn định nghĩa tương ứng ở cột phải để nối. Bấm lại để hủy nối.</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column (Chinese Items: 4-5 items) */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-charcoal/50 uppercase tracking-wider pb-1">
-            <span>Cột chữ Hán ({pairs.length} từ):</span>
+          <div className="flex items-center justify-between text-xs font-bold text-ink-muted uppercase tracking-wider pb-1">
+            <span>Cột thuật ngữ / từ Hán ({pairs.length} từ):</span>
           </div>
           {pairs.map((p, idx) => {
             const isSelected = selectedLeft === p.id;
@@ -152,24 +152,24 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
                   if (isMatched) handleUnmatch(p.id);
                   else handleLeftClick(p.id);
                 }}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all active:translate-y-1 shadow-duo ${
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all active:translate-y-0.5 shadow-soft ${
                   isMatched
                     ? `${colorClass} font-bold ring-1 ring-current`
                     : isSelected
-                    ? "border-coral bg-coral/15 ring-2 ring-coral text-coral-dark scale-[1.02]"
-                    : "bg-white border-amber-100 hover:border-amber-300 text-charcoal"
+                    ? "border-celadon bg-celadon-50 ring-2 ring-celadon text-celadon-dark scale-[1.01]"
+                    : "bg-white border-parchment-300 hover:border-celadon-300 text-ink"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-chinese text-xl font-bold">{p.left}</div>
                   {isMatched && (
-                    <span className="text-[11px] bg-white/90 px-2.5 py-0.5 rounded-full border border-current font-medium">
-                      Đã nối ➔ {currentMatches[p.id]}
+                    <span className="text-[11px] bg-white px-2.5 py-0.5 rounded-full border border-current font-semibold truncate max-w-[180px]">
+                      ➔ {currentMatches[p.id]}
                     </span>
                   )}
                   {!isMatched && isSelected && (
-                    <span className="text-[11px] bg-coral text-white px-2 py-0.5 rounded-full animate-pulse">
-                      Chọn nghĩa bên phải...
+                    <span className="text-[11px] bg-celadon text-white px-2.5 py-0.5 rounded-full animate-pulse font-bold">
+                      Chọn bên phải...
                     </span>
                   )}
                 </div>
@@ -178,11 +178,11 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
           })}
         </div>
 
-        {/* Right Column (Vietnamese Items: with heavy distractors) */}
+        {/* Right Column (Right options with distractors) */}
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-bold text-charcoal/50 uppercase tracking-wider pb-1">
-            <span>Cột nghĩa tiếng Việt ({shuffledRights.length} lựa chọn):</span>
-            <span className="text-[11px] text-amber-700 font-semibold lowercase">
+          <div className="flex items-center justify-between text-xs font-bold text-ink-muted uppercase tracking-wider pb-1">
+            <span>Cột giải nghĩa / kết hợp ({shuffledRights.length} lựa chọn):</span>
+            <span className="text-[11px] text-vermillion font-semibold lowercase">
               ({distractorCount} đáp án nhiễu)
             </span>
           </div>
@@ -199,19 +199,19 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
                 <div
                   key={r.id}
                   onClick={() => handleRightClick(r.text)}
-                  className={`p-3.5 rounded-2xl border-2 transition-all active:translate-y-1 shadow-duo ${
+                  className={`p-3.5 rounded-2xl border-2 transition-all active:translate-y-0.5 shadow-soft ${
                     isMatched
                       ? `${colorClass} font-bold cursor-pointer hover:opacity-90`
                       : selectedLeft
-                      ? "bg-white border-amber-300 hover:border-coral cursor-pointer hover:bg-coral/5 hover:scale-[1.01]"
-                      : "bg-white border-amber-100/70 text-charcoal/80 cursor-pointer hover:border-amber-200"
+                      ? "bg-white border-celadon-300 hover:border-celadon cursor-pointer hover:bg-celadon-50 hover:scale-[1.01]"
+                      : "bg-white border-parchment-300 text-ink cursor-pointer hover:border-parchment-400"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-sm sm:text-base font-medium">{r.text}</span>
                     {isMatched && (
-                      <span className="text-[10px] uppercase font-bold text-charcoal/50 bg-white/70 px-2 py-0.5 rounded-full">
-                        Bấm để hủy nối
+                      <span className="text-[10px] uppercase font-bold text-ink-muted bg-white/80 px-2 py-0.5 rounded-full shrink-0">
+                        Hủy nối
                       </span>
                     )}
                   </div>

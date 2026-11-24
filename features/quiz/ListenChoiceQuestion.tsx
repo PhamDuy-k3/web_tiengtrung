@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { QuestionComponentProps } from "./WordOrderQuestion";
 import { AudioButton } from "./AudioButton";
 import { soundService } from "@/lib/sound";
@@ -19,20 +19,43 @@ export const ListenChoiceQuestion: React.FC<QuestionComponentProps> = ({
     onChange(option);
   };
 
+  // Keyboard shortcut listener: 1, 2, 3, 4, or A, B, C, D
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (disabled) return;
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+      const key = e.key.toUpperCase();
+      let selectedIdx = -1;
+      if (key === "1" || key === "A") selectedIdx = 0;
+      else if (key === "2" || key === "B") selectedIdx = 1;
+      else if (key === "3" || key === "C") selectedIdx = 2;
+      else if (key === "4" || key === "D") selectedIdx = 3;
+
+      if (selectedIdx >= 0 && selectedIdx < options.length) {
+        handleSelect(options[selectedIdx]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [options, disabled]);
+
   return (
     <div className="space-y-6">
       {/* Central Audio Control Card */}
-      <div className="p-8 bg-gradient-to-b from-amber-50 to-white rounded-3xl border-2 border-amber-200/80 shadow-sm flex flex-col items-center justify-center gap-4 text-center">
-        <span className="text-sm font-semibold text-charcoal/70">
-          Bấm để nghe phát âm tiếng Trung:
+      <div className="p-6 sm:p-8 bg-parchment-100/70 rounded-3xl border border-parchment-300 shadow-soft flex flex-col items-center justify-center gap-4 text-center">
+        <span className="text-sm font-bold text-ink">
+          🎧 Bấm để nghe phát âm tiếng Trung:
         </span>
         <AudioButton
           text={question.chineseText}
           size="lg"
           showSlowOption={true}
         />
-        <span className="text-xs text-charcoal/50">
-          (Nút loa đỏ: tốc độ bình thường | Nút ốc sên vàng: tốc độ chậm)
+        <span className="text-xs text-ink-muted">
+          (Nút xanh: 1.0x chuẩn | Nút vàng: 0.75x chậm | Nút đỏ: 1.2x nâng cao)
         </span>
       </div>
 
@@ -41,6 +64,7 @@ export const ListenChoiceQuestion: React.FC<QuestionComponentProps> = ({
         {options.map((option, idx) => {
           const isSelected = value === option;
           const letter = String.fromCharCode(65 + idx);
+          const numKey = idx + 1;
 
           return (
             <button
@@ -48,22 +72,27 @@ export const ListenChoiceQuestion: React.FC<QuestionComponentProps> = ({
               type="button"
               disabled={disabled}
               onClick={() => handleSelect(option)}
-              className={`p-4 rounded-2xl text-left flex items-start gap-3.5 border-2 transition-all active:translate-y-1 shadow-duo ${
+              className={`p-4 rounded-2xl text-left flex items-start gap-3.5 border-2 transition-all active:translate-y-0.5 ${
                 isSelected
-                  ? "bg-coral/10 border-coral text-coral-deep shadow-duo-coral font-bold"
-                  : "bg-white border-amber-100 hover:border-amber-300 hover:bg-amber-50/50 text-charcoal"
+                  ? "bg-celadon-50 border-celadon text-ink shadow-soft font-bold scale-[1.01]"
+                  : "bg-white border-parchment-300 hover:border-celadon-300 hover:bg-parchment-100/50 text-ink"
               }`}
             >
-              <span
-                className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border transition-colors ${
-                  isSelected
-                    ? "bg-coral text-white border-coral"
-                    : "bg-cream-100 text-charcoal/70 border-cream-300"
-                }`}
-              >
-                {letter}
-              </span>
-              <span className="text-base sm:text-lg leading-snug pt-0.5">
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <span
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm border transition-colors ${
+                    isSelected
+                      ? "bg-celadon text-white border-celadon shadow-sm"
+                      : "bg-parchment-200 text-ink-muted border-parchment-300"
+                  }`}
+                >
+                  {letter}
+                </span>
+                <span className="text-[10px] font-mono text-ink-muted/60 font-semibold hidden sm:inline">
+                  [{numKey}]
+                </span>
+              </div>
+              <span className="text-base sm:text-lg leading-snug pt-0.5 break-words">
                 {option}
               </span>
             </button>

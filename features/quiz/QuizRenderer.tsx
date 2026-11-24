@@ -12,13 +12,15 @@ import { PinyinChoiceQuestion } from "./PinyinChoiceQuestion";
 import { ShortTranslateQuestion } from "./ShortTranslateQuestion";
 import { AudioButton } from "./AudioButton";
 import { getLevelDifficultyConfig } from "@/lib/difficulty";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Bookmark, BookmarkCheck, Command } from "lucide-react";
 
 interface QuizRendererProps {
   question: Question;
   value: any;
   onChange: (val: any) => void;
   disabled?: boolean;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 // Badge colour per HSK level (new colour system)
@@ -39,6 +41,8 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
   value,
   onChange,
   disabled = false,
+  isBookmarked = false,
+  onToggleBookmark,
 }) => {
   const isListeningType =
     question.type === "listen_choice" || question.type === "listen_word_order";
@@ -51,7 +55,7 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
 
   return (
     <div className="bg-parchment-50 rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-soft space-y-6">
-      {/* ── Header: level badge + tags + audio ── */}
+      {/* ── Header: level badge + tags + audio + bookmark ── */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-parchment-200 pb-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* Level badge */}
@@ -70,10 +74,38 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
           ))}
         </div>
 
-        {/* Audio play button for non-listening types */}
-        {!isListeningType && question.chineseText && (
-          <AudioButton text={question.chineseText} size="sm" />
-        )}
+        <div className="flex items-center gap-2">
+          {/* Audio play button for non-listening types */}
+          {!isListeningType && question.chineseText && (
+            <AudioButton text={question.chineseText} size="sm" />
+          )}
+
+          {/* Bookmark Button */}
+          {onToggleBookmark && (
+            <button
+              type="button"
+              onClick={onToggleBookmark}
+              title={isBookmarked ? "Đã ghim để ôn lại" : "Ghim câu hỏi này"}
+              className={`p-2 rounded-2xl border transition-all duration-150 flex items-center gap-1.5 text-xs font-bold ${
+                isBookmarked
+                  ? "bg-gilt text-white border-gilt shadow-soft"
+                  : "bg-parchment-100 hover:bg-parchment-200 text-ink-muted border-parchment-300"
+              }`}
+            >
+              {isBookmarked ? (
+                <>
+                  <BookmarkCheck size={16} />
+                  <span className="hidden sm:inline">Đã ghim</span>
+                </>
+              ) : (
+                <>
+                  <Bookmark size={16} />
+                  <span className="hidden sm:inline">Ghim câu</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Question prompt ── */}

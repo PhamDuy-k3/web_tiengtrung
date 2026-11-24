@@ -14,6 +14,7 @@ interface QuestionPaletteProps {
   mode?: "dialog" | "sidebar";
   onSubmit?: () => void;
   isSubmitting?: boolean;
+  bookmarkedIds?: Set<string>;
 }
 
 export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
@@ -26,6 +27,7 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
   mode = "dialog",
   onSubmit,
   isSubmitting = false,
+  bookmarkedIds,
 }) => {
   const total = questions.length;
   const answeredCount = questions.filter((q) => {
@@ -76,7 +78,7 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-between text-[11px] font-semibold text-ink-muted bg-parchment-100 p-2 rounded-xl border border-parchment-200">
+      <div className="flex items-center justify-between text-[11px] font-semibold text-ink-muted bg-parchment-100 p-2 rounded-xl border border-parchment-200 flex-wrap gap-1">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-vermillion shadow-sm"></span>
           <span>Đang chọn</span>
@@ -86,8 +88,8 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
           <span>Đã làm</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-white border border-parchment-300"></span>
-          <span>Chưa làm</span>
+          <span className="w-2 h-2 rounded-full bg-gilt-dark"></span>
+          <span>Đã ghim</span>
         </div>
       </div>
 
@@ -102,6 +104,7 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
             (!Array.isArray(val) || val.length > 0) &&
             (typeof val !== "object" || Object.keys(val).length > 0);
           const isCurrent = idx === currentIndex;
+          const isBookmarked = bookmarkedIds ? bookmarkedIds.has(q.id) : false;
 
           let style =
             "bg-white border-parchment-300 text-ink-light hover:border-celadon hover:text-celadon-dark hover:bg-celadon-50";
@@ -122,10 +125,13 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                 onSelectIndex(idx);
                 if (isModal && onClose) onClose();
               }}
-              className={`h-10 rounded-xl border-2 flex items-center justify-center text-xs font-bold transition-all transform active:scale-95 ${style}`}
-              title={`Câu ${idx + 1}${hasAnswer ? " (Đã làm)" : " (Chưa làm)"}`}
+              className={`h-10 rounded-xl border-2 flex items-center justify-center text-xs font-bold transition-all transform active:scale-95 relative ${style}`}
+              title={`Câu ${idx + 1}${hasAnswer ? " (Đã làm)" : " (Chưa làm)"}${isBookmarked ? " [Đã ghim]" : ""}`}
             >
-              {idx + 1}
+              <span>{idx + 1}</span>
+              {isBookmarked && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-gilt border border-white shadow-sm" />
+              )}
             </button>
           );
         })}
