@@ -22,6 +22,7 @@ Website luyện tập tiếng Trung thuần thực hành dành cho người Vi�
 - **Sổ tay lỗi sai thông minh (Spaced Repetition)**: Tự động gom mọi câu làm sai, theo dõi số lần sai. Trả lời đúng liên tiếp 3 lần sẽ tự động chuyển sang trạng thái "Đã thuộc". Có chế độ sinh đề luyện riêng các câu hay sai.
 - **Báo cáo tiến độ & Biểu đồ**: Biểu đồ điểm số theo thời gian, tỷ lệ chính xác theo từng dạng bài và từng chủ đề, chuỗi ngày học liên tục (Streak) và điểm kinh nghiệm (XP).
 - **Sao lưu & Phục hồi**: Xuất/nhập dữ liệu dưới dạng JSON, hỗ trợ Reset dữ liệu sạch sẽ.
+- **Trò chuyện với AI (`/chat`)**: Nói chuyện tiếng Trung tự nhiên với một người bạn AI (Claude), chọn được cấp độ (HSK 1-2 / 3-4 / 5-6) và tình huống (tán gẫu, quán cà phê, mua sắm, hỏi đường, làm quen, phỏng vấn). Có nói bằng micro (nhận giọng `zh-CN`), tự đọc câu trả lời, bật/tắt Pinyin và nghĩa tiếng Việt, và góp ý khi bạn dùng sai. Cần `ANTHROPIC_API_KEY` trong `.env.local` (xem `.env.example`).
 
 ---
 
