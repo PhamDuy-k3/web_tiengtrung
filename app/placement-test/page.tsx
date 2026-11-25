@@ -21,8 +21,8 @@ import { repository } from "@/services";
 import { AnswerValue, LevelId, QuestionResult, Question } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { triggerConfetti } from "@/components/ui/Confetti";
-import { soundService } from "@/lib/sound";
 import { useUserStore } from "@/store/useUserStore";
+import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
 import {
   generateAssessmentTest,
   evaluateAssessmentTest,
@@ -161,9 +161,6 @@ export default function PlacementTestPage() {
 
       if (evaluation.verified_level >= 2) {
         triggerConfetti();
-        soundService.playFanfare();
-      } else {
-        soundService.playSuccess();
       }
     } catch (e) {
       console.error("Lỗi chấm bài:", e);
@@ -186,25 +183,33 @@ export default function PlacementTestPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-fadeIn">
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-parchment-300 shadow-card text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-celadon-100 text-celadon-dark mx-auto flex items-center justify-center text-4xl shadow-soft border border-celadon-200">
-            🎯
-          </div>
-
-          <div className="space-y-2">
-            <span className="px-3.5 py-1 rounded-full bg-celadon-100 text-celadon-dark text-xs font-black uppercase tracking-wider border border-celadon-200">
-              Kết quả đánh giá trình độ
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-black text-ink">
-              Trình độ xác nhận:{" "}
-              <span className="text-celadon-dark">
-                {evalResult.verified_level === 0
-                  ? "Mới bắt đầu (HSK 0)"
-                  : `HSK ${evalResult.verified_level}`}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+            <MascotWithBubble
+              action={evalResult.verified_level >= 1 ? "celebrate" : "sad"}
+              tone={evalResult.verified_level >= 1 ? "celadon" : "gilt"}
+              size="md"
+              message={
+                evalResult.verified_level >= 1
+                  ? `Tuyệt vời! Trình độ của bạn là HSK ${evalResult.verified_level}!`
+                  : "Đừng lo nhé! Bắt đầu từ HSK 0 cùng Han Han nào!"
+              }
+            />
+            <div className="space-y-2 sm:text-left">
+              <span className="inline-block px-3.5 py-1 rounded-full bg-celadon-100 text-celadon-dark text-xs font-black uppercase tracking-wider border border-celadon-200">
+                Kết quả đánh giá trình độ
               </span>
-            </h1>
-            <p className="text-sm sm:text-base text-ink-muted max-w-lg mx-auto leading-relaxed">
-              {evalResult.message}
-            </p>
+              <h1 className="text-3xl sm:text-4xl font-black text-ink">
+                Trình độ xác nhận:{" "}
+                <span className="text-celadon-dark">
+                  {evalResult.verified_level === 0
+                    ? "Mới bắt đầu (HSK 0)"
+                    : `HSK ${evalResult.verified_level}`}
+                </span>
+              </h1>
+              <p className="text-sm sm:text-base text-ink-muted max-w-lg leading-relaxed">
+                {evalResult.message}
+              </p>
+            </div>
           </div>
 
           {/* Điểm số theo từng cấp độ (Quy tắc 2/3) */}

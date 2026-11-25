@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
+import { DailyGreetingMascot } from "@/components/mascot/DailyGreetingMascot";
 
 // Both fonts loaded via <link> to avoid next/font Google Fonts fetch bug on Vercel (Next.js 14.2.x)
 // See: https://github.com/vercel/next.js/issues/55682
@@ -35,6 +36,7 @@ export default function RootLayout({
         <main className="flex-1 pb-16 md:pb-8">{children}</main>
         <Footer />
         <BottomNav />
+        <DailyGreetingMascot />
       </body>
     </html>
   );

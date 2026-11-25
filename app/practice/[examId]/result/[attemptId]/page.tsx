@@ -20,8 +20,8 @@ import { repository } from "@/services";
 import { AnswerValue, ExamAttempt } from "@/types";
 import { formatTime, formatDate } from "@/lib/utils";
 import { triggerConfetti } from "@/components/ui/Confetti";
-import { soundService } from "@/lib/sound";
 import { AudioButton, AnswerDiffViewer } from "@/features/quiz";
+import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
 
 export default function ExamResultPage() {
   const params = useParams();
@@ -38,15 +38,8 @@ export default function ExamResultPage() {
         const data = await repository.getAttempt(attemptId);
         setAttempt(data);
 
-        if (data) {
-          if (data.score >= 80) {
-            triggerConfetti();
-            soundService.playFanfare();
-          } else if (data.score >= 60) {
-            soundService.playSuccess();
-          } else {
-            soundService.playError();
-          }
+        if (data && data.score >= 80) {
+          triggerConfetti();
         }
       } catch (e) {
         console.error("Lỗi tải kết quả:", e);
@@ -151,10 +144,25 @@ export default function ExamResultPage() {
           </p>
         </div>
 
-        {/* Circular / Large Score Display */}
-        <div className="flex items-center justify-center gap-2 relative z-10">
+        {/* Mascot (left) + Circular Score Display (dead-center) */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center justify-items-center gap-4 sm:gap-6 relative z-10">
+          <div className="sm:justify-self-end order-2 sm:order-1">
+            <MascotWithBubble
+              action={isPassed ? "celebrate" : "sad"}
+              tone={isPassed ? "celadon" : "vermillion"}
+              size="md"
+              message={
+                isExcellent
+                  ? "Xuất sắc quá! Han Han ăn mừng cùng bạn nè!"
+                  : isPassed
+                  ? "Làm tốt lắm! Tiếp tục giữ phong độ này nhé!"
+                  : "Đừng buồn nhé! Cùng xem lại các câu sai để tiến bộ hơn!"
+              }
+            />
+          </div>
+
           <div
-            className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-8 flex flex-col items-center justify-center shadow-inner ${
+            className={`order-1 sm:order-2 w-32 h-32 sm:w-40 sm:h-40 rounded-full border-8 flex flex-col items-center justify-center shadow-inner shrink-0 ${
               isExcellent
                 ? "border-celadon-300 bg-celadon-50 text-celadon-dark"
                 : isPassed
@@ -169,6 +177,8 @@ export default function ExamResultPage() {
               {attempt.correctCount}/{attempt.totalQuestions} câu đúng
             </span>
           </div>
+
+          <div className="hidden sm:block sm:order-3" aria-hidden="true" />
         </div>
 
         {/* Summary Stats Row */}

@@ -20,7 +20,7 @@ import { AnswerValue, Exam, LevelId, QuestionResult, ExamAttempt, LevelProgressI
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { triggerConfetti } from "@/components/ui/Confetti";
-import { soundService } from "@/lib/sound";
+import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
 
 export default function LevelTestPage() {
   const params = useParams();
@@ -139,9 +139,6 @@ export default function LevelTestPage() {
 
       if (attempt.score >= 80) {
         triggerConfetti();
-        soundService.playFanfare();
-      } else {
-        soundService.playError();
       }
     } catch (e) {
       console.error("Lỗi nộp bài thi lên cấp:", e);
@@ -198,19 +195,34 @@ export default function LevelTestPage() {
             </p>
           </div>
 
-          {/* Score card */}
-          <div className="inline-flex items-center gap-6 p-4 px-8 bg-cream-50 rounded-2xl border border-cream-200">
-            <div>
-              <div className="text-xs text-charcoal/50">Điểm số</div>
-              <div className="text-3xl font-black text-coral">{testResult.score}%</div>
+          {/* Mascot (left) + Score card (dead-center) */}
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center justify-items-center gap-4 sm:gap-6">
+            <div className="sm:justify-self-end order-2 sm:order-1">
+              <MascotWithBubble
+                action={passed ? "celebrate" : "sad"}
+                tone={passed ? "celadon" : "vermillion"}
+                size="md"
+                message={
+                  passed
+                    ? "Tuyệt vời! Bạn đã chính thức vượt cấp rồi!"
+                    : "Thiếu chút nữa thôi! Ôn thêm rồi thi lại cùng mình nhé!"
+                }
+              />
             </div>
-            <div className="w-[1px] h-8 bg-cream-300"></div>
-            <div>
-              <div className="text-xs text-charcoal/50">Đúng/Tổng</div>
-              <div className="text-xl font-black text-charcoal">
-                {testResult.correctCount}/{testResult.totalQuestions}
+            <div className="order-1 sm:order-2 inline-flex items-center gap-6 p-4 px-8 bg-cream-50 rounded-2xl border border-cream-200">
+              <div>
+                <div className="text-xs text-charcoal/50">Điểm số</div>
+                <div className="text-3xl font-black text-coral">{testResult.score}%</div>
+              </div>
+              <div className="w-[1px] h-8 bg-cream-300"></div>
+              <div>
+                <div className="text-xs text-charcoal/50">Đúng/Tổng</div>
+                <div className="text-xl font-black text-charcoal">
+                  {testResult.correctCount}/{testResult.totalQuestions}
+                </div>
               </div>
             </div>
+            <div className="hidden sm:block sm:order-3" aria-hidden="true" />
           </div>
 
           {/* Weak topic suggestions if failed */}

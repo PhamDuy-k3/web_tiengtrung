@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import { repository } from "@/services";
 import { AudioButton, QuizRenderer } from "@/features/quiz";
+import { FloatingMascot } from "@/components/mascot/FloatingMascot";
 import { gradeQuestion } from "@/lib/grading";
 import type { AnswerValue, GradeResult } from "@/types";
 import type { SrsQuality, SrsReviewItem } from "@/types/srs";
@@ -26,6 +27,7 @@ export default function ReviewPage() {
   const [saving, setSaving] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [returnTo, setReturnTo] = useState("/");
+  const [showThinkMascot, setShowThinkMascot] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -54,6 +56,16 @@ export default function ReviewPage() {
   }, [loadAttempt]);
 
   const current = items[0];
+  const currentItemId = current?.card.itemId;
+
+  useEffect(() => {
+    setShowThinkMascot(false);
+    if (!currentItemId || revealed) return;
+    const timer = window.setTimeout(() => {
+      setShowThinkMascot(true);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [currentItemId, revealed]);
 
   const handleCheckAnswer = () => {
     if (!current || current.kind !== "question") return;
@@ -173,6 +185,17 @@ export default function ReviewPage() {
             </>
           )}
         </section>
+      )}
+
+      {showThinkMascot && current && !revealed && (
+        <FloatingMascot
+          action="think"
+          tone="gilt"
+          title="Nhớ lại thử xem nào… 🤔"
+          message="Cố hồi tưởng nghĩa và thanh điệu trước khi bấm xem đáp án nhé!"
+          onClose={() => setShowThinkMascot(false)}
+          bottomOffsetClass="bottom-20 md:bottom-6"
+        />
       )}
     </main>
   );

@@ -17,6 +17,7 @@ import {
 import { repository } from "@/services";
 import { AnswerValue, Exam, PracticeMode, QuestionResult } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
+import { FloatingMascot } from "@/components/mascot/FloatingMascot";
 import { gradeQuestion } from "@/lib/grading";
 import { soundService } from "@/lib/sound";
 import { speechService } from "@/lib/speech";
@@ -48,6 +49,7 @@ export default function ExamPracticePage() {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [showSubmitWarning, setShowSubmitWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThinkMascot, setShowThinkMascot] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const questionStartedAt = useRef(0);
   const sessionStartedAt = useRef(Date.now());
@@ -324,6 +326,16 @@ export default function ExamPracticePage() {
     currentAnswer !== null &&
     (!Array.isArray(currentAnswer) || currentAnswer.length > 0) &&
     (typeof currentAnswer !== "object" || Object.keys(currentAnswer).length > 0);
+
+  // Show thinking mascot if learner pauses >= 20s on an unanswered question in practice mode
+  useEffect(() => {
+    setShowThinkMascot(false);
+    if (!exam || !currentQuestion || isMockExam || hasSelectedAnswer || showSubmitWarning) return;
+    const timer = window.setTimeout(() => {
+      setShowThinkMascot(true);
+    }, 20000);
+    return () => window.clearTimeout(timer);
+  }, [exam, currentQuestion, isMockExam, hasSelectedAnswer, showSubmitWarning]);
 
   const keyboardActionsRef = useRef({
     handleCheckCurrentQuestion,
@@ -670,6 +682,17 @@ export default function ExamPracticePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showThinkMascot && !hasSelectedAnswer && !showSubmitWarning && (
+        <FloatingMascot
+          action="think"
+          tone="gilt"
+          title="Đang suy nghĩ câu này à? 🤔"
+          message="Thử bấm loa nghe lại phát âm hoặc đọc kỹ ngữ cảnh để loại trừ đáp án nhé!"
+          onClose={() => setShowThinkMascot(false)}
+          bottomOffsetClass="bottom-6"
+        />
       )}
     </div>
   );
