@@ -18,6 +18,7 @@ import {
 import { repository } from "@/services";
 import { MistakeEntry, LevelId, Question } from "@/types";
 import { AudioButton, AnswerDiffViewer } from "@/features/quiz";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface BookmarkedItem {
   question: Question;
@@ -347,18 +348,17 @@ export default function MistakesPage() {
                 <BookOpen size={14} />
                 Đề thi:
               </span>
-              <select
+              <CustomSelect
+                ariaLabel="Lọc theo đề thi"
+                size="sm"
                 value={selectedExamId}
-                onChange={(e) => setSelectedExamId(e.target.value)}
-                className="bg-parchment-50 border border-parchment-300 text-ink rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none focus:border-celadon max-w-xs"
-              >
-                <option value="all">Tất cả các đề thi ({uniqueExams.length})</option>
-                {uniqueExams.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.title}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedExamId(val)}
+                className="min-w-[210px] max-w-xs"
+                options={[
+                  { value: "all", label: `Tất cả các đề thi (${uniqueExams.length})` },
+                  ...uniqueExams.map((ex) => ({ value: ex.id, label: ex.title })),
+                ]}
+              />
             </div>
           )}
         </div>

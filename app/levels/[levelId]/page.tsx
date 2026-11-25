@@ -21,6 +21,7 @@ import {
 import { repository } from "@/services";
 import { Level, LevelId, Topic, Exam, LevelProgressInfo, QuestionType } from "@/types";
 import type { SrsReviewItem } from "@/types/srs";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
   { value: "word_order", label: "Sắp xếp câu" },
@@ -207,9 +208,13 @@ export default function LevelDetailPage() {
           <div className="rounded-2xl border border-cream-300 bg-white p-4 shadow-sm space-y-3">
             <div className="flex items-center gap-2 font-black text-sm text-charcoal"><Target size={20} className="text-coral" />Theo dạng bài</div>
             <p className="text-xs text-charcoal/60">Tập trung luyện một dạng câu hỏi.</p>
-            <select aria-label="Chọn dạng bài" value={selectedQuestionType} onChange={(event) => setSelectedQuestionType(event.target.value as QuestionType)} className="w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-xs font-semibold text-charcoal">
-              {QUESTION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            <CustomSelect
+              ariaLabel="Chọn dạng bài"
+              size="sm"
+              value={selectedQuestionType}
+              onChange={(val) => setSelectedQuestionType(val)}
+              options={QUESTION_TYPE_OPTIONS}
+            />
             <Link href={`/practice/type-practice-${level.id}-${selectedQuestionType}?mode=type`} className="inline-flex items-center gap-1 text-xs font-bold text-coral hover:text-coral-dark">
               Bắt đầu luyện <ArrowRight size={14} />
             </Link>

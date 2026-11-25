@@ -16,6 +16,7 @@ import type { QuestionReport } from "@/types";
 import { AudioButton } from "./AudioButton";
 import { getLevelDifficultyConfig } from "@/lib/difficulty";
 import { Eye, EyeOff, Bookmark, BookmarkCheck, Command } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface QuizRendererProps {
   question: Question;
@@ -213,11 +214,21 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
             try { await onReport({ reason: reportReason, details: reportDetails.trim() || undefined }); setReportState("Đã ghi nhận báo cáo."); setReportOpen(false); }
             catch { setReportState("Chưa lưu được. Hãy thử lại."); }
           }}>
-            <label className="block text-sm font-semibold">Lý do
-              <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2">
-                {["Sai đáp án", "Lỗi chính tả/Pinyin", "Câu hỏi khó hiểu", "Lý do khác"].map((reason) => <option key={reason}>{reason}</option>)}
-              </select>
-            </label>
+            <div className="block text-sm font-semibold space-y-1">
+              <span>Lý do</span>
+              <CustomSelect
+                ariaLabel="Lý do báo cáo câu hỏi"
+                size="sm"
+                value={reportReason}
+                onChange={(val) => setReportReason(val)}
+                options={[
+                  { value: "Sai đáp án", label: "Sai đáp án" },
+                  { value: "Lỗi chính tả/Pinyin", label: "Lỗi chính tả/Pinyin" },
+                  { value: "Câu hỏi khó hiểu", label: "Câu hỏi khó hiểu" },
+                  { value: "Lý do khác", label: "Lý do khác" },
+                ]}
+              />
+            </div>
             <label className="block text-sm font-semibold">Ghi chú (không bắt buộc)
               <textarea value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} maxLength={500} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2" rows={2} />
             </label>

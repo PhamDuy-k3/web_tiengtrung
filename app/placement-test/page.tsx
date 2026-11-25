@@ -126,9 +126,15 @@ export default function PlacementTestPage() {
       const evaluation = evaluateAssessmentTest(rawQuestions, mappedUserAnswers);
       setEvalResult(evaluation);
 
-      // Lưu kết quả đánh giá vào localStorage
+      // Lưu kết quả đánh giá kèm thời điểm hoàn thành để trang Lộ trình nhận biết vừa test lại
       try {
-        localStorage.setItem("hanyu:assessment_result", JSON.stringify(evaluation));
+        localStorage.setItem(
+          "hanyu:assessment_result",
+          JSON.stringify({
+            ...evaluation,
+            completedAt: new Date().toISOString(),
+          })
+        );
       } catch {}
 
       // Tự động mở khóa cấp độ đạt được trong profile (giữ nguyên các cấp đã mở trước đó)
