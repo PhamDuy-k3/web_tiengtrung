@@ -23,6 +23,11 @@ import {
 import { useUserStore } from "@/store/useUserStore";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { formatDate } from "@/lib/utils";
+import {
+  getRoadmapProgress,
+  ROADMAP_PREVIEW_STORAGE_KEY,
+  type RoadmapProgressRecord,
+} from "@/lib/roadmapStudy";
 
 const ASSESSMENT_STORAGE_KEY = "hanyu:assessment_result";
 const SAVED_ROADMAP_STORAGE_KEY = "hanyu:saved_roadmap";
@@ -74,6 +79,10 @@ export default function RoadmapPage() {
   const [weakSkills, setWeakSkills] = useState<string[]>(["grammar", "reading"]);
 
   const [copied, setCopied] = useState(false);
+  const [roadmapProgress, setRoadmapProgress] = useState<RoadmapProgressRecord>({
+    completedLessonIds: [],
+    scores: {},
+  });
 
   useEffect(() => {
     loadProfile();
@@ -156,6 +165,30 @@ export default function RoadmapPage() {
 
   const activeRoadmap = savedRecord ? savedRecord.roadmap : previewRoadmap;
   const isLocked = !!savedRecord;
+  const roadmapKey = savedRecord ? savedRecord.lockedAt : "preview";
+
+  useEffect(() => {
+    if (!hydrated || isLocked) return;
+    try {
+      localStorage.setItem(ROADMAP_PREVIEW_STORAGE_KEY, JSON.stringify(previewRoadmap));
+    } catch {}
+  }, [hydrated, isLocked, previewRoadmap]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const syncProgress = () => setRoadmapProgress(getRoadmapProgress(roadmapKey));
+    syncProgress();
+    window.addEventListener("focus", syncProgress);
+    return () => window.removeEventListener("focus", syncProgress);
+  }, [hydrated, roadmapKey]);
+
+  const allLessons = activeRoadmap.weeks.flatMap((week) => week.lessons);
+  const completedCount = allLessons.filter((lesson) =>
+    roadmapProgress.completedLessonIds.includes(lesson.id)
+  ).length;
+  const nextPendingLesson =
+    allLessons.find((lesson) => !roadmapProgress.completedLessonIds.includes(lesson.id)) ??
+    allLessons[0];
 
   const handleConfirmAndSave = () => {
     const record: SavedRoadmapRecord = {
@@ -455,16 +488,32 @@ export default function RoadmapPage() {
 
       {/* ================= Roadmap Summary Banner ================= */}
       {activeRoadmap && (
-        <div className="bg-celadon-50 rounded-3xl p-6 border border-celadon-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1">
+        <div className="bg-celadon-50 rounded-3xl p-6 border border-celadon-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-2 flex-1">
             <span className="text-xs font-bold text-celadon-dark uppercase tracking-wider">
               {isLocked ? "Tổng quan kế hoạch học tập:" : "Bản xem trước kế hoạch học tập:"}
             </span>
             <p className="text-sm sm:text-base font-semibold text-ink leading-relaxed">
               {activeRoadmap.summary}
             </p>
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-bold text-celadon-dark">
+              <span>Tiến độ: {completedCount}/{allLessons.length} bài học</span>
+              {nextPendingLesson && (
+                <Link
+                  href={`/roadmap/lesson/${nextPendingLesson.id}`}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-celadon text-white hover:bg-celadon-600 transition-colors"
+                >
+                  <span>{completedCount > 0 ? "Học bài tiếp theo" : "Bắt đầu bài đầu tiên"}</span>
+                  <ChevronRight size={14} />
+                </Link>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
+            <div className="text-center px-4 py-2 bg-white rounded-2xl border border-celadon-200">
+              <div className="text-[11px] text-ink-muted">Hoàn thành</div>
+              <div className="text-xl font-black text-celadon-dark">{completedCount}/{allLessons.length}</div>
+            </div>
             <div className="text-center px-4 py-2 bg-white rounded-2xl border border-celadon-200">
               <div className="text-[11px] text-ink-muted">Tổng thời gian</div>
               <div className="text-xl font-black text-celadon-dark">{activeRoadmap.total_weeks} Tuần</div>
@@ -499,21 +548,35 @@ export default function RoadmapPage() {
 
             {/* Lessons List in Week */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {week.lessons.map((lesson, lIdx) => (
+              {week.lessons.map((lesson, lIdx) => {
+                const isLessonDone = roadmapProgress.completedLessonIds.includes(lesson.id);
+                const bestScore = roadmapProgress.scores[lesson.id];
+
+                return (
                 <div
                   key={lesson.id}
-                  className="p-4 rounded-2xl border border-parchment-200 hover:border-celadon/50 bg-parchment-50/60 hover:bg-white transition-all space-y-3 flex flex-col justify-between"
+                  className={`p-4 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${
+                    isLessonDone
+                      ? "border-celadon-200 bg-celadon-50/40 hover:bg-white"
+                      : "border-parchment-200 hover:border-celadon/50 bg-parchment-50/60 hover:bg-white"
+                  }`}
                 >
                   <div className="space-y-2">
                     {/* Header */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-parchment-200 text-ink font-bold text-xs flex items-center justify-center">
                           {lIdx + 1}
                         </span>
                         {getLessonBadge(lesson.type)}
+                        {isLessonDone && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-celadon-100 text-celadon-dark border border-celadon-200">
+                            <CheckCircle2 size={11} />
+                            {typeof bestScore === "number" ? `Đã xong · ${bestScore}%` : "Đã xong"}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-[11px] text-ink-muted font-semibold flex items-center gap-1">
+                      <span className="text-[11px] text-ink-muted font-semibold flex items-center gap-1 shrink-0">
                         <Clock size={12} />
                         {lesson.estimated_minutes} phút
                       </span>
@@ -545,15 +608,16 @@ export default function RoadmapPage() {
                       Kỹ năng: {lesson.skills.join(", ")}
                     </span>
                     <Link
-                      href="/"
+                      href={`/roadmap/lesson/${lesson.id}`}
                       className="inline-flex items-center gap-1 text-xs font-bold text-celadon-dark hover:underline"
                     >
-                      <span>Học ngay</span>
+                      <span>{isLessonDone ? "Ôn lại bài" : "Học ngay"}</span>
                       <ChevronRight size={14} />
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
