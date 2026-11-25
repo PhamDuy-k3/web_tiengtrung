@@ -21,11 +21,15 @@ import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { triggerConfetti } from "@/components/ui/Confetti";
 import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
+import { useUserStore } from "@/store/useUserStore";
+
+const isDevMode = process.env.NODE_ENV === "development";
 
 export default function LevelTestPage() {
   const params = useParams();
   const router = useRouter();
   const levelId = (params.levelId as LevelId) || "basic";
+  const { loadProfile } = useUserStore();
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [levelProg, setLevelProg] = useState<LevelProgressInfo | null>(null);
@@ -108,13 +112,12 @@ export default function LevelTestPage() {
     );
   }
 
-  // Handle submit level test
-  const handleSubmit = async () => {
+  const submitAnswers = async (selectedAnswers: Record<string, AnswerValue>) => {
     setIsSubmitting(true);
     try {
       const answersResult: Record<string, QuestionResult> = {};
       for (const q of exam.questions) {
-        const uAns = answers[q.id];
+        const uAns = selectedAnswers[q.id];
         const grade = gradeQuestion(q, uAns);
         answersResult[q.id] = {
           userAnswer: uAns,
@@ -135,6 +138,7 @@ export default function LevelTestPage() {
         durationSeconds: elapsedSeconds,
       });
 
+      await loadProfile();
       setTestResult(attempt);
 
       if (attempt.score >= 80) {
@@ -145,6 +149,19 @@ export default function LevelTestPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Handle submit level test
+  const handleSubmit = () => submitAnswers(answers);
+
+  const handleDevQuickPass = async () => {
+    if (!isDevMode) return;
+    const autoAnswers: Record<string, AnswerValue> = {};
+    for (const q of exam.questions) {
+      autoAnswers[q.id] = q.correctAnswer;
+    }
+    setAnswers(autoAnswers);
+    await submitAnswers(autoAnswers);
   };
 
   // RETAKE TEST: reshuffle new test
@@ -345,7 +362,7 @@ export default function LevelTestPage() {
           />
 
           {/* Control Buttons */}
-          <div className="flex items-center justify-between gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <button
               type="button"
               onClick={() => currentIndex > 0 && setCurrentIndex(currentIndex - 1)}
@@ -360,25 +377,40 @@ export default function LevelTestPage() {
               <span>Câu trước</span>
             </button>
 
-            {currentIndex < totalQuestions - 1 ? (
-              <button
-                type="button"
-                onClick={() => setCurrentIndex(currentIndex + 1)}
-                className="px-6 py-3 rounded-2xl bg-vermillion hover:bg-vermillion-deep text-white font-bold text-sm flex items-center gap-1.5 shadow-soft hover:shadow-md transition-all"
-              >
-                <span>Câu tiếp theo</span>
-                <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-8 py-3 rounded-2xl bg-celadon hover:bg-celadon-600 text-white font-bold text-base shadow-soft hover:shadow-md animate-pulse"
-              >
-                {isSubmitting ? "Đang chấm điểm..." : "NỘP BÀI THI LÊN CẤP"}
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {isDevMode && (
+                <button
+                  type="button"
+                  onClick={handleDevQuickPass}
+                  disabled={isSubmitting}
+                  title="Chỉ hiện ở môi trường dev để test qua cấp nhanh"
+                  className="px-4 py-3 rounded-2xl bg-gilt-light hover:bg-gilt-soft text-gilt-deep border border-gilt-soft font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all disabled:opacity-50"
+                >
+                  <Sparkles size={15} />
+                  <span>{isSubmitting ? "Đang xử lý..." : "Pass nhanh (Dev)"}</span>
+                </button>
+              )}
+
+              {currentIndex < totalQuestions - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex(currentIndex + 1)}
+                  className="px-6 py-3 rounded-2xl bg-vermillion hover:bg-vermillion-deep text-white font-bold text-sm flex items-center gap-1.5 shadow-soft hover:shadow-md transition-all"
+                >
+                  <span>Câu tiếp theo</span>
+                  <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-8 py-3 rounded-2xl bg-celadon hover:bg-celadon-600 text-white font-bold text-base shadow-soft hover:shadow-md animate-pulse"
+                >
+                  {isSubmitting ? "Đang chấm điểm..." : "NỘP BÀI THI LÊN CẤP"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
