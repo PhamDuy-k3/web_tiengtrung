@@ -43,10 +43,10 @@ const StatChip = ({
   label: string;
   colorClass: string;
 }) => (
-  <div className={`flex flex-col items-center px-5 py-4 rounded-2xl ${colorClass}`}>
+  <div className={`flex flex-col items-center justify-center text-center px-4 py-3.5 sm:px-5 sm:py-4 md:min-w-[106px] rounded-2xl ${colorClass}`}>
     <div className="mb-1">{icon}</div>
     <div className="text-2xl font-black leading-none">{value}</div>
-    <div className="text-[11px] font-semibold uppercase tracking-wider opacity-70 mt-0.5">{label}</div>
+    <div className="text-[11px] font-semibold uppercase tracking-wider opacity-70 mt-1">{label}</div>
   </div>
 );
 
@@ -140,7 +140,7 @@ export default function HomePage() {
 
   // ────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-10 relative overflow-hidden">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-10 space-y-8 sm:space-y-10 relative overflow-hidden">
 
       {/* ── Background decorative Hanzi ── */}
       <BgHanzi char="学" className="right-0 -top-6 text-[220px] text-ink/[0.025] hidden lg:block" />
@@ -150,21 +150,21 @@ export default function HomePage() {
           HERO SECTION
       ════════════════════════════════════════════════════════════ */}
       <section className="relative">
-        <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-parchment-100 via-parchment-50 to-celadon-50 border border-parchment-300 shadow-soft p-8 sm:p-10">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-parchment-100 via-parchment-50 to-celadon-50 border border-parchment-300 shadow-soft p-5 sm:p-8 lg:p-10">
 
           {/* Dot grid texture */}
           <div className="absolute inset-0 bg-pattern-dots opacity-40" />
 
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          <div className="relative z-10 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5 md:gap-8">
             {/* Left: greeting */}
-            <div className="space-y-3 max-w-xl">
+            <div className="space-y-3 w-full md:max-w-xl">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-5 rounded-full bg-celadon" />
                 <span className="text-xs font-bold text-celadon-dark uppercase tracking-widest">
                   Chào mừng trở lại
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-ink leading-tight">
+              <h1 className="text-[28px] sm:text-4xl font-black text-ink leading-tight">
                 {userName}，
                 <br />
                 <span className="text-gradient-green">加油学习！</span>
@@ -176,33 +176,35 @@ export default function HomePage() {
               </p>
 
               {/* CTA buttons */}
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2.5 sm:gap-3 pt-1 sm:pt-2">
                 <Link
                   href="/review"
-                  className="btn-primary text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                  className="btn-primary w-full sm:w-auto justify-center text-sm py-3 sm:py-2.5 px-5 rounded-xl flex items-center gap-2"
                 >
-                  <RotateCcw size={16} />
-                  Hôm nay cần ôn {dueSrsCount} mục
+                  <RotateCcw size={16} className="shrink-0" />
+                  <span>Hôm nay cần ôn {dueSrsCount} mục</span>
                 </Link>
-                <Link
-                  href="/placement-test"
-                  className="btn-ghost text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
-                >
-                  <Compass size={16} />
-                  Kiểm tra trình độ HSK
-                </Link>
-                <Link
-                  href="/roadmap"
-                  className="btn-ghost text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
-                >
-                  <Calendar size={16} />
-                  Lộ trình học theo tuần
-                </Link>
+                <div className="grid grid-cols-2 gap-2.5 sm:contents">
+                  <Link
+                    href="/placement-test"
+                    className="btn-ghost w-full sm:w-auto justify-center text-center text-xs sm:text-sm py-2.5 px-2.5 sm:px-5 rounded-xl flex items-center gap-1.5 sm:gap-2 bg-white/70 sm:bg-transparent"
+                  >
+                    <Compass size={15} className="shrink-0" />
+                    <span className="leading-tight">Kiểm tra trình độ HSK</span>
+                  </Link>
+                  <Link
+                    href="/roadmap"
+                    className="btn-ghost w-full sm:w-auto justify-center text-center text-xs sm:text-sm py-2.5 px-2.5 sm:px-5 rounded-xl flex items-center gap-1.5 sm:gap-2 bg-white/70 sm:bg-transparent"
+                  >
+                    <Calendar size={15} className="shrink-0" />
+                    <span className="leading-tight">Lộ trình học theo tuần</span>
+                  </Link>
+                </div>
               </div>
             </div>
 
             {/* Right: stat chips */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex md:items-center md:shrink-0">
               <StatChip
                 icon={<Flame size={22} className="fill-gilt text-gilt" />}
                 value={streak}

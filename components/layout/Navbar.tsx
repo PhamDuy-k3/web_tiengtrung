@@ -29,9 +29,9 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40">
-        {/* Top bar: parchment nền, cạnh dưới ornament line */}
-        <div className="bg-parchment-50/95 backdrop-blur-xl border-b border-parchment-300">
+      <header className="fixed top-0 left-0 right-0 z-40 [transform:translate3d(0,0,0)] [backface-visibility:hidden] will-change-transform">
+        {/* Top bar: parchment nền rõ ràng, cạnh dưới ornament line */}
+        <div className="bg-parchment-50 border-b border-parchment-300 shadow-soft">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
             {/* ── LOGO ── */}
@@ -113,7 +113,7 @@ export const Navbar: React.FC = () => {
 
         {/* ── MOBILE DROPDOWN MENU ── */}
         {mobileOpen && (
-          <div className="md:hidden absolute inset-x-0 top-16 bg-parchment-50/98 backdrop-blur-xl border-b border-parchment-300 shadow-lifted z-50 animate-fade-up">
+          <div className="md:hidden absolute inset-x-0 top-16 bg-parchment-50 border-b border-parchment-300 shadow-lifted z-50 animate-fade-up">
             <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
               {navLinks.map((item) => {
                 const isActive = pathname === item.href;
@@ -140,6 +140,7 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </header>
+      <div className="h-[65px] shrink-0" aria-hidden="true" />
     </>
   );
 };

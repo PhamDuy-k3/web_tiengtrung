@@ -22,7 +22,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-parchment-50/96 backdrop-blur-xl border-t border-parchment-300">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-parchment-50 border-t border-parchment-300 shadow-soft [transform:translate3d(0,0,0)] [backface-visibility:hidden] will-change-transform">
       <div className="flex items-stretch h-16">
         {items.map((item) => {
           const isActive = pathname === item.href;

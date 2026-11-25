@@ -102,60 +102,62 @@ body {
    BUTTON SYSTEM (thay thế viên gạch Duolingo)
    ====================================================== */
 
-/* Primary button: celadon xanh ngọc */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.925rem;
-  color: #FFFFFF;
-  background: linear-gradient(135deg, #3DB38A 0%, #2E9A74 100%);
-  box-shadow: 0 4px 14px rgba(61,179,138,0.35), 0 1px 4px rgba(61,179,138,0.2);
-  transition: all 0.18s ease;
-  cursor: pointer;
-}
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(61,179,138,0.4), 0 2px 8px rgba(61,179,138,0.25);
-}
-.btn-primary:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(61,179,138,0.3);
-}
+@layer components {
+  /* Primary button: celadon xanh ngọc */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.925rem;
+    color: #FFFFFF;
+    background: linear-gradient(135deg, #3DB38A 0%, #2E9A74 100%);
+    box-shadow: 0 4px 14px rgba(61,179,138,0.35), 0 1px 4px rgba(61,179,138,0.2);
+    transition: all 0.18s ease;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(61,179,138,0.4), 0 2px 8px rgba(61,179,138,0.25);
+  }
+  .btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(61,179,138,0.3);
+  }
 
-/* Danger / Accent button: đỏ son */
-.btn-danger {
-  background: linear-gradient(135deg, #E05252 0%, #C23B3B 100%);
-  box-shadow: 0 4px 14px rgba(224,82,82,0.35), 0 1px 4px rgba(224,82,82,0.2);
-  color: white;
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-weight: 700;
-  transition: all 0.18s ease;
-}
-.btn-danger:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(224,82,82,0.4);
-}
+  /* Danger / Accent button: đỏ son */
+  .btn-danger {
+    background: linear-gradient(135deg, #E05252 0%, #C23B3B 100%);
+    box-shadow: 0 4px 14px rgba(224,82,82,0.35), 0 1px 4px rgba(224,82,82,0.2);
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    transition: all 0.18s ease;
+  }
+  .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(224,82,82,0.4);
+  }
 
-/* Ghost button */
-.btn-ghost {
-  background: transparent;
-  border: 1.5px solid var(--border-medium);
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all 0.18s ease;
-}
-.btn-ghost:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: rgba(44,44,44,0.22);
+  /* Ghost button */
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid var(--border-medium);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.18s ease;
+  }
+  .btn-ghost:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: rgba(44,44,44,0.22);
+  }
 }
 
 /* ======================================================
