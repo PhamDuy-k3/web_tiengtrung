@@ -101,6 +101,12 @@ export default function SourcesPage() {
       {/* Return button */}
       <div className="pt-4 text-center">
         <Link
+          href="/content-review"
+          className="mr-2 inline-block px-6 py-3 rounded-2xl border border-cream-400 bg-white text-charcoal font-bold text-sm transition-all hover:bg-cream-100"
+        >
+          Mở hàng đợi rà soát nội dung
+        </Link>
+        <Link
           href="/"
           className="inline-block px-8 py-3 rounded-2xl bg-coral hover:bg-coral-dark text-white font-bold text-sm shadow-duo-coral transition-all"
         >

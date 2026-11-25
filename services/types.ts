@@ -16,6 +16,7 @@ import {
   QuestionReport,
 } from "@/types";
 import type { GrammarLesson } from "@/types/grammar";
+import type { ContentReviewItem } from "@/types/contentReview";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 import type { VocabularyItem } from "@/data/mock/vocabulary";
 
@@ -26,6 +27,7 @@ export interface IRepository {
   getTopics(levelId: LevelId): Promise<Topic[]>;
   getTopic(topicId: string): Promise<Topic | null>;
   getGrammarLesson(grammarPointId: string): Promise<GrammarLesson | null>;
+  getContentReviewItems(): Promise<ContentReviewItem[]>;
 
   // Exams & Tests
   getExams(topicId: string): Promise<Exam[]>;

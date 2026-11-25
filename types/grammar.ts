@@ -1,8 +1,10 @@
 export interface GrammarExample {
-  sourceQuestionId: string;
+  sourceQuestionId?: string;
   chinese: string;
   pinyin?: string;
   vietnamese: string;
+  sourceTitle?: string;
+  sourceUrl?: string;
 }
 
 export interface GrammarLesson {
@@ -20,4 +22,5 @@ export interface GrammarLesson {
 
 export interface GrammarLessonSource extends Omit<GrammarLesson, "examples"> {
   exampleTranslations?: Record<string, string>;
+  externalExamples?: GrammarExample[];
 }

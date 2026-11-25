@@ -17,6 +17,7 @@ import {
   QuestionReport,
 } from "@/types";
 import type { GrammarLesson } from "@/types/grammar";
+import type { ContentReviewItem } from "@/types/contentReview";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 import type { VocabularyItem } from "@/data/mock/vocabulary";
 
@@ -54,6 +55,10 @@ export class RemoteRepository implements IRepository {
 
   async getGrammarLesson(_grammarPointId: string): Promise<GrammarLesson | null> {
     throw new Error("Remote API chÆ°a há»— trá»£ bÃ i há»c ngá»¯ phÃ¡p.");
+  }
+
+  async getContentReviewItems(): Promise<ContentReviewItem[]> {
+    throw new Error("Remote API chÆ°a há»— trá»£ hÃ ng Ä‘á»£i kiá»ƒm duyá»‡t ná»™i dung.");
   }
 
   async getExams(topicId: string): Promise<Exam[]> {

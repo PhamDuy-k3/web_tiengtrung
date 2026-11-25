@@ -32,10 +32,11 @@ export default function GrammarLessonPage() {
     </header>
     <section className="space-y-3 rounded-3xl border border-parchment-300 bg-white p-6">
       <h2 className="text-xl font-black">VÃ­ dá»¥ tá»« ngÃ¢n hÃ ng cÃ¢u há»i</h2>
-      {lesson.examples.length ? lesson.examples.map((example) => <article key={example.sourceQuestionId} className="rounded-2xl bg-parchment-50 p-4">
+      {lesson.examples.length ? lesson.examples.map((example, index) => <article key={example.sourceQuestionId ?? example.sourceUrl ?? index} className="rounded-2xl bg-parchment-50 p-4">
         <p className="font-chinese text-2xl font-bold">{example.chinese}</p>
         {example.pinyin && <p className="mt-1 text-sm font-semibold text-celadon-dark">{example.pinyin}</p>}
         <p className="mt-2 text-sm text-ink-light">{example.vietnamese}</p>
+        {example.sourceTitle && example.sourceUrl && <a href={example.sourceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-celadon-dark underline">Nguồn: {example.sourceTitle}</a>}
       </article>) : <p className="text-sm text-amber-800">VÃ­ dá»¥ nguá»“n chÆ°a cÃ³ Ä‘á»§ dá»¯ liá»‡u, cáº§n rÃ  soÃ¡t.</p>}
     </section>
     <section className="rounded-3xl border border-vermillion-soft bg-vermillion-light p-6">

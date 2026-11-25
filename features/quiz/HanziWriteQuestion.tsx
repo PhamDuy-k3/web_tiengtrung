@@ -30,17 +30,21 @@ export function HanziWriteQuestion({ question, value, onChange, disabled = false
 
   useEffect(() => {
     let active = true;
-    const element = mountRef.current;
-    if (!element || !character) {
+    const root = mountRef.current;
+    if (!root || !character) {
       setError("CÃ¢u há»i chÆ°a cÃ³ má»™t chá»¯ HÃ¡n há»£p lá»‡.");
       setLoading(false);
       return;
     }
+    // Give each Hanzi Writer instance its own host. The library mutates this
+    // subtree, so React must not reconcile or clear the SVG nodes it owns.
+    const host = document.createElement("div");
+    root.appendChild(host);
     setLoading(true);
     setError("");
     void import("hanzi-writer").then(({ default: HanziWriterLib }) => {
       if (!active) return;
-      const writer = HanziWriterLib.create(element, character, {
+      const writer = HanziWriterLib.create(host, character, {
         width: 260,
         height: 260,
         padding: 12,
@@ -63,7 +67,9 @@ export function HanziWriteQuestion({ question, value, onChange, disabled = false
       active = false;
       writerRef.current?.cancelQuiz();
       writerRef.current = null;
-      element.replaceChildren();
+      // Detach only the wrapper. Leave its SVG children intact so any pending
+      // Hanzi Writer cleanup can still remove nodes from their original parent.
+      host.remove();
     };
   // The writer is recreated for each question.
   // eslint-disable-next-line react-hooks/exhaustive-deps

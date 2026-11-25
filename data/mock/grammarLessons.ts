@@ -12,8 +12,13 @@ export const grammarLessons: GrammarLessonSource[] = [
       "Không thêm 很 trước tính từ trong mẫu câu so sánh cơ bản này.",
     ],
     sourceQuestionIds: ["b-gd-3-10"],
-    needsReview: true,
-    reviewNote: "Ngân hàng câu hỏi hiện chỉ có một ví dụ phù hợp với cấu trúc 比; cần bổ sung ví dụ đã được kiểm chứng trước khi bỏ cờ rà soát.",
+    externalExamples: [{
+      chinese: "我觉得数学比历史难多了",
+      pinyin: "Wǒ juéde shùxué bǐ lìshǐ nánduō le",
+      vietnamese: "Tôi thấy môn Toán khó hơn môn Lịch sử nhiều.",
+      sourceTitle: "HSK Standard Course 3 Workbook, Lesson 10, dialogue 2",
+      sourceUrl: "https://cdn.baulchino.com/hsk-books/HSK-3-Workbook.pdf",
+    }],
   },
   {
     id: "hoi-tuoi-duo-da-le",

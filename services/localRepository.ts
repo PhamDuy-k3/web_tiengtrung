@@ -26,6 +26,7 @@ import {
   buildPlacementTest,
   getQuestionsByLevel,
   mockVocabulary,
+  grammarLessons,
 } from "@/data/mock";
 import { shuffleArray } from "@/lib/shuffle";
 import { migrateStorageData } from "@/lib/storageMigration";
@@ -33,6 +34,7 @@ import { createSrsCard, getSrsItemId, isSrsMastered, scheduleSrsReview } from "@
 import { selectAdaptiveQuestions } from "@/services/adaptiveExamGenerator";
 import { generateVocabularyExam as buildVocabularyExam } from "@/services/vocabularyQuestionGenerator";
 import type { GrammarLesson } from "@/types/grammar";
+import type { ContentReviewItem } from "@/types/contentReview";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 const STORAGE_KEY = "hanyu:v2";
@@ -172,7 +174,48 @@ class LocalRepository implements IRepository {
       const vietnamese = source.exampleTranslations?.[id] ?? question.prompt.match(/[‘']([^’']+)[’']/)?.[1] ?? question.prompt;
       return [{ sourceQuestionId: id, chinese, pinyin: question.pinyin, vietnamese }];
     });
-    return { ...source, examples };
+    return { ...source, examples: [...examples, ...(source.externalExamples ?? [])] };
+  }
+
+  async getContentReviewItems(): Promise<ContentReviewItem[]> {
+    await this.artificialDelay(80);
+    const questionItems = allMockExams.flatMap((exam) => exam.questions
+      .filter((question) => question.needsReview)
+      .map((question): ContentReviewItem => ({
+        id: `question:${question.id}`,
+        kind: "question",
+        title: question.prompt,
+        source: `${exam.title} · ${question.id}`,
+        reason: "Câu hỏi được đánh dấu needsReview trong ngân hàng.",
+        hskLevel: question.hskLevel,
+        chineseText: question.chineseText,
+        pinyin: question.pinyin,
+        vietnamese: question.vietnamese,
+        explanation: question.explanation,
+      })));
+    const vocabularyItems = mockVocabulary.filter((word) => word.needsReview).map((word): ContentReviewItem => ({
+      id: `vocabulary:${word.id}`,
+      kind: "vocabulary",
+      title: word.hanzi,
+      source: `Từ vựng ${word.id} · ${word.topicId}`,
+      reason: "Mục từ vựng được đánh dấu needsReview; cần xác minh âm Hán Việt hoặc ví dụ.",
+      hskLevel: word.hskLevel,
+      chineseText: word.hanzi,
+      pinyin: word.pinyin,
+      vietnamese: word.vietnamese,
+      explanation: `${word.hanViet} · ${word.exampleZh} · ${word.examplePinyin} · ${word.exampleVn}`,
+    }));
+    const grammarItems = grammarLessons.filter((lesson) => lesson.needsReview).map((lesson): ContentReviewItem => ({
+      id: `grammar:${lesson.id}`,
+      kind: "grammar",
+      title: lesson.title,
+      source: `Bài học ngữ pháp ${lesson.id}`,
+      reason: lesson.reviewNote ?? "Bài học cần được biên tập và xác nhận nguồn.",
+      hskLevel: lesson.hskLevel,
+      chineseText: lesson.structure,
+      explanation: lesson.explanation,
+    }));
+    return [...grammarItems, ...questionItems, ...vocabularyItems];
   }
 
   async getExams(topicId: string): Promise<Exam[]> {
