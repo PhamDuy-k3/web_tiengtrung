@@ -19,8 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" translate="no" className="notranslate">
       <head>
+        <meta name="google" content="notranslate" />
         {/* Google Fonts — loaded via link to bypass next/font CJK + Vietnamese subset bug on Vercel */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
