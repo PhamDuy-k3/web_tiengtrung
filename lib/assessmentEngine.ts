@@ -376,9 +376,23 @@ export function generateAssessmentTest(params?: {
     const chosen = shuffled.slice(0, questionsPerLevel);
 
     for (const q of chosen) {
+      const entries = Object.entries(q.options) as [("A" | "B" | "C" | "D"), string][];
+      const correctText = q.options[q.answer];
+      const shuffledValues = entries.map(([, val]) => val).sort(() => Math.random() - 0.5);
+      const keys = ["A", "B", "C", "D"] as const;
+      const newOptions = {
+        A: shuffledValues[0],
+        B: shuffledValues[1],
+        C: shuffledValues[2],
+        D: shuffledValues[3],
+      };
+      const newAnswerIndex = shuffledValues.indexOf(correctText);
+      const newAnswer = keys[newAnswerIndex >= 0 ? newAnswerIndex : 0];
       selectedQuestions.push({
         ...q,
         id: currentId++,
+        options: newOptions,
+        answer: newAnswer,
       });
     }
   }

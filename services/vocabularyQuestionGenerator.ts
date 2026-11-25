@@ -1,8 +1,10 @@
 import type { Exam, Question } from "@/types";
 import type { VocabularyItem } from "@/data/mock/vocabulary";
+import { shuffleArray } from "@/lib/shuffle";
 
 function choicesFor<T>(items: VocabularyItem[], item: VocabularyItem, value: (word: VocabularyItem) => T): T[] {
-  return [item, ...items.filter((candidate) => candidate.id !== item.id).slice(0, 3)].map(value);
+  const distractors = shuffleArray(items.filter((candidate) => candidate.id !== item.id)).slice(0, 3);
+  return shuffleArray([item, ...distractors]).map(value);
 }
 
 export function generateVocabularyQuestions(vocabulary: VocabularyItem[]): Question[] {

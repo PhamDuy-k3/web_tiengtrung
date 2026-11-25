@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { QuestionComponentProps } from "./WordOrderQuestion";
 import { soundService } from "@/lib/sound";
+import { shuffleArray } from "@/lib/shuffle";
 import {
   getLevelDifficultyConfig,
   LOOKALIKE_CHARACTERS_MAP,
@@ -30,7 +31,7 @@ export const FillInBlankQuestion: React.FC<QuestionComponentProps> = ({
 
   // Inject deceptive lookalike distractors, homophones, and syntax traps into options
   const correctStr = String(question.correctAnswer || "").trim();
-  const options = useMemo(() => {
+  const rawOptions = useMemo(() => {
     const list = [...baseOptions];
     const addDistractor = (cand: string) => {
       if (cand && !list.includes(cand) && list.length < 6) {
@@ -58,6 +59,12 @@ export const FillInBlankQuestion: React.FC<QuestionComponentProps> = ({
     }
     return list;
   }, [baseOptions, correctStr]);
+
+  const [options, setOptions] = useState<string[]>(rawOptions);
+
+  useEffect(() => {
+    setOptions(shuffleArray(rawOptions));
+  }, [question.id, rawOptions]);
 
   const handleSelect = (option: string) => {
     if (disabled) return;

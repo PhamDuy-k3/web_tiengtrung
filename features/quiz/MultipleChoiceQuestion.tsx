@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { QuestionComponentProps } from "./WordOrderQuestion";
 import { soundService } from "@/lib/sound";
+import { shuffleArray } from "@/lib/shuffle";
 
 export const MultipleChoiceQuestion: React.FC<QuestionComponentProps> = ({
   question,
@@ -10,7 +11,11 @@ export const MultipleChoiceQuestion: React.FC<QuestionComponentProps> = ({
   onChange,
   disabled = false,
 }) => {
-  const options = question.options || [];
+  const [options, setOptions] = useState<string[]>(() => question.options || []);
+
+  useEffect(() => {
+    setOptions(shuffleArray(question.options || []));
+  }, [question.id, question.options]);
 
   const handleSelect = (option: string) => {
     if (disabled) return;
