@@ -15,7 +15,7 @@ export const BottomNav: React.FC = () => {
   const items = [
     { href: "/",         label: "Học",      icon: BookOpen   },
     { href: "/roadmap",  label: "Lộ trình", icon: Compass    },
-    { href: "/chat",     label: "Trò chuyện", icon: MessageCircle },
+    // { href: "/chat",     label: "Trò chuyện", icon: MessageCircle },
     { href: "/mistakes", label: "Sổ lỗi",   icon: ShieldCheck },
     { href: "/stats",    label: "Thống kê", icon: BarChart2  },
     { href: "/profile",  label: "Hồ sơ",    icon: User       },
