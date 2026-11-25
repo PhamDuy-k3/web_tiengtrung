@@ -230,7 +230,7 @@ export default function LearnTopicPage() {
           <h2 className="text-xl sm:text-2xl font-black text-ink">Bài học đã hoàn thành!</h2>
           <p className="text-sm text-ink-muted">Đã thêm {cards.length} từ vào lịch ôn SRS. Bây giờ bạn có thể luyện đề của chủ đề này.</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link href={`/practice/generated-vocab-${topic.id}`} className="px-5 py-2.5 rounded-xl border border-celadon-300 font-bold inline-flex items-center gap-2">Luyá»‡n cÃ¢u tá»« vá»±ng tá»± sinh <ArrowRight size={16} /></Link>
+            <Link href={`/practice/generated-vocab-${topic.id}`} className="px-5 py-2.5 rounded-xl border border-celadon-300 font-bold inline-flex items-center gap-2">Luyện câu từ vựng tự sinh <ArrowRight size={16} /></Link>
             <button type="button" onClick={() => { setCardIndex(0); setStep("cards"); }} className="px-5 py-2.5 rounded-xl border border-parchment-300 font-bold">Xem lại thẻ</button>
             <Link href={practiceHref} className="px-5 py-2.5 rounded-xl bg-celadon text-white font-bold inline-flex items-center gap-2">Vào luyện đề <ArrowRight size={16} /></Link>
           </div>

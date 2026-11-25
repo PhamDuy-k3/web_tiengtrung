@@ -72,9 +72,9 @@ export function validateExamData(exams: Exam[]): string[] {
           break;
         case "hanzi_write":
           if (!question.chineseText?.trim() || Array.from(question.chineseText).length !== 1) {
-            errors.push(`${label}: hanzi_write cáº§n Ä‘Ãºng má»™t chá»¯ HÃ¡n trong chineseText.`);
+            errors.push(`${label}: hanzi_write cần đúng một chữ Hán trong chineseText.`);
           }
-          if (typeof question.correctAnswer !== "string") errors.push(`${label}: hanzi_write cáº§n Ä‘Ã¡p Ã¡n chuá»—i.`);
+          if (typeof question.correctAnswer !== "string") errors.push(`${label}: hanzi_write cần đáp án chuỗi.`);
           break;
       }
     }

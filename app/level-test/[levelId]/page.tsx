@@ -62,7 +62,7 @@ export default function LevelTestPage() {
     );
   }
 
-  if (!exam) {
+  if (!exam || exam.questions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="text-2xl font-bold">Không thể tải đề thi lên cấp</h2>
@@ -224,11 +224,18 @@ export default function LevelTestPage() {
   // ACTIVE LEVEL TEST PLAYING VIEW
   const currentQuestion = exam.questions[currentIndex];
   const totalQuestions = exam.questions.length;
-  const currentAnswer = answers[currentQuestion.id];
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
 
-  const answeredCount = Object.keys(answers).filter(
-    (k) => answers[k] !== undefined && answers[k] !== "" && answers[k] !== null
-  ).length;
+  const answeredCount = Object.keys(answers).filter((k) => {
+    const val = answers[k];
+    return (
+      val !== undefined &&
+      val !== "" &&
+      val !== null &&
+      (!Array.isArray(val) || val.length > 0) &&
+      (typeof val !== "object" || Object.keys(val).length > 0)
+    );
+  }).length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">

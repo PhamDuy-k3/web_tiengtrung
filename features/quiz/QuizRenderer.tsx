@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnswerValue, Question } from "@/types";
 import { WordOrderQuestion } from "./WordOrderQuestion";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
@@ -55,9 +55,17 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
   const diffConfig = getLevelDifficultyConfig(question.hskLevel);
   const [showPinyinHint, setShowPinyinHint] = useState(diffConfig.showPinyinByDefault);
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("Sai Ä‘Ã¡p Ã¡n");
+  const [reportReason, setReportReason] = useState("Sai đáp án");
   const [reportDetails, setReportDetails] = useState("");
   const [reportState, setReportState] = useState("");
+
+  useEffect(() => {
+    setShowPinyinHint(diffConfig.showPinyinByDefault);
+    setReportOpen(false);
+    setReportReason("Sai đáp án");
+    setReportDetails("");
+    setReportState("");
+  }, [question.id, diffConfig.showPinyinByDefault]);
 
   const badgeClass = getLevelBadgeClass(question.hskLevel);
   const levelLabel = getLevelLabel(question.hskLevel);
@@ -175,45 +183,45 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
         {(() => {
           switch (question.type) {
             case "word_order":
-              return <WordOrderQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <WordOrderQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "multiple_choice":
-              return <MultipleChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <MultipleChoiceQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "fill_in_blank":
-              return <FillInBlankQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <FillInBlankQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "matching":
-              return <MatchingQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <MatchingQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "listen_choice":
-              return <ListenChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <ListenChoiceQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "listen_word_order":
-              return <ListenWordOrderQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <ListenWordOrderQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "pinyin_choice":
-              return <PinyinChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <PinyinChoiceQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "short_translate":
-              return <ShortTranslateQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <ShortTranslateQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "hanzi_write":
-              return <HanziWriteQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+              return <HanziWriteQuestion key={question.id} question={question} value={value} onChange={onChange} disabled={disabled} />;
             default:
               return <div className="text-ink-light text-sm">Dạng câu hỏi chưa được hỗ trợ.</div>;
           }
         })()}
       </div>
-      {question.grammarPointId && <Link href={`/grammar/${question.grammarPointId}`} className="inline-flex rounded-xl bg-celadon-50 px-3 py-2 text-sm font-bold text-celadon-dark hover:underline">Xem ghi chÃº ngá»¯ phÃ¡p</Link>}
+      {question.grammarPointId && <Link href={`/grammar/${question.grammarPointId}`} className="inline-flex rounded-xl bg-celadon-50 px-3 py-2 text-sm font-bold text-celadon-dark hover:underline">Xem ghi chú ngữ pháp</Link>}
       {onReport && <div className="border-t border-parchment-200 pt-3">
-        {!reportOpen ? <button type="button" onClick={() => setReportOpen(true)} className="text-sm font-semibold text-ink-muted underline">BÃ¡o cÃ¢u há»i cÃ³ lá»—i</button> :
+        {!reportOpen ? <button type="button" onClick={() => setReportOpen(true)} className="text-sm font-semibold text-ink-muted underline">Báo câu hỏi có lỗi</button> :
           <form className="space-y-2" onSubmit={async (event) => {
             event.preventDefault(); setReportState("");
-            try { await onReport({ reason: reportReason, details: reportDetails.trim() || undefined }); setReportState("ÄÃ£ ghi nháº­n bÃ¡o cÃ¡o."); setReportOpen(false); }
-            catch { setReportState("ChÆ°a lÆ°u Ä‘Æ°á»£c. HÃ£y thá»­ láº¡i."); }
+            try { await onReport({ reason: reportReason, details: reportDetails.trim() || undefined }); setReportState("Đã ghi nhận báo cáo."); setReportOpen(false); }
+            catch { setReportState("Chưa lưu được. Hãy thử lại."); }
           }}>
-            <label className="block text-sm font-semibold">LÃ½ do
+            <label className="block text-sm font-semibold">Lý do
               <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2">
-                {["Sai Ä‘Ã¡p Ã¡n", "Lá»—i chÃ­nh táº£/Pinyin", "CÃ¢u há»i khÃ³ hiá»ƒu", "LÃ½ do khÃ¡c"].map((reason) => <option key={reason}>{reason}</option>)}
+                {["Sai đáp án", "Lỗi chính tả/Pinyin", "Câu hỏi khó hiểu", "Lý do khác"].map((reason) => <option key={reason}>{reason}</option>)}
               </select>
             </label>
-            <label className="block text-sm font-semibold">Ghi chÃº (khÃ´ng báº¯t buá»™c)
+            <label className="block text-sm font-semibold">Ghi chú (không bắt buộc)
               <textarea value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} maxLength={500} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2" rows={2} />
             </label>
-            <div className="flex gap-2"><button type="submit" className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-white">Gá»­i bÃ¡o cÃ¡o</button><button type="button" onClick={() => setReportOpen(false)} className="rounded-xl border px-3 py-2 text-sm">Há»§y</button></div>
+            <div className="flex gap-2"><button type="submit" className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-white">Gửi báo cáo</button><button type="button" onClick={() => setReportOpen(false)} className="rounded-xl border px-3 py-2 text-sm">Hủy</button></div>
           </form>}
         {reportState && <p role="status" className="mt-2 text-sm">{reportState}</p>}
       </div>}

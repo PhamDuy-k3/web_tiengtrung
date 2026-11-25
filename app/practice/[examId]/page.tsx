@@ -114,9 +114,14 @@ export default function ExamPracticePage() {
         sessionStartElapsed.current = useQuizDraftStore.getState().elapsedSeconds;
         const loaded = await repository.getExam(examId);
         if (loaded && pageMode === "quick") {
-          setExam({ ...loaded, title: `Luyện nhanh · ${loaded.title}`, questions: loaded.questions.slice(0, 8), timeLimitSeconds: undefined });
+          const quickQuestions = loaded.questions.slice(0, 8);
+          setExam({ ...loaded, title: `Luyện nhanh · ${loaded.title}`, questions: quickQuestions, timeLimitSeconds: undefined });
+          setCurrentIndex((prev) => (quickQuestions.length > 0 && prev >= quickQuestions.length ? 0 : prev));
         } else {
           setExam(loaded);
+          if (loaded && loaded.questions.length > 0) {
+            setCurrentIndex((prev) => (prev >= loaded.questions.length ? 0 : prev));
+          }
         }
       } catch (e) {
         console.error("Lỗi tải đề thi:", e);
@@ -303,6 +308,19 @@ export default function ExamPracticePage() {
     (!Array.isArray(currentAnswer) || currentAnswer.length > 0) &&
     (typeof currentAnswer !== "object" || Object.keys(currentAnswer).length > 0);
 
+  const keyboardActionsRef = useRef({
+    handleCheckCurrentQuestion,
+    handleConfirmSubmit,
+    handleNext,
+    handlePrev,
+  });
+  keyboardActionsRef.current = {
+    handleCheckCurrentQuestion,
+    handleConfirmSubmit,
+    handleNext,
+    handlePrev,
+  };
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     if (!exam || !currentQuestion) return;
@@ -314,20 +332,20 @@ export default function ExamPracticePage() {
       if (e.key === "Enter") {
         e.preventDefault();
         if (!isMockExam && hasSelectedAnswer && !currentQCheck?.checked) {
-          handleCheckCurrentQuestion();
+          keyboardActionsRef.current.handleCheckCurrentQuestion();
         } else {
           if (currentIndex < totalQuestions - 1) {
-            handleNext();
+            keyboardActionsRef.current.handleNext();
           } else {
-            handleConfirmSubmit();
+            keyboardActionsRef.current.handleConfirmSubmit();
           }
         }
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        handlePrev();
+        keyboardActionsRef.current.handlePrev();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        handleNext();
+        keyboardActionsRef.current.handleNext();
       } else if (e.code === "Space") {
         if (currentQuestion.chineseText) {
           e.preventDefault();

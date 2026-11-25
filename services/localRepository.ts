@@ -613,7 +613,7 @@ class LocalRepository implements IRepository {
     const store = this.loadStorage();
     const saved = { ...report, id: `report-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, createdAt: new Date().toISOString() };
     store.reportedQuestions.push(saved);
-    if (!this.saveStorage(store)) throw new Error("KhÃ´ng lÆ°u Ä‘Æ°á»£c bÃ¡o cÃ¡o vÃ o thiáº¿t bá»‹ nÃ y.");
+    if (!this.saveStorage(store)) throw new Error("Không lưu được báo cáo vào thiết bị này.");
     return saved;
   }
 
@@ -953,6 +953,7 @@ class LocalRepository implements IRepository {
       listen_word_order: "Nghe xếp lại câu",
       pinyin_choice: "Chọn Pinyin chuẩn",
       short_translate: "Dịch câu ngắn",
+      hanzi_write: "Luyện viết chữ Hán",
     };
 
     attempts.forEach((att) => {

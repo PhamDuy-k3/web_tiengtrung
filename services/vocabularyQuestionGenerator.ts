@@ -89,8 +89,12 @@ export function generateVocabularyQuestions(vocabulary: VocabularyItem[]): Quest
 
 export function generateVocabularyExam(topicId: string, vocabulary: VocabularyItem[]): Exam {
   const questions = generateVocabularyQuestions(vocabulary);
-  const levelId: Exam["levelId"] = topicId.startsWith("advanced-") ? "advanced"
-    : topicId.startsWith("inter-") ? "intermediate" : "basic";
+  const levelId: Exam["levelId"] =
+    topicId.startsWith("adv-") || topicId.startsWith("advanced-")
+      ? "advanced"
+      : topicId.startsWith("inter-")
+      ? "intermediate"
+      : "basic";
   return {
     id: `generated-vocab-${topicId}`,
     topicId,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { QuestionComponentProps } from "./WordOrderQuestion";
 import { soundService } from "@/lib/sound";
 import { shuffleArray } from "@/lib/shuffle";
@@ -17,7 +17,7 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
   disabled = false,
 }) => {
   const diffConfig = getLevelDifficultyConfig(question.hskLevel);
-  const pairs = question.pairs || [];
+  const pairs = useMemo(() => question.pairs ?? [], [question.pairs]);
   // value is Record<pairId, selectedRightText>
   const currentMatches: Record<string, string> =
     value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -26,6 +26,7 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
   const [shuffledRights, setShuffledRights] = useState<{ id: string; text: string }[]>([]);
 
   useEffect(() => {
+    setSelectedLeft(null);
     // 1. Correct right answers
     const correctRights = pairs.map((p) => ({ id: `correct-${p.id}`, text: p.right }));
 
@@ -45,6 +46,7 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
     // Combine correct items + smart distractors -> đúng chuẩn chủ đề
     const combined = [...correctRights, ...distractorItems];
     setShuffledRights(shuffleArray(combined));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     question.id,
     question.distractors,
@@ -193,7 +195,7 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
               );
               const isMatched = !!matchedLeftId;
               const leftIndex = pairs.findIndex((p) => p.id === matchedLeftId);
-              const colorClass = isMatched ? colors[leftIndex % colors.length] : "";
+              const colorClass = isMatched && leftIndex >= 0 ? colors[leftIndex % colors.length] : "";
 
               return (
                 <div

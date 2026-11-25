@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Timer, Eye, EyeOff } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
@@ -21,25 +21,39 @@ export const QuizTimer: React.FC<QuizTimerProps> = ({
 }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isVisible, setIsVisible] = useState(true);
+  const secondsRef = useRef(initialSeconds);
+  const timedOutRef = useRef(false);
+  const onTickRef = useRef(onTick);
+  const onTimeUpRef = useRef(onTimeUp);
+
+  useEffect(() => {
+    onTickRef.current = onTick;
+  }, [onTick]);
+
+  useEffect(() => {
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
 
   useEffect(() => {
     if (!isRunning) return;
 
     const interval = setInterval(() => {
-      setSeconds((prev) => {
-        const next = prev + 1;
-        if (onTick) onTick(next);
+      const next = secondsRef.current + 1;
+      secondsRef.current = next;
+      setSeconds(next);
+      onTickRef.current?.(next);
 
-        if (timeLimitSeconds && next >= timeLimitSeconds) {
-          clearInterval(interval);
-          if (onTimeUp) onTimeUp();
+      if (timeLimitSeconds && next >= timeLimitSeconds) {
+        clearInterval(interval);
+        if (!timedOutRef.current) {
+          timedOutRef.current = true;
+          onTimeUpRef.current?.();
         }
-        return next;
-      });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, timeLimitSeconds, onTimeUp, onTick]);
+  }, [isRunning, timeLimitSeconds]);
 
   // If countdown mode
   const displaySeconds = timeLimitSeconds ? Math.max(0, timeLimitSeconds - seconds) : seconds;

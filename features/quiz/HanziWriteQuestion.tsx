@@ -25,14 +25,17 @@ export function HanziWriteQuestion({ question, value, onChange, disabled = false
     setComplete(false);
     onChange("");
     writerRef.current.cancelQuiz();
-    void writerRef.current.quiz({ onComplete: () => { setComplete(true); onChange(character); } });
+    void writerRef.current.quiz({ onComplete: () => { setComplete(true); onChange(character); } }).catch(() => {
+      setError("Không tải được dữ liệu nét chữ. Kiểm tra kết nối rồi thử lại.");
+    });
   };
 
   useEffect(() => {
     let active = true;
     const root = mountRef.current;
+    setComplete(false);
     if (!root || !character) {
-      setError("CÃ¢u há»i chÆ°a cÃ³ má»™t chá»¯ HÃ¡n há»£p lá»‡.");
+      setError("Câu hỏi chưa có một chữ Hán hợp lệ.");
       setLoading(false);
       return;
     }
@@ -54,14 +57,19 @@ export function HanziWriteQuestion({ question, value, onChange, disabled = false
         onLoadCharDataError: () => {
           if (active) {
             setLoading(false);
-            setError("KhÃ´ng táº£i Ä‘Æ°á»£c dá»¯ liá»‡u nÃ©t chá»¯. Kiá»ƒm tra káº¿t ná»‘i rá»“i thá»­ láº¡i.");
+            setError("Không tải được dữ liệu nét chữ. Kiểm tra kết nối rồi thử lại.");
           }
         },
       });
       writerRef.current = writer;
-      void writer.quiz({ onComplete: () => { if (active) { setComplete(true); onChange(character); } } });
+      void writer.quiz({ onComplete: () => { if (active) { setComplete(true); onChange(character); } } }).catch(() => {
+        if (active) {
+          setLoading(false);
+          setError("Không tải được dữ liệu nét chữ. Kiểm tra kết nối rồi thử lại.");
+        }
+      });
     }).catch(() => {
-      if (active) { setLoading(false); setError("KhÃ´ng khá»Ÿi táº¡o Ä‘Æ°á»£c bá»™ luyá»‡n viáº¿t."); }
+      if (active) { setLoading(false); setError("Không khởi tạo được bộ luyện viết."); }
     });
     return () => {
       active = false;
@@ -77,19 +85,19 @@ export function HanziWriteQuestion({ question, value, onChange, disabled = false
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-ink-light">Viáº¿t Ä‘Ãºng thá»© tá»± nÃ©t cho chá»¯ Ä‘ang áº©n trong Ã´ bÃªn dÆ°á»›i.</p>
+      <p className="text-sm text-ink-light">Viết đúng thứ tự nét cho chữ đang ẩn trong ô bên dưới.</p>
       <div className="relative mx-auto w-fit rounded-2xl border border-parchment-300 bg-white p-2">
-        <div ref={mountRef} aria-label="VÃ¹ng luyá»‡n viáº¿t chá»¯ HÃ¡n" />
-        {loading && !error && <div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/85 text-sm">Äang táº£i nÃ©t chá»¯â€¦</div>}
+        <div ref={mountRef} aria-label="Vùng luyện viết chữ Hán" />
+        {loading && !error && <div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/85 text-sm">Đang tải nét chữ…</div>}
         {error && <div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/95 p-4 text-center text-sm text-red-700">{error}</div>}
       </div>
-      {error && <button type="button" onClick={() => { setError(""); setLoading(true); setComplete(false); setRetryKey((key) => key + 1); }} className="rounded-xl border px-3 py-2 text-sm font-semibold">Thá»­ láº¡i</button>}
+      {error && <button type="button" onClick={() => { setError(""); setLoading(true); setComplete(false); setRetryKey((key) => key + 1); }} className="rounded-xl border px-3 py-2 text-sm font-semibold">Thử lại</button>}
       {!error && <div className="flex justify-center gap-2">
-        <button type="button" disabled={disabled || loading} onClick={startQuiz} className="rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50">Viáº¿t láº¡i</button>
-        <button type="button" disabled={disabled || loading} onClick={() => writerRef.current?.animateCharacter()} className="rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50">Xem thá»© tá»± nÃ©t</button>
+        <button type="button" disabled={disabled || loading} onClick={startQuiz} className="rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50">Viết lại</button>
+        <button type="button" disabled={disabled || loading} onClick={() => writerRef.current?.animateCharacter()} className="rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50">Xem thứ tự nét</button>
       </div>}
-      {complete && <p role="status" className="text-center text-sm font-bold text-celadon-dark">HoÃ n thÃ nh! ÄÃ£ ghi nháº­n cÃ¢u tráº£ lá»i.</p>}
-      {typeof value === "string" && value && <span className="sr-only">ÄÃ£ hoÃ n thÃ nh viáº¿t chá»¯.</span>}
+      {complete && <p role="status" className="text-center text-sm font-bold text-celadon-dark">Hoàn thành! Đã ghi nhận câu trả lời.</p>}
+      {typeof value === "string" && value && <span className="sr-only">Đã hoàn thành viết chữ.</span>}
     </div>
   );
 }

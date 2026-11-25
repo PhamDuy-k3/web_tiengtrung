@@ -35,7 +35,7 @@ export class RemoteRepository implements IRepository {
 
   async getLevels(): Promise<Level[]> {
     // TODO: fetch(`${this.baseUrl}/levels`)
-    throw new Error("Remote API chưa được kết nối. Vui lòng sử dụng localRepository.");
+    throw new Error("Remote API chưa hỗ trợ tạo câu hỏi từ vựng.");
   }
 
   async getLevel(levelId: LevelId): Promise<Level | null> {
@@ -54,11 +54,11 @@ export class RemoteRepository implements IRepository {
   }
 
   async getGrammarLesson(_grammarPointId: string): Promise<GrammarLesson | null> {
-    throw new Error("Remote API chÆ°a há»— trá»£ bÃ i há»c ngá»¯ phÃ¡p.");
+    throw new Error("Remote API chưa hỗ trợ bài học ngữ pháp.");
   }
 
   async getContentReviewItems(): Promise<ContentReviewItem[]> {
-    throw new Error("Remote API chÆ°a há»— trá»£ hÃ ng Ä‘á»£i kiá»ƒm duyá»‡t ná»™i dung.");
+    throw new Error("Remote API chưa hỗ trợ hàng đợi kiểm duyệt nội dung.");
   }
 
   async getExams(topicId: string): Promise<Exam[]> {
@@ -72,7 +72,7 @@ export class RemoteRepository implements IRepository {
   }
 
   async generateVocabularyExam(_topicId: string): Promise<Exam> {
-    throw new Error("Remote API chÆ°a há»— trá»£ táº¡o cÃ¢u há»i tá»« vá»±ng.");
+    throw new Error("Remote API chưa hỗ trợ tạo câu hỏi từ vựng.");
   }
 
   async getAllExams(): Promise<Exam[]> {
@@ -139,7 +139,7 @@ export class RemoteRepository implements IRepository {
   }
 
   async reportQuestion(_report: Omit<QuestionReport, "id" | "createdAt">): Promise<QuestionReport> {
-    throw new Error("Remote API chÆ°a há»— trá»£ bÃ¡o lá»—i cÃ¢u há»i.");
+    throw new Error("Remote API chưa hỗ trợ báo lỗi câu hỏi.");
   }
 
   async getMistakes(): Promise<MistakeEntry[]> {

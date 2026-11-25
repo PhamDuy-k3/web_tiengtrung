@@ -253,7 +253,12 @@ export default function ChatPage() {
     rec.onerror = () => setListening(false);
     recognitionRef.current = rec;
     setListening(true);
-    rec.start();
+    try {
+      rec.start();
+    } catch {
+      setListening(false);
+      recognitionRef.current = null;
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

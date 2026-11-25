@@ -131,14 +131,15 @@ export default function PlacementTestPage() {
         localStorage.setItem("hanyu:assessment_result", JSON.stringify(evaluation));
       } catch {}
 
-      // Tự động mở khóa cấp độ đạt được trong profile
+      // Tự động mở khóa cấp độ đạt được trong profile (giữ nguyên các cấp đã mở trước đó)
       try {
-        const unlocked: LevelId[] = ["basic"];
-        if (evaluation.verified_level >= 3) unlocked.push("intermediate");
-        if (evaluation.verified_level >= 5) unlocked.push("advanced");
+        const existingUnlocked = profile?.unlockedLevels ?? ["basic"];
+        const unlockedSet = new Set<LevelId>(["basic", ...existingUnlocked]);
+        if (evaluation.verified_level >= 3) unlockedSet.add("intermediate");
+        if (evaluation.verified_level >= 5) unlockedSet.add("advanced");
 
         await repository.saveProfile({
-          unlockedLevels: unlocked,
+          unlockedLevels: Array.from(unlockedSet),
         });
         await loadProfile();
 
