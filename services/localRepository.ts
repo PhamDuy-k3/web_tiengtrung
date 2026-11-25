@@ -12,6 +12,8 @@ import {
   QuestionResult,
   Question,
   Badge,
+  LocalStorageData,
+  AnswerValue,
 } from "@/types";
 import {
   mockLevels,
@@ -22,16 +24,10 @@ import {
   getQuestionsByLevel,
 } from "@/data/mock";
 import { shuffleArray } from "@/lib/shuffle";
+import { migrateStorageData } from "@/lib/storageMigration";
 
-const STORAGE_KEY = "hanyu:v1";
-
-interface LocalStorageSchema {
-  version: string;
-  profile: UserProfile;
-  attempts: ExamAttempt[];
-  mistakes: Record<string, MistakeEntry>;
-  progress: Record<string, { bestScore: number; attempts: number }>;
-}
+const STORAGE_KEY = "hanyu:v2";
+const LEGACY_STORAGE_KEY = "hanyu:v1";
 
 const DEFAULT_PROFILE: UserProfile = {
   name: "Học viên Hanyu",
@@ -51,9 +47,9 @@ const DEFAULT_PROFILE: UserProfile = {
   totalXp: 50,
 };
 
-function createInitialStorage(): LocalStorageSchema {
+function createInitialStorage(): LocalStorageData {
   return {
-    version: "1.0",
+    version: "2.0",
     profile: { ...DEFAULT_PROFILE },
     attempts: [],
     mistakes: {},
@@ -66,37 +62,50 @@ class LocalRepository implements IRepository {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private loadStorage(): LocalStorageSchema {
+  private loadStorage(): LocalStorageData {
     if (typeof window === "undefined") {
       return createInitialStorage();
     }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const initial = createInitialStorage();
-        this.saveStorage(initial);
-        return initial;
+
+    const currentRaw = localStorage.getItem(STORAGE_KEY);
+    if (currentRaw) {
+      try {
+        const current = migrateStorageData(JSON.parse(currentRaw) as unknown);
+        if (current) {
+          if (current.version !== "2.0") this.saveStorage(current);
+          return current;
+        }
+      } catch {
+        // Keep the unreadable value intact and try the legacy backup below.
       }
-      const parsed = JSON.parse(raw);
-      // Migration check if needed
-      if (!parsed.version || !parsed.profile) {
-        const reset = createInitialStorage();
-        this.saveStorage(reset);
-        return reset;
-      }
-      return parsed;
-    } catch {
-      const fallback = createInitialStorage();
-      return fallback;
     }
+
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacyRaw) {
+      try {
+        const migrated = migrateStorageData(JSON.parse(legacyRaw) as unknown);
+        if (migrated) {
+          this.saveStorage(migrated);
+          return migrated;
+        }
+      } catch {
+        // Keep legacy data intact; fall back to a fresh in-memory profile.
+      }
+    }
+
+    const initial = createInitialStorage();
+    this.saveStorage(initial);
+    return initial;
   }
 
-  private saveStorage(data: LocalStorageSchema): void {
-    if (typeof window === "undefined") return;
+  private saveStorage(data: LocalStorageData): boolean {
+    if (typeof window === "undefined") return false;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
     } catch (e) {
       console.error("Lỗi ghi dữ liệu vào localStorage:", e);
+      return false;
     }
   }
 
@@ -249,13 +258,14 @@ class LocalRepository implements IRepository {
 
     let correctCount = 0;
     const totalQuestions = Object.keys(payload.answers).length;
+    let totalScore = 0;
     for (const key of Object.keys(payload.answers)) {
-      if (payload.answers[key].isCorrect) {
-        correctCount++;
-      }
+      const answer = payload.answers[key];
+      if (answer.isCorrect) correctCount++;
+      totalScore += answer.score;
     }
 
-    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+    const score = totalQuestions > 0 ? Math.round(totalScore / totalQuestions) : 0;
     const isLevelTest = payload.examId.startsWith("level-test-");
     const passed = isLevelTest ? score >= 80 : score >= 60;
 
@@ -438,7 +448,7 @@ class LocalRepository implements IRepository {
 
   async recordSingleMistake(
     question: Question,
-    userAnswer: any,
+    userAnswer: AnswerValue | null | undefined,
     context?: { examId?: string; examTitle?: string; levelId?: LevelId }
   ): Promise<void> {
     const store = this.loadStorage();
@@ -636,12 +646,12 @@ class LocalRepository implements IRepository {
   async importData(json: string): Promise<boolean> {
     await this.artificialDelay(200);
     try {
-      const parsed = JSON.parse(json);
-      if (!parsed.profile || !parsed.attempts) {
+      const parsed: unknown = JSON.parse(json);
+      const migrated = migrateStorageData(parsed);
+      if (!migrated) {
         return false;
       }
-      this.saveStorage(parsed);
-      return true;
+      return this.saveStorage(migrated);
     } catch {
       return false;
     }

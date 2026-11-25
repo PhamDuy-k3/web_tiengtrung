@@ -15,7 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { repository } from "@/services";
-import { Exam, LevelId, QuestionResult, ExamAttempt, LevelProgressInfo } from "@/types";
+import { AnswerValue, Exam, LevelId, QuestionResult, ExamAttempt, LevelProgressInfo } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { triggerConfetti } from "@/components/ui/Confetti";
@@ -30,7 +30,7 @@ export default function LevelTestPage() {
   const [levelProg, setLevelProg] = useState<LevelProgressInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,10 +80,13 @@ export default function LevelTestPage() {
       const answersResult: Record<string, QuestionResult> = {};
       for (const q of exam.questions) {
         const uAns = answers[q.id];
-        const isCorrect = gradeQuestion(q, uAns);
+        const grade = gradeQuestion(q, uAns);
         answersResult[q.id] = {
           userAnswer: uAns,
-          isCorrect,
+          isCorrect: grade.correct,
+          score: grade.score,
+          matchedAnswer: grade.matchedAnswer,
+          feedback: grade.feedback,
           question: q,
         };
       }

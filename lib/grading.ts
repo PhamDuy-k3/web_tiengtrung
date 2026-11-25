@@ -1,113 +1,173 @@
-import { Question } from "@/types";
+import { AnswerValue, GradeResult, Question } from "@/types";
 
-/**
- * Normalizes text for flexible grading:
- * - strips punctuation (Chinese and Western: 。,.!?，！？、“”"':;)
- * - collapses whitespace
- * - lowercases
- * - strips tone marks if needed for pinyin comparisons
- */
+/** Normalize punctuation and spacing while preserving Chinese and Vietnamese letters. */
 export function normalizeAnswer(text: string): string {
-  if (!text) return "";
   return text
-    .toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'，。！？、；：“”‘’]/g, "")
+    .normalize("NFC")
+    .toLocaleLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'，。！？、；：“”‘’「」『』【】（）［］《》…·—]+/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-/**
- * Normalizes pinyin removing tone marks and formatting:
- * e.g., "Nǐ hǎo" -> "ni hao"
- */
+/** Normalize tone marks and common ü spellings for Pinyin comparisons. */
 export function normalizePinyin(text: string): string {
-  if (!text) return "";
   return normalizeAnswer(text)
+    .replace(/u:/g, "v")
+    .replace(/ü/g, "v")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ü/g, "v")
-    .replace(/ǖ|ǘ|ǚ|ǜ/g, "v");
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-/**
- * Checks if a user's answer is correct for any of the 8 question types
- */
-export function gradeQuestion(question: Question, userAnswer: any): boolean {
-  if (userAnswer === undefined || userAnswer === null) return false;
+function isAnswerRecord(value: AnswerValue): value is Record<string, string> {
+  return !Array.isArray(value) && typeof value === "object";
+}
 
-  switch (question.type) {
-    case "multiple_choice":
-    case "listen_choice":
-    case "pinyin_choice": {
-      if (typeof userAnswer !== "string") return false;
-      const expected = String(question.correctAnswer).trim();
-      return normalizeAnswer(userAnswer) === normalizeAnswer(expected);
-    }
+function candidates(question: Question): AnswerValue[] {
+  return [question.correctAnswer, ...(question.acceptedAnswers ?? [])];
+}
 
-    case "fill_in_blank": {
-      if (typeof userAnswer !== "string") return false;
-      const expected = String(question.correctAnswer).trim();
-      const normUser = normalizeAnswer(userAnswer);
-      const normExp = normalizeAnswer(expected);
-      if (normUser === normExp) return true;
-      if (normalizePinyin(normUser) === normalizePinyin(normExp)) return true;
-      if (question.pinyin && normalizePinyin(normUser) === normalizePinyin(question.pinyin)) return true;
-      return false;
-    }
+function sameText(left: string, right: string): boolean {
+  const normalizedLeft = normalizeAnswer(left);
+  const normalizedRight = normalizeAnswer(right);
+  if (normalizedLeft === normalizedRight) return true;
 
-    case "word_order":
-    case "listen_word_order": {
-      // Support direct typing mode (Intermediate/Advanced self-typing)
-      if (typeof userAnswer === "string") {
-        const expected = Array.isArray(question.correctAnswer)
-          ? question.correctAnswer.join("")
-          : String(question.correctAnswer);
-        const normUser = normalizeAnswer(userAnswer).replace(/\s+/g, "");
-        const normExp = normalizeAnswer(expected).replace(/\s+/g, "");
-        if (normUser === normExp) return true;
-        return normalizePinyin(normUser) === normalizePinyin(normExp);
-      }
-
-      // Support tile ordering mode
-      if (!Array.isArray(userAnswer)) return false;
-      const expected = Array.isArray(question.correctAnswer)
-        ? question.correctAnswer
-        : [String(question.correctAnswer)];
-
-      if (userAnswer.length !== expected.length) return false;
-      return userAnswer.every((tile, idx) => tile === expected[idx]);
-    }
-
-    case "matching": {
-      // userAnswer is Record<leftId, rightId> or array of pairs
-      if (!question.pairs || typeof userAnswer !== "object") return false;
-      const totalPairs = question.pairs.length;
-      let matchedCount = 0;
-
-      for (const pair of question.pairs) {
-        if (userAnswer[pair.id] === pair.right) {
-          matchedCount++;
-        }
-      }
-      return matchedCount === totalPairs;
-    }
-
-    case "short_translate": {
-      if (typeof userAnswer !== "string") return false;
-      const userNorm = normalizeAnswer(userAnswer);
-      const expected = Array.isArray(question.correctAnswer)
-        ? question.correctAnswer
-        : [String(question.correctAnswer)];
-
-      return expected.some((ans) => {
-        const ansNorm = normalizeAnswer(ans);
-        if (userNorm === ansNorm) return true;
-        // Also compare pinyin equivalent if user typed pinyin
-        return normalizePinyin(userNorm) === normalizePinyin(ansNorm);
-      });
-    }
-
-    default:
-      return false;
+  // Only use tone-insensitive matching when the expected text is Pinyin/Latin.
+  if (!/[\u3400-\u9fff]/.test(right)) {
+    return normalizePinyin(left) === normalizePinyin(right);
   }
+  return false;
+}
+
+function textSimilarity(left: string, right: string): number {
+  const a = Array.from(normalizeAnswer(left).replace(/\s/g, ""));
+  const b = Array.from(normalizeAnswer(right).replace(/\s/g, ""));
+  if (a.length === 0 || b.length === 0) return 0;
+
+  const previous = new Array<number>(b.length + 1).fill(0);
+  for (const char of a) {
+    let diagonal = 0;
+    for (let j = 1; j <= b.length; j++) {
+      const old = previous[j];
+      previous[j] = char === b[j - 1]
+        ? diagonal + 1
+        : Math.max(previous[j], previous[j - 1]);
+      diagonal = old;
+    }
+  }
+  return Math.round((previous[b.length] / b.length) * 100);
+}
+
+function partialResult(
+  score: number,
+  matchedAnswer: AnswerValue | null,
+  question: Question
+): GradeResult {
+  const boundedScore = Math.max(0, Math.min(100, Math.round(score)));
+  return {
+    correct: boundedScore === 100,
+    score: boundedScore,
+    matchedAnswer,
+    feedback:
+      boundedScore === 100
+        ? "Chính xác!"
+        : boundedScore > 0
+          ? `Bạn đã làm đúng một phần (${boundedScore}%). ${question.explanation}`
+          : question.explanation,
+  };
+}
+
+function scoreSequence(answer: string[], expected: string[]): number {
+  if (expected.length === 0) return 0;
+  const matched = answer.reduce(
+    (count, token, index) => count + (token === expected[index] ? 1 : 0),
+    0
+  );
+  return Math.round((matched / expected.length) * 100);
+}
+
+/** Grade all eight quiz types and return full/partial credit plus feedback. */
+export function gradeQuestion(
+  question: Question,
+  userAnswer: AnswerValue | null | undefined
+): GradeResult {
+  if (userAnswer === undefined || userAnswer === null) {
+    return partialResult(0, question.correctAnswer, question);
+  }
+
+  const expectedAnswers = candidates(question);
+
+  if (question.type === "matching") {
+    if (!question.pairs || !isAnswerRecord(userAnswer)) {
+      return partialResult(0, question.correctAnswer, question);
+    }
+    const matched = question.pairs.reduce(
+      (count, pair) => count + (userAnswer[pair.id] === pair.right ? 1 : 0),
+      0
+    );
+    return partialResult(
+      question.pairs.length ? (matched / question.pairs.length) * 100 : 0,
+      question.correctAnswer,
+      question
+    );
+  }
+
+  if (question.type === "word_order" || question.type === "listen_word_order") {
+    if (typeof userAnswer === "object" && !Array.isArray(userAnswer)) {
+      return partialResult(0, question.correctAnswer, question);
+    }
+    for (const expected of expectedAnswers) {
+      if (typeof expected === "object" && !Array.isArray(expected)) continue;
+      const expectedText = Array.isArray(expected) ? expected.join("") : expected;
+      const answerText = Array.isArray(userAnswer) ? userAnswer.join("") : userAnswer;
+      if (sameText(answerText, expectedText)) return partialResult(100, expected, question);
+      if (Array.isArray(userAnswer) && Array.isArray(expected) && scoreSequence(userAnswer, expected) === 100) {
+        return partialResult(100, expected, question);
+      }
+    }
+    const answerTokens: string[] = Array.isArray(userAnswer)
+      ? userAnswer
+      : Array.from(userAnswer.replace(/\s/g, ""));
+    const sequenceAnswer = expectedAnswers.find((answer): answer is string[] => Array.isArray(answer));
+    const textAnswer = expectedAnswers.find((answer): answer is string => typeof answer === "string");
+    const bestExpected: AnswerValue = sequenceAnswer ?? textAnswer ?? question.correctAnswer;
+    const expectedTokens: string[] = Array.isArray(bestExpected)
+      ? bestExpected
+      : typeof bestExpected === "string"
+        ? Array.from(bestExpected.replace(/\s/g, ""))
+        : [];
+    return partialResult(scoreSequence(answerTokens, expectedTokens), bestExpected, question);
+  }
+
+  if (question.type === "fill_in_blank" || question.type === "short_translate") {
+    if (typeof userAnswer !== "string") {
+      return partialResult(0, question.correctAnswer, question);
+    }
+    for (const expected of expectedAnswers) {
+      if (typeof expected === "string" && sameText(userAnswer, expected)) {
+        return partialResult(100, expected, question);
+      }
+    }
+    const stringAnswers = expectedAnswers.filter(
+      (answer): answer is string => typeof answer === "string"
+    );
+    const bestMatch = stringAnswers.reduce<{ answer: string | null; score: number }>(
+      (best, expected) => {
+        const score = textSimilarity(userAnswer, expected);
+        return score > best.score ? { answer: expected, score } : best;
+      },
+      { answer: null, score: 0 }
+    );
+    return partialResult(bestMatch.score, bestMatch.answer, question);
+  }
+
+  if (typeof userAnswer !== "string") {
+    return partialResult(0, question.correctAnswer, question);
+  }
+  const matched = expectedAnswers.find(
+    (expected) => typeof expected === "string" && sameText(userAnswer, expected)
+  );
+  return partialResult(matched ? 100 : 0, matched ?? question.correctAnswer, question);
 }

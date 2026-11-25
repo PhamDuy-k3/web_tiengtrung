@@ -10,6 +10,7 @@ import {
   Question,
   LevelProgressInfo,
   QuestionResult,
+  AnswerValue,
 } from "@/types";
 
 export interface IRepository {
@@ -48,7 +49,7 @@ export interface IRepository {
   ): Promise<void>;
   recordSingleMistake?(
     question: Question,
-    userAnswer: any,
+    userAnswer: AnswerValue | null | undefined,
     context?: { examId?: string; examTitle?: string; levelId?: LevelId }
   ): Promise<void>;
   resetMistake(questionId: string): Promise<void>;

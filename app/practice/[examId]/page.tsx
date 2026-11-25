@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { repository } from "@/services";
-import { Exam, QuestionResult } from "@/types";
+import { AnswerValue, Exam, QuestionResult } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { soundService } from "@/lib/sound";
@@ -37,7 +37,7 @@ export default function ExamPracticePage() {
 
   // Instant check feedback state for current question
   const [checkedFeedback, setCheckedFeedback] = useState<{
-    [qId: string]: { isCorrect: boolean; checked: boolean };
+    [qId: string]: { isCorrect: boolean; checked: boolean; score: number; feedback: string };
   }>({});
 
   // Draft store
@@ -110,14 +110,14 @@ export default function ExamPracticePage() {
 
   const progressPercent = totalQuestions > 0 ? Math.round(((currentIndex + 1) / totalQuestions) * 100) : 0;
 
-  const handleAnswerChange = (val: any) => {
+  const handleAnswerChange = (val: AnswerValue) => {
     if (!currentQuestion) return;
     setDraftAnswer(examId, currentQuestion.id, val);
     // Reset check state for this question when answer changes
     if (checkedFeedback[currentQuestion.id]) {
       setCheckedFeedback((prev) => ({
         ...prev,
-        [currentQuestion.id]: { isCorrect: false, checked: false },
+        [currentQuestion.id]: { isCorrect: false, checked: false, score: 0, feedback: "" },
       }));
     }
   };
@@ -128,13 +128,13 @@ export default function ExamPracticePage() {
     if (currentAnswer === undefined || currentAnswer === null || currentAnswer === "") {
       return;
     }
-    const isCorrect = gradeQuestion(currentQuestion, currentAnswer);
+    const grade = gradeQuestion(currentQuestion, currentAnswer);
     setCheckedFeedback((prev) => ({
       ...prev,
-      [currentQuestion.id]: { isCorrect, checked: true },
+      [currentQuestion.id]: { isCorrect: grade.correct, checked: true, score: grade.score, feedback: grade.feedback },
     }));
 
-    if (isCorrect) {
+    if (grade.correct) {
       soundService.playSuccess();
     } else {
       soundService.playError();
@@ -159,8 +159,8 @@ export default function ExamPracticePage() {
       (!Array.isArray(currentAnswer) || currentAnswer.length > 0) &&
       (typeof currentAnswer !== "object" || Object.keys(currentAnswer).length > 0)
     ) {
-      const isCorrect = gradeQuestion(currentQuestion, currentAnswer);
-      if (!isCorrect && repository.recordSingleMistake) {
+      const grade = gradeQuestion(currentQuestion, currentAnswer);
+      if (!grade.correct && repository.recordSingleMistake) {
         await repository.recordSingleMistake(currentQuestion, currentAnswer, {
           examId: exam.id,
           examTitle: exam.title,
@@ -192,10 +192,13 @@ export default function ExamPracticePage() {
       const answersResult: Record<string, QuestionResult> = {};
       for (const q of exam.questions) {
         const uAns = savedAnswers[q.id];
-        const isCorrect = gradeQuestion(q, uAns);
+        const grade = gradeQuestion(q, uAns);
         answersResult[q.id] = {
           userAnswer: uAns,
-          isCorrect,
+          isCorrect: grade.correct,
+          score: grade.score,
+          matchedAnswer: grade.matchedAnswer,
+          feedback: grade.feedback,
           question: q,
         };
       }
@@ -384,9 +387,10 @@ export default function ExamPracticePage() {
                         : "Chưa chính xác — Câu này đã được lưu vào Sổ lỗi sai! 📌"}
                     </span>
                   </div>
-                  {currentQuestion.explanation && (
+                  {currentQCheck.feedback && (
                     <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                      <strong>Giải thích:</strong> {currentQuestion.explanation}
+                      <strong>{currentQCheck.score > 0 && currentQCheck.score < 100 ? `Điểm một phần: ${currentQCheck.score}%. ` : "Giải thích: "}</strong>
+                      {currentQCheck.feedback}
                     </p>
                   )}
                 </div>

@@ -20,7 +20,7 @@ export const MatchingQuestion: React.FC<QuestionComponentProps> = ({
   const pairs = question.pairs || [];
   // value is Record<pairId, selectedRightText>
   const currentMatches: Record<string, string> =
-    value && typeof value === "object" ? value : {};
+    value && typeof value === "object" && !Array.isArray(value) ? value : {};
 
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [shuffledRights, setShuffledRights] = useState<{ id: string; text: string }[]>([]);

@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Question } from "@/types";
+import { AnswerValue, Question } from "@/types";
 
 interface AnswerDiffViewerProps {
   question: Question;
-  userAnswer: any;
+  userAnswer: AnswerValue | null | undefined;
   isCorrect: boolean;
 }
 

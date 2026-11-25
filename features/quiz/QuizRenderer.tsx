@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Question } from "@/types";
+import { AnswerValue, Question } from "@/types";
 import { WordOrderQuestion } from "./WordOrderQuestion";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { FillInBlankQuestion } from "./FillInBlankQuestion";
@@ -16,8 +16,8 @@ import { Eye, EyeOff, Bookmark, BookmarkCheck, Command } from "lucide-react";
 
 interface QuizRendererProps {
   question: Question;
-  value: any;
-  onChange: (val: any) => void;
+  value: AnswerValue | undefined;
+  onChange: (val: AnswerValue) => void;
   disabled?: boolean;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;

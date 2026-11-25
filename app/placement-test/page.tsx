@@ -18,7 +18,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { repository } from "@/services";
-import { LevelId, QuestionResult, Question } from "@/types";
+import { AnswerValue, LevelId, QuestionResult, Question } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { triggerConfetti } from "@/components/ui/Confetti";
 import { soundService } from "@/lib/sound";
@@ -34,8 +34,10 @@ import {
 function mapAssessmentToQuizQuestion(aq: AssessmentQuestion): Question {
   return {
     id: `assess-${aq.id}`,
+    version: 1,
     type: "multiple_choice",
-    hskLevel: Math.min(6, Math.max(1, aq.level)) as any,
+    hskLevel: Math.min(6, Math.max(1, aq.level)) as Question["hskLevel"],
+    difficulty: Math.min(5, Math.max(1, aq.level)) as Question["difficulty"],
     topicId: `hsk-${aq.level}-${aq.skill}`,
     tags: [aq.skill, aq.topicTag || `HSK_${aq.level}`],
     prompt: aq.question,
@@ -54,7 +56,7 @@ export default function PlacementTestPage() {
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,6 +115,9 @@ export default function PlacementTestPage() {
         answersResultForRepo[q.id] = {
           userAnswer: userChoice,
           isCorrect,
+          score: isCorrect ? 100 : 0,
+          matchedAnswer: q.correctAnswer,
+          feedback: isCorrect ? "Chính xác!" : q.explanation,
           question: q,
         };
       });

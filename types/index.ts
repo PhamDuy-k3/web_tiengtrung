@@ -38,10 +38,15 @@ export interface MatchingPair {
   right: string; // Vietnamese meaning
 }
 
+export type AnswerValue = string | string[] | Record<string, string>;
+export type QuestionDifficulty = 1 | 2 | 3 | 4 | 5;
+
 export interface Question {
   id: string;
+  version: number;
   type: QuestionType;
   hskLevel: 1 | 2 | 3 | 4 | 5 | 6;
+  difficulty: QuestionDifficulty;
   topicId: string;
   tags: string[]; // e.g. ['từ_vựng', 'ngữ_pháp_câu_chữ_bả']
   prompt: string;
@@ -55,7 +60,20 @@ export interface Question {
   distractorTiles?: string[]; // Extra distractor tiles for word ordering
   orderDirection?: "zh_to_vn" | "vn_to_zh";
   correctAnswer: string | string[] | Record<string, string>;
+  acceptedAnswers?: AnswerValue[];
+  grammarPointId?: string;
+  vocabIds?: string[];
+  wrongExplanations?: Record<string, string>;
+  needsReview?: boolean;
   explanation: string;
+}
+
+export interface GradeResult {
+  correct: boolean;
+  /** Score from 0 to 100. */
+  score: number;
+  matchedAnswer: AnswerValue | null;
+  feedback: string;
 }
 
 export interface Exam {
@@ -73,8 +91,11 @@ export interface Exam {
 }
 
 export interface QuestionResult {
-  userAnswer: any;
+  userAnswer: AnswerValue | null | undefined;
   isCorrect: boolean;
+  score: number;
+  matchedAnswer: AnswerValue | null;
+  feedback: string;
   question: Question;
 }
 
@@ -105,7 +126,15 @@ export interface MistakeEntry {
   examTitle?: string;
   levelId?: LevelId;
   levelName?: string;
-  lastUserAnswer?: any;
+  lastUserAnswer?: AnswerValue | null;
+}
+
+export interface LocalStorageData {
+  version: "2.0";
+  profile: UserProfile;
+  attempts: ExamAttempt[];
+  mistakes: Record<string, MistakeEntry>;
+  progress: Record<string, { bestScore: number; attempts: number }>;
 }
 
 export interface Badge {

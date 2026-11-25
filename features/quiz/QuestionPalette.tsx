@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { Question } from "@/types";
+import { AnswerValue, Question } from "@/types";
 import { Check, Send, Grid } from "lucide-react";
 
 interface QuestionPaletteProps {
   questions: Question[];
-  answers: Record<string, any>;
+  answers: Record<string, AnswerValue>;
   currentIndex: number;
   onSelectIndex: (idx: number) => void;
   isOpen?: boolean;

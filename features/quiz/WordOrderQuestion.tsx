@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Question } from "@/types";
+import { AnswerValue, Question } from "@/types";
 import { soundService } from "@/lib/sound";
 import { shuffleArray } from "@/lib/shuffle";
 import { RotateCcw, Keyboard, Grid, Sparkles, AlertCircle } from "lucide-react";
@@ -12,8 +12,8 @@ import {
 
 export interface QuestionComponentProps {
   question: Question;
-  value: any;
-  onChange: (val: any) => void;
+  value: AnswerValue | undefined;
+  onChange: (val: AnswerValue) => void;
   disabled?: boolean;
 }
 

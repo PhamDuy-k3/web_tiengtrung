@@ -11,6 +11,7 @@ import {
   LevelProgressInfo,
   QuestionResult,
   Question,
+  AnswerValue,
 } from "@/types";
 
 /**
@@ -117,7 +118,7 @@ export class RemoteRepository implements IRepository {
 
   async recordSingleMistake(
     question: Question,
-    userAnswer: any,
+    userAnswer: AnswerValue | null | undefined,
     context?: { examId?: string; examTitle?: string; levelId?: LevelId }
   ): Promise<void> {
     // TODO: post(`${this.baseUrl}/mistakes/single`, { question, userAnswer, context })

@@ -144,7 +144,7 @@ export const FillInBlankQuestion: React.FC<QuestionComponentProps> = ({
       <div className="p-5 bg-white border border-parchment-300 rounded-3xl shadow-soft text-center">
         <div className="text-sm font-semibold text-ink-muted mb-2">Từ bạn đã điền vào chỗ trống:</div>
         <div className="inline-block min-w-[120px] px-6 py-2.5 rounded-2xl bg-parchment-50 border-2 border-celadon-300 font-chinese text-2xl font-bold text-celadon-dark shadow-inner-soft">
-          {value ? value : "___"}
+          {typeof value === "string" ? value : Array.isArray(value) ? value.join(" ") : "___"}
         </div>
       </div>
 

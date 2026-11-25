@@ -1,13 +1,14 @@
 "use client";
 
 import { create } from "zustand";
+import { AnswerValue } from "@/types";
 
 interface QuizDraftState {
   activeExamId: string | null;
-  savedAnswers: Record<string, any>;
+  savedAnswers: Record<string, AnswerValue>;
   elapsedSeconds: number;
   currentQuestionIndex: number;
-  setDraftAnswer: (examId: string, questionId: string, answer: any) => void;
+  setDraftAnswer: (examId: string, questionId: string, answer: AnswerValue) => void;
   setIndex: (index: number) => void;
   setElapsed: (seconds: number) => void;
   initExam: (examId: string) => void;
@@ -15,6 +16,13 @@ interface QuizDraftState {
 }
 
 const DRAFT_STORAGE_PREFIX = "hanyu_quiz_draft_";
+
+function isAnswerValue(value: unknown): value is AnswerValue {
+  if (typeof value === "string") return true;
+  if (Array.isArray(value)) return value.every((item) => typeof item === "string");
+  return typeof value === "object" && value !== null &&
+    Object.values(value).every((item) => typeof item === "string");
+}
 
 export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
   activeExamId: null,
@@ -27,12 +35,21 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
     try {
       const raw = localStorage.getItem(`${DRAFT_STORAGE_PREFIX}${examId}`);
       if (raw) {
-        const parsed = JSON.parse(raw);
+        const parsed: unknown = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") throw new Error("Invalid quiz draft");
+        const draft = parsed as Record<string, unknown>;
+        const rawAnswers = draft.savedAnswers;
+        const answers: Record<string, AnswerValue> = {};
+        if (rawAnswers && typeof rawAnswers === "object" && !Array.isArray(rawAnswers)) {
+          for (const [id, answer] of Object.entries(rawAnswers)) {
+            if (isAnswerValue(answer)) answers[id] = answer;
+          }
+        }
         set({
           activeExamId: examId,
-          savedAnswers: parsed.savedAnswers || {},
-          elapsedSeconds: parsed.elapsedSeconds || 0,
-          currentQuestionIndex: parsed.currentQuestionIndex || 0,
+          savedAnswers: answers,
+          elapsedSeconds: typeof draft.elapsedSeconds === "number" ? draft.elapsedSeconds : 0,
+          currentQuestionIndex: typeof draft.currentQuestionIndex === "number" ? draft.currentQuestionIndex : 0,
         });
         return;
       }
@@ -47,7 +64,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
     });
   },
 
-  setDraftAnswer: (examId: string, questionId: string, answer: any) => {
+  setDraftAnswer: (examId: string, questionId: string, answer: AnswerValue) => {
     set((state) => {
       const updated = {
         ...state.savedAnswers,

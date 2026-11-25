@@ -241,7 +241,7 @@ export default function ExamResultPage() {
                   ) : (
                     <span className="flex items-center gap-1 text-xs font-bold text-vermillion-deep bg-vermillion-light px-3 py-1 rounded-full border border-vermillion-soft">
                       <XCircle size={14} />
-                      Chưa chính xác
+                      {item.score > 0 ? `Đúng một phần · ${item.score}%` : "Chưa chính xác"}
                     </span>
                   )}
                 </div>
