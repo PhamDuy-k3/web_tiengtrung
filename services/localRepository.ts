@@ -570,8 +570,15 @@ class LocalRepository implements IRepository {
       const questionId = itemId.slice("question:".length);
       const mistake = store.mistakes[questionId];
       if (mistake) {
-        mistake.consecutiveCorrect = updated.repetitions;
-        mistake.isMastered = isSrsMastered(updated);
+        if (quality < 3) {
+          mistake.timesWrong += 1;
+          mistake.lastWrongAt = new Date(reviewedAt).toISOString();
+          mistake.consecutiveCorrect = 0;
+          mistake.isMastered = false;
+        } else {
+          mistake.consecutiveCorrect = updated.repetitions;
+          mistake.isMastered = isSrsMastered(updated);
+        }
       }
     }
     this.saveStorage(store);
