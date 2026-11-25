@@ -18,7 +18,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
-import { repository } from "@/services";
+import { repository, REQUIRED_EXAMS_FOR_LEVEL_TEST } from "@/services";
 import { DailyMissionProgress, Level, LevelProgressInfo, MistakeEntry } from "@/types";
 
 // ── Decorative Hanzi in background ──────────────────────────────
@@ -311,7 +311,7 @@ export default function HomePage() {
           <div>
             <h2 className="text-2xl font-black text-ink">Chọn cấp độ luyện tập</h2>
             <p className="text-xs text-ink-light mt-1">
-              Hoàn thành ≥ 70% số đề đạt ≥ 60% để mở khóa bài kiểm tra lên cấp
+              Hoàn thành ≥ {REQUIRED_EXAMS_FOR_LEVEL_TEST} đề đạt ≥ 60% để mở khóa bài kiểm tra lên cấp
             </p>
           </div>
         </div>
@@ -330,7 +330,7 @@ export default function HomePage() {
                 const prog = levelProgresses[lvl.id] || {
                   totalExams: 16, completedExams: 0, qualifyingExams: 0,
                   percentCompleted: 0, canTakeLevelTest: false,
-                  examsNeededForTest: 12, hasPassedLevelTest: false,
+                  examsNeededForTest: REQUIRED_EXAMS_FOR_LEVEL_TEST, hasPassedLevelTest: false,
                 };
                 const isUnlocked = isHydrated
                   ? (profile?.unlockedLevels.includes(lvl.id) ?? lvl.id === "basic")

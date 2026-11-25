@@ -39,6 +39,7 @@ import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 const STORAGE_KEY = "hanyu:v2";
 const LEGACY_STORAGE_KEY = "hanyu:v1";
+export const REQUIRED_EXAMS_FOR_LEVEL_TEST = 2;
 
 const DEFAULT_PROFILE: UserProfile = {
   name: "Học viên Hanyu",
@@ -904,7 +905,7 @@ class LocalRepository implements IRepository {
     }
 
     const percentCompleted = totalExams > 0 ? Math.round((completedExams / totalExams) * 100) : 0;
-    const requiredQualifying = Math.ceil(totalExams * 0.7); // 70%
+    const requiredQualifying = Math.min(totalExams, REQUIRED_EXAMS_FOR_LEVEL_TEST);
     const canTakeLevelTest = qualifyingExams >= requiredQualifying;
     const examsNeededForTest = Math.max(0, requiredQualifying - qualifyingExams);
     const hasPassedLevelTest = store.profile.completedLevelTests.includes(levelId);

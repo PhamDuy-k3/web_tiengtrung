@@ -18,7 +18,7 @@ import {
   RotateCcw,
   ListChecks,
 } from "lucide-react";
-import { repository } from "@/services";
+import { repository, REQUIRED_EXAMS_FOR_LEVEL_TEST } from "@/services";
 import { Level, LevelId, Topic, Exam, LevelProgressInfo, QuestionType } from "@/types";
 import type { SrsReviewItem } from "@/types/srs";
 import { CustomSelect } from "@/components/ui/CustomSelect";
@@ -211,7 +211,7 @@ export default function LevelDetailPage() {
             </p>
           ) : (
             <p className="text-xs sm:text-sm text-charcoal/70">
-              Tiến độ mở khóa: Đã đạt {levelProg?.qualifyingExams || 0}/{Math.ceil((levelProg?.totalExams || 16) * 0.7)} đề yêu cầu (còn thiếu{" "}
+              Tiến độ mở khóa: Đã đạt {levelProg?.qualifyingExams || 0}/{Math.min(levelProg?.totalExams || REQUIRED_EXAMS_FOR_LEVEL_TEST, REQUIRED_EXAMS_FOR_LEVEL_TEST)} đề yêu cầu (còn thiếu{" "}
               <strong className="text-coral">{levelProg?.examsNeededForTest || 0} đề</strong> nữa).
             </p>
           )}
