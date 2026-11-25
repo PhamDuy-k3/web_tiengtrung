@@ -44,6 +44,8 @@ export function validateExamData(exams: Exam[]): string[] {
         errors.push(`${label}: acceptedAnswers có đáp án rỗng.`);
       }
 
+      if (question.needsReview === true) continue;
+
       switch (question.type) {
         case "multiple_choice":
         case "listen_choice":
@@ -71,6 +73,12 @@ export function validateExamData(exams: Exam[]): string[] {
     }
   }
   return errors;
+}
+
+export function listQuestionsNeedingReview(exams: Exam[]): string[] {
+  return exams.flatMap((exam) => exam.questions
+    .filter((question) => question.needsReview === true)
+    .map((question) => `${exam.id}/${question.id}`));
 }
 
 export function formatValidationErrors(errors: string[]): string {

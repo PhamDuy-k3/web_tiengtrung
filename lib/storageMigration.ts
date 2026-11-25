@@ -24,6 +24,14 @@ function difficultyFor(hskLevel: number): 1 | 2 | 3 | 4 | 5 {
   return Math.min(5, Math.max(1, hskLevel)) as 1 | 2 | 3 | 4 | 5;
 }
 
+function stableQuestionId(value: UnknownRecord): string {
+  // The v1 bank accidentally reused this ID for two different listening questions.
+  if (value.id === "i-sk-4-8" && value.chineseText === "笑一笑，十年少。") {
+    return "i-sk-3-8";
+  }
+  return value.id as string;
+}
+
 function migrateQuestion(value: unknown): Question | null {
   if (!isRecord(value) ||
     typeof value.id !== "string" ||
@@ -40,7 +48,7 @@ function migrateQuestion(value: unknown): Question | null {
 
   return {
     ...value,
-    id: value.id,
+    id: stableQuestionId(value),
     version: typeof value.version === "number" && value.version > 0 ? value.version : 1,
     type: value.type as Question["type"],
     hskLevel: value.hskLevel as Question["hskLevel"],
@@ -87,7 +95,7 @@ function migrateAttempt(value: unknown): ExamAttempt | null {
   for (const [id, rawResult] of Object.entries(value.answers)) {
     const result = migrateQuestionResult(rawResult);
     if (!result) return null;
-    answers[id] = result;
+    answers[result.question.id || id] = result;
   }
   const score = typeof value.score === "number" ? value.score : 0;
   return {
@@ -112,7 +120,7 @@ function migrateMistake(value: unknown): MistakeEntry | null {
   if (!question) return null;
   return {
     ...value,
-    questionId: value.questionId,
+    questionId: question.id,
     question,
     timesWrong: typeof value.timesWrong === "number" ? value.timesWrong : 0,
     consecutiveCorrect: typeof value.consecutiveCorrect === "number" ? value.consecutiveCorrect : 0,
@@ -151,7 +159,7 @@ export function migrateStorageData(value: unknown): LocalStorageData | null {
     for (const [id, rawMistake] of Object.entries(value.mistakes)) {
       const mistake = migrateMistake(rawMistake);
       if (!mistake) return null;
-      mistakes[id] = mistake;
+      mistakes[mistake.questionId || id] = mistake;
     }
   }
 

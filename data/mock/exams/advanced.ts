@@ -1191,7 +1191,7 @@ export const advancedExams: Exam[] = [
     questions: [
       {
         id: "a-vh-1-1",
-        type: "matching",
+        type: "word_order",
         hskLevel: 5,
         version: 1,
         difficulty: 5,
@@ -1246,6 +1246,7 @@ export const advancedExams: Exam[] = [
         prompt: "Ghép các ngụ ngôn thành ngữ nổi tiếng với bài học triết lý nhân sinh:",
         options: ["亡羊补牢","守株待兔","掩耳盗铃","叶公好龙"],
         correctAnswer: {"ng1":"自欺欺人，企图用可笑谎言掩盖事实真相","ng2":"心存侥幸，妄想不劳而获坐享其成","ng3":"拘泥成法，不知道随客观环境变化而变通","ng4":"祸福相依，在顺境与逆境中都应保持平常心"},
+        needsReview: true,
         explanation: "Nội hàm triết lý 4 đại ngụ ngôn kinh điển HSK 5-6.",
       },
       {

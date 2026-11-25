@@ -12,11 +12,13 @@ export function normalizeAnswer(text: string): string {
 
 /** Normalize tone marks and common ü spellings for Pinyin comparisons. */
 export function normalizePinyin(text: string): string {
-  return normalizeAnswer(text)
+  return text
+    .toLocaleLowerCase()
     .replace(/u:/g, "v")
-    .replace(/ü/g, "v")
+    .replace(/[üǖǘǚǜ]/g, "v")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'，。！？、；：“”‘’「」『』【】（）［］《》…·—]+/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -127,32 +129,38 @@ export function gradeQuestion(
         return partialResult(100, expected, question);
       }
     }
-    const answerTokens: string[] = Array.isArray(userAnswer)
-      ? userAnswer
-      : Array.from(userAnswer.replace(/\s/g, ""));
     const sequenceAnswer = expectedAnswers.find((answer): answer is string[] => Array.isArray(answer));
     const textAnswer = expectedAnswers.find((answer): answer is string => typeof answer === "string");
     const bestExpected: AnswerValue = sequenceAnswer ?? textAnswer ?? question.correctAnswer;
-    const expectedTokens: string[] = Array.isArray(bestExpected)
-      ? bestExpected
+    if (Array.isArray(userAnswer)) {
+      const expectedTokens = Array.isArray(bestExpected)
+        ? bestExpected
+        : typeof bestExpected === "string"
+          ? Array.from(bestExpected.replace(/\s/g, ""))
+          : [];
+      return partialResult(scoreSequence(userAnswer, expectedTokens), bestExpected, question);
+    }
+    const expectedText = Array.isArray(bestExpected)
+      ? bestExpected.join("")
       : typeof bestExpected === "string"
-        ? Array.from(bestExpected.replace(/\s/g, ""))
-        : [];
-    return partialResult(scoreSequence(answerTokens, expectedTokens), bestExpected, question);
+        ? bestExpected
+        : "";
+    return partialResult(textSimilarity(userAnswer, expectedText), bestExpected, question);
   }
 
   if (question.type === "fill_in_blank" || question.type === "short_translate") {
     if (typeof userAnswer !== "string") {
       return partialResult(0, question.correctAnswer, question);
     }
-    for (const expected of expectedAnswers) {
-      if (typeof expected === "string" && sameText(userAnswer, expected)) {
+    const textCandidates = expectedAnswers.flatMap((expected) =>
+      typeof expected === "string" ? [expected] : Array.isArray(expected) ? expected : []
+    );
+    for (const expected of textCandidates) {
+      if (sameText(userAnswer, expected)) {
         return partialResult(100, expected, question);
       }
     }
-    const stringAnswers = expectedAnswers.filter(
-      (answer): answer is string => typeof answer === "string"
-    );
+    const stringAnswers = textCandidates;
     const bestMatch = stringAnswers.reduce<{ answer: string | null; score: number }>(
       (best, expected) => {
         const score = textSimilarity(userAnswer, expected);

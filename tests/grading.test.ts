@@ -53,6 +53,11 @@ describe("gradeQuestion", () => {
     expect(result.score).toBe(33);
   });
 
+  it("awards partial credit to typed word order by matched characters", () => {
+    const question = makeQuestion("word_order", ["你好", "世界"]);
+    expect(gradeQuestion(question, "你好").score).toBe(50);
+  });
+
   it("grades matching pairs partially", () => {
     const question = makeQuestion("matching", { one: "một", two: "hai" }, {
       pairs: [

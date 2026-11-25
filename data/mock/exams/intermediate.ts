@@ -1594,7 +1594,7 @@ export const intermediateExams: Exam[] = [
         explanation: "别担心 (đừng lo), 一切都会好起来的 (mọi chuyện rồi sẽ tốt đẹp lên).",
       },
       {
-        id: "i-sk-4-8",
+        id: "i-sk-3-8",
         type: "listen_word_order",
         hskLevel: 4,
         version: 1,

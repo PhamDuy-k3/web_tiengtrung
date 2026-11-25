@@ -82,6 +82,27 @@ describe("migrateStorageData", () => {
     expect(question?.difficulty).toBe(1);
   });
 
+  it("remaps the one duplicated legacy question ID by its stored sentence", () => {
+    const source = legacyData();
+    const legacyDuplicate = { ...legacyQuestion, id: "i-sk-4-8", chineseText: "笑一笑，十年少。" };
+    Object.assign(source.attempts[0].answers, { "i-sk-4-8": {
+      userAnswer: "笑一笑，十年少。",
+      isCorrect: true,
+      question: legacyDuplicate,
+    } });
+    Object.assign(source.mistakes, { "i-sk-4-8": {
+      questionId: "i-sk-4-8",
+      question: legacyDuplicate,
+      timesWrong: 1,
+      consecutiveCorrect: 0,
+      lastWrongAt: "2026-11-20T10:00:00.000Z",
+      isMastered: false,
+    } });
+    const migrated = migrateStorageData(source);
+    expect(migrated?.attempts[0].answers["i-sk-3-8"].question.id).toBe("i-sk-3-8");
+    expect(migrated?.mistakes["i-sk-3-8"].questionId).toBe("i-sk-3-8");
+  });
+
   it("rejects malformed data without producing a blank replacement", () => {
     expect(migrateStorageData({ version: "1.0", profile: {}, attempts: [] })).toBeNull();
   });
