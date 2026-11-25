@@ -45,14 +45,19 @@ export default function LevelDetailPage() {
   const [levelProg, setLevelProg] = useState<LevelProgressInfo | null>(null);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [dueItems, setDueItems] = useState<SrsReviewItem[]>([]);
+  const [isUnlocked, setIsUnlocked] = useState(true);
   const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType>("multiple_choice");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const lvl = await repository.getLevel(levelId);
+        const [lvl, profile] = await Promise.all([
+          repository.getLevel(levelId),
+          repository.getProfile(),
+        ]);
         setLevel(lvl);
+        setIsUnlocked(profile.unlockedLevels.includes(levelId));
 
         const tps = await repository.getTopics(levelId);
         setTopics(tps);
@@ -113,6 +118,36 @@ export default function LevelDetailPage() {
         <Link href="/" className="text-coral underline mt-2 inline-block">
           Quay về trang chủ
         </Link>
+      </div>
+    );
+  }
+
+  if (!isUnlocked) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-parchment-200 border border-parchment-300 text-ink-light flex items-center justify-center mx-auto">
+          <Lock size={28} />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-ink">
+          Cấp độ {level.name} đang bị khóa
+        </h1>
+        <p className="text-sm text-ink-light leading-relaxed">
+          Bạn cần vượt qua bài kiểm tra lên cấp của cấp độ trước (đạt ≥ 80%) hoặc đạt trình độ tương ứng qua bài kiểm tra xếp lớp để mở khóa cấp độ này.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <Link
+            href="/"
+            className="px-5 py-2.5 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-ink font-bold text-sm transition-colors"
+          >
+            Quay về trang chủ
+          </Link>
+          <Link
+            href="/placement-test"
+            className="px-5 py-2.5 rounded-xl bg-celadon hover:bg-celadon-600 text-white font-bold text-sm transition-colors"
+          >
+            Làm bài kiểm tra xếp lớp
+          </Link>
+        </div>
       </div>
     );
   }
@@ -182,17 +217,28 @@ export default function LevelDetailPage() {
           )}
         </div>
 
-        <Link
-          href={`/level-test/${level.id}`}
-          className={`px-5 py-3 rounded-2xl font-bold text-sm shrink-0 flex items-center gap-2 transition-all shadow-sm ${
-            levelProg?.canTakeLevelTest
-              ? "bg-coral hover:bg-coral-dark text-white shadow-duo-coral animate-pulse"
-              : "bg-white hover:bg-cream-100 text-charcoal border border-amber-300"
-          }`}
-        >
-          <span>{levelProg?.canTakeLevelTest ? "Làm bài thi lên cấp ngay!" : "Xem đề thi lên cấp"}</span>
-          <ArrowRight size={16} />
-        </Link>
+        {levelProg?.canTakeLevelTest || levelProg?.hasPassedLevelTest ? (
+          <Link
+            href={`/level-test/${level.id}`}
+            className="px-5 py-3 rounded-2xl font-bold text-sm shrink-0 flex items-center gap-2 transition-all bg-coral hover:bg-coral-dark text-white shadow-duo-coral"
+          >
+            <span>
+              {levelProg.hasPassedLevelTest
+                ? "Làm lại bài thi lên cấp"
+                : "Làm bài thi lên cấp ngay!"}
+            </span>
+            <ArrowRight size={16} />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="px-5 py-3 rounded-2xl font-bold text-sm shrink-0 flex items-center gap-2 bg-white/80 text-charcoal/50 border border-amber-200 cursor-not-allowed"
+          >
+            <Lock size={15} />
+            <span>Cần thêm {levelProg?.examsNeededForTest || 0} đề để mở khóa</span>
+          </button>
+        )}
       </div>
 
       <section className="space-y-4">

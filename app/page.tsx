@@ -413,27 +413,55 @@ export default function HomePage() {
 
                     {/* CTA buttons */}
                     <div className="pt-5 space-y-2.5 relative z-10">
-                      <Link
-                        href={`/levels/${lvl.id}`}
-                        className={`flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-sm font-bold text-white transition-all ${th.btnBg} hover:shadow-medium hover:-translate-y-0.5 active:translate-y-0`}
-                      >
-                        {isUnlocked ? "Vào luyện đề" : "Xem danh sách"}
-                        <ArrowRight size={16} />
-                      </Link>
-                      <Link
-                        href={`/level-test/${lvl.id}`}
-                        className={`flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl text-xs font-semibold transition-colors border ${
-                          prog.canTakeLevelTest
-                            ? `${th.bgAccent} border-current/20 ${th.accent} font-bold`
-                            : "bg-transparent border-parchment-300 text-ink-light hover:bg-parchment-200"
-                        }`}
-                      >
-                        {!isUnlocked
-                          ? "Thi vượt cấp để mở khóa →"
-                          : prog.canTakeLevelTest
-                          ? "⚡ Làm bài kiểm tra lên cấp"
-                          : "Xem trước bài kiểm tra lên cấp"}
-                      </Link>
+                      {isUnlocked ? (
+                        <>
+                          <Link
+                            href={`/levels/${lvl.id}`}
+                            className={`flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-sm font-bold text-white transition-all ${th.btnBg} hover:shadow-medium hover:-translate-y-0.5 active:translate-y-0`}
+                          >
+                            Vào luyện đề
+                            <ArrowRight size={16} />
+                          </Link>
+                          {prog.canTakeLevelTest || prog.hasPassedLevelTest ? (
+                            <Link
+                              href={`/level-test/${lvl.id}`}
+                              className={`flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl text-xs font-bold transition-colors border ${th.bgAccent} border-current/20 ${th.accent}`}
+                            >
+                              {prog.hasPassedLevelTest
+                                ? "Làm lại bài kiểm tra lên cấp"
+                                : "⚡ Làm bài kiểm tra lên cấp"}
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled
+                              className="flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl text-xs font-semibold border bg-parchment-100 border-parchment-300 text-ink-light/70 cursor-not-allowed"
+                            >
+                              <Lock size={13} />
+                              <span>Cần thêm {prog.examsNeededForTest} đề đạt ≥ 60% để thi</span>
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            disabled
+                            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-sm font-bold bg-parchment-200 text-ink-light border border-parchment-300 cursor-not-allowed"
+                          >
+                            <Lock size={15} />
+                            <span>Đang khóa</span>
+                          </button>
+                          <div className="flex items-center justify-center gap-1.5 w-full py-2 px-3 rounded-xl text-xs font-semibold border bg-parchment-100/80 border-parchment-300 text-ink-light">
+                            <Lock size={12} className="shrink-0" />
+                            <span>
+                              {lvl.id === "intermediate"
+                                ? "Đạt ≥ 80% thi lên cấp Cơ bản để mở"
+                                : "Đạt ≥ 80% thi lên cấp Trung cấp để mở"}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 );

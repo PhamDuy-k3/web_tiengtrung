@@ -13,6 +13,7 @@ import {
   Sparkles,
   ArrowRight,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { repository } from "@/services";
 import { AnswerValue, Exam, LevelId, QuestionResult, ExamAttempt, LevelProgressInfo } from "@/types";
@@ -28,6 +29,7 @@ export default function LevelTestPage() {
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [levelProg, setLevelProg] = useState<LevelProgressInfo | null>(null);
+  const [isLevelUnlocked, setIsLevelUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
@@ -39,11 +41,18 @@ export default function LevelTestPage() {
   useEffect(() => {
     async function init() {
       try {
-        const prog = await repository.getLevelProgress(levelId);
+        const [profile, prog] = await Promise.all([
+          repository.getProfile(),
+          repository.getLevelProgress(levelId),
+        ]);
+        const unlocked = profile.unlockedLevels.includes(levelId);
+        setIsLevelUnlocked(unlocked);
         setLevelProg(prog);
 
-        const testExam = await repository.generateLevelTest(levelId);
-        setExam(testExam);
+        if (unlocked && (prog.canTakeLevelTest || prog.hasPassedLevelTest)) {
+          const testExam = await repository.generateLevelTest(levelId);
+          setExam(testExam);
+        }
       } catch (e) {
         console.error("Lỗi tạo bài thi lên cấp:", e);
       } finally {
@@ -58,6 +67,32 @@ export default function LevelTestPage() {
       <div className="max-w-4xl mx-auto px-4 py-20 text-center text-charcoal/60">
         <div className="animate-spin w-10 h-10 border-4 border-coral border-t-transparent rounded-full mx-auto mb-3"></div>
         Đang khởi tạo đề thi lên cấp 40 câu...
+      </div>
+    );
+  }
+
+  if (!isLevelUnlocked || (!levelProg?.canTakeLevelTest && !levelProg?.hasPassedLevelTest)) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-parchment-200 border border-parchment-300 text-ink-light flex items-center justify-center mx-auto">
+          <Lock size={28} />
+        </div>
+        <h1 className="text-2xl font-black text-ink">Bài kiểm tra lên cấp đang bị khóa</h1>
+        <p className="text-sm text-ink-light leading-relaxed">
+          {!isLevelUnlocked
+            ? "Bạn cần mở khóa cấp độ này trước khi làm bài kiểm tra lên cấp."
+            : `Bạn cần hoàn thành thêm ${levelProg?.examsNeededForTest ?? 0} đề đạt từ 60% trở lên để mở khóa bài kiểm tra lên cấp.`}
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
+          <Link href="/" className="px-5 py-2.5 rounded-2xl bg-parchment-200 text-ink font-bold text-sm">
+            Quay về trang chủ
+          </Link>
+          {isLevelUnlocked && (
+            <Link href={`/levels/${levelId}`} className="px-5 py-2.5 rounded-2xl bg-celadon text-white font-bold text-sm">
+              Quay lại luyện đề
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

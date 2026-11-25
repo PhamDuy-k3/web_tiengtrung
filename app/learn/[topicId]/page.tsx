@@ -38,13 +38,19 @@ export default function LearnTopicPage() {
     let active = true;
     async function load() {
       try {
-        const [loadedTopic, words, exams, completed] = await Promise.all([
+        const [loadedTopic, words, exams, completed, profile] = await Promise.all([
           repository.getTopic(topicId),
           repository.getVocabularyForTopic(topicId),
           repository.getExams(topicId),
           repository.getCompletedLessons(),
+          repository.getProfile(),
         ]);
         if (!active) return;
+        if (loadedTopic && !profile.unlockedLevels.includes(loadedTopic.levelId)) {
+          setTopic(null);
+          setError("Chủ đề thuộc cấp độ đang bị khóa. Hãy mở khóa cấp độ trước khi học.");
+          return;
+        }
         setTopic(loadedTopic);
         setCards(words);
         setPracticeHref(exams[0] ? `/practice/${exams[0].id}` : "/");

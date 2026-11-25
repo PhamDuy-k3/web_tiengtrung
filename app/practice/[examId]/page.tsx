@@ -42,6 +42,7 @@ export default function ExamPracticePage() {
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [mode, setMode] = useState<PracticeMode>("practice");
+  const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -112,7 +113,23 @@ export default function ExamPracticePage() {
         setMode(pageMode);
         sessionStartedAt.current = Date.now();
         sessionStartElapsed.current = useQuizDraftStore.getState().elapsedSeconds;
-        const loaded = await repository.getExam(examId);
+        const [loaded, profile] = await Promise.all([
+          repository.getExam(examId),
+          repository.getProfile(),
+        ]);
+        if (loaded && !loaded.isPlacementTest && !loaded.isMistakeReview) {
+          if (!profile.unlockedLevels.includes(loaded.levelId)) {
+            setLockedMessage("Cấp độ này đang bị khóa. Hãy vượt qua bài kiểm tra lên cấp trước hoặc thi xếp lớp để mở khóa.");
+            return;
+          }
+          if (loaded.isLevelTest) {
+            const prog = await repository.getLevelProgress(loaded.levelId);
+            if (!prog.canTakeLevelTest && !prog.hasPassedLevelTest) {
+              setLockedMessage(`Bài kiểm tra lên cấp đang bị khóa. Bạn cần thêm ${prog.examsNeededForTest} đề đạt ≥ 60% để mở khóa.`);
+              return;
+            }
+          }
+        }
         if (loaded && pageMode === "quick") {
           const quickQuestions = loaded.questions.slice(0, 8);
           setExam({ ...loaded, title: `Luyện nhanh · ${loaded.title}`, questions: quickQuestions, timeLimitSeconds: undefined });
@@ -363,6 +380,29 @@ export default function ExamPracticePage() {
       <div className="max-w-4xl mx-auto px-4 py-20 text-center text-ink-muted">
         <div className="animate-spin w-10 h-10 border-4 border-celadon border-t-transparent rounded-full mx-auto mb-3"></div>
         Đang chuẩn bị đề luyện tập...
+      </div>
+    );
+  }
+
+  if (lockedMessage) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-ink">Nội dung đang bị khóa</h2>
+        <p className="text-sm text-ink-light">{lockedMessage}</p>
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
+          <Link
+            href="/"
+            className="inline-block px-6 py-3 rounded-2xl bg-celadon text-white font-bold text-sm"
+          >
+            Quay về trang chủ
+          </Link>
+          <Link
+            href="/placement-test"
+            className="inline-block px-6 py-3 rounded-2xl bg-parchment-200 text-ink font-bold text-sm"
+          >
+            Thi xếp lớp
+          </Link>
+        </div>
       </div>
     );
   }
