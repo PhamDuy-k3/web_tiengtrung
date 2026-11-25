@@ -74,9 +74,13 @@ class LocalRepository implements IRepository {
     const currentRaw = localStorage.getItem(STORAGE_KEY);
     if (currentRaw) {
       try {
-        const current = migrateStorageData(JSON.parse(currentRaw) as unknown);
+        const parsed: unknown = JSON.parse(currentRaw);
+        const current = migrateStorageData(parsed);
         if (current) {
-          if (current.version !== "2.1") this.saveStorage(current);
+          const storedVersion = typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+            ? (parsed as Record<string, unknown>).version
+            : undefined;
+          if (storedVersion !== "2.1") this.saveStorage(current);
           return current;
         }
       } catch {

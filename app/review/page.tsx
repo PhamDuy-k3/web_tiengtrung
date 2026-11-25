@@ -24,6 +24,7 @@ export default function ReviewPage() {
   const [answer, setAnswer] = useState<AnswerValue | undefined>();
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -39,7 +40,7 @@ export default function ReviewPage() {
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [loadAttempt]);
 
   const current = items[0];
 
@@ -96,12 +97,20 @@ export default function ReviewPage() {
       {error && <div role="alert" className="rounded-2xl border border-vermillion-soft bg-vermillion-light p-4 text-sm text-vermillion-deep">{error}</div>}
 
       {!current ? (
-        <section className="rounded-3xl border border-parchment-300 bg-white p-8 text-center shadow-soft space-y-3">
-          <CheckCircle2 size={38} className="mx-auto text-celadon" />
-          <h2 className="text-xl font-black text-ink">Bạn đã hoàn tất phần ôn hôm nay</h2>
-          <p className="text-sm text-ink-muted">Khi có mục đến hạn, chúng sẽ xuất hiện ở đây.</p>
-          <Link href="/" className="inline-flex mt-2 px-5 py-2.5 rounded-xl bg-celadon text-white font-bold">Về trang chủ</Link>
-        </section>
+        error ? (
+          <section className="rounded-3xl border border-vermillion-soft bg-white p-8 text-center shadow-soft space-y-3">
+            <XCircle size={38} className="mx-auto text-vermillion" />
+            <h2 className="text-xl font-black text-ink">Không tải được phiên ôn</h2>
+            <button type="button" onClick={() => { setError(null); setLoading(true); setLoadAttempt((value) => value + 1); }} className="inline-flex mt-2 px-5 py-2.5 rounded-xl bg-celadon text-white font-bold">Thử tải lại</button>
+          </section>
+        ) : (
+          <section className="rounded-3xl border border-parchment-300 bg-white p-8 text-center shadow-soft space-y-3">
+            <CheckCircle2 size={38} className="mx-auto text-celadon" />
+            <h2 className="text-xl font-black text-ink">Bạn đã hoàn tất phần ôn hôm nay</h2>
+            <p className="text-sm text-ink-muted">Khi có mục đến hạn, chúng sẽ xuất hiện ở đây.</p>
+            <Link href="/" className="inline-flex mt-2 px-5 py-2.5 rounded-xl bg-celadon text-white font-bold">Về trang chủ</Link>
+          </section>
+        )
       ) : (
         <section className="rounded-3xl border border-parchment-300 bg-white p-5 sm:p-8 shadow-soft space-y-5">
           {current.kind === "vocabulary" ? (

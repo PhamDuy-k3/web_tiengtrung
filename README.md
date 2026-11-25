@@ -19,7 +19,7 @@ Website luyện tập tiếng Trung thuần thực hành dành cho người Vi�
   8. *Dịch câu ngắn*: Chấm điểm linh hoạt (bỏ qua dấu câu, khoảng trắng, viết hoa).
 - **Bài kiểm tra lên cấp (Level-Up Exam)**: Đề thi tổng hợp 40 câu hỏi phủ khắp các chủ đề, giới hạn thời gian. Đạt từ 80% trở lên sẽ kích hoạt pháo giấy chúc mừng, trao huy hiệu và mở khóa cấp độ tiếp theo.
 - **Bài kiểm tra xếp lớp đầu vào (Placement Test)**: 30 câu hỏi từ sơ cấp đến cao cấp giúp học viên mới xếp đúng trình độ ngay tức thì.
-- **Sổ tay lỗi sai thông minh (Spaced Repetition)**: Tự động gom mọi câu làm sai, theo dõi số lần sai. Trả lời đúng liên tiếp 3 lần sẽ tự động chuyển sang trạng thái "Đã thuộc". Có chế độ sinh đề luyện riêng các câu hay sai.
+- **Ôn tập cách quãng (SRS)**: Tự động đưa câu làm sai vào lịch ôn SM-2 rút gọn; có thể thêm thẻ từ vựng qua repository. Mục được xem là "Đã thuộc" khi khoảng ôn đạt ít nhất 21 ngày. Phiên ôn nằm tại `/review`.
 - **Báo cáo tiến độ & Biểu đồ**: Biểu đồ điểm số theo thời gian, tỷ lệ chính xác theo từng dạng bài và từng chủ đề, chuỗi ngày học liên tục (Streak) và điểm kinh nghiệm (XP).
 - **Sao lưu & Phục hồi**: Xuất/nhập dữ liệu dưới dạng JSON, hỗ trợ Reset dữ liệu sạch sẽ.
 - **Trò chuyện với AI (`/chat`)**: Nói chuyện tiếng Trung tự nhiên với một người bạn AI (Claude), chọn được cấp độ (HSK 1-2 / 3-4 / 5-6) và tình huống (tán gẫu, quán cà phê, mua sắm, hỏi đường, làm quen, phỏng vấn). Có nói bằng micro (nhận giọng `zh-CN`), tự đọc câu trả lời, bật/tắt Pinyin và nghĩa tiếng Việt, và góp ý khi bạn dùng sai. Cần `ANTHROPIC_API_KEY` trong `.env.local` (xem `.env.example`).
@@ -44,6 +44,7 @@ app_lear/
 │   │   └── [levelId]/page.tsx        # Bài kiểm tra lên cấp (40 câu, tính năng mở khóa cấp mới)
 │   ├── placement-test/page.tsx       # Bài kiểm tra phân loại đầu vào (30 câu)
 │   ├── mistakes/page.tsx             # Sổ lỗi sai thông minh (Theo dõi câu sai & Đã thuộc)
+│   ├── review/page.tsx               # Phiên ôn SRS cho câu hỏi và từ vựng
 │   ├── history/page.tsx              # Lịch sử các lần làm bài
 │   ├── stats/page.tsx                # Thống kê tiến độ & Biểu đồ Recharts
 │   ├── sources/page.tsx              # Nguồn học liệu chính thống (Hanban, BLCU)
@@ -85,7 +86,7 @@ app_lear/
 │           └── advanced.ts           # 12 đề cấp Nâng cao (HSK 5-6)
 ├── services/                         # Lớp dịch vụ (Service Layer)
 │   ├── types.ts                      # Interface IRepository chuẩn
-│   ├── localRepository.ts            # Cài đặt Local (Mock data + LocalStorage version hanyu:v1)
+│   ├── localRepository.ts            # Cài đặt Local (Mock data + LocalStorage hanyu:v2)
 │   ├── remoteRepository.ts           # Chữ ký hàm sẵn sàng kết nối API Backend
 │   └── index.ts                      # Xuất repository dựa trên biến môi trường
 ├── store/
@@ -95,6 +96,7 @@ app_lear/
 │   └── index.ts                      # Toàn bộ kiểu TypeScript chặt chẽ
 ├── lib/
 │   ├── grading.ts                    # Hàm chấm điểm linh hoạt cho 8 dạng câu hỏi
+│   ├── srs.ts                        # Thuật toán SM-2 rút gọn
 │   ├── speech.ts                     # Web Speech API wrapper hỗ trợ giọng zh-CN
 │   ├── sound.ts                      # Bộ hiệu ứng âm thanh Web Audio API (không cần file mp3 ngoài)
 │   ├── shuffle.ts                    # Thuật toán Fisher-Yates xáo trộn mảng
