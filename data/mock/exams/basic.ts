@@ -781,6 +781,7 @@ export const basicExams: Exam[] = [
       },
       {
         id: "b-gd-2-2",
+        grammarPointId: "hoi-tuoi-duo-da-le",
         type: "word_order",
         hskLevel: 1,
         version: 1,
@@ -1047,6 +1048,7 @@ export const basicExams: Exam[] = [
       },
       {
         id: "b-gd-3-10",
+        grammarPointId: "so-sanh-bi",
         type: "word_order",
         hskLevel: 2,
         version: 1,

@@ -12,9 +12,26 @@ import {
   ArrowRight,
   BookOpen,
   Trophy,
+  Timer,
+  Shuffle,
+  Target,
+  RotateCcw,
+  ListChecks,
 } from "lucide-react";
 import { repository } from "@/services";
-import { Level, LevelId, Topic, Exam, LevelProgressInfo } from "@/types";
+import { Level, LevelId, Topic, Exam, LevelProgressInfo, QuestionType } from "@/types";
+import type { SrsReviewItem } from "@/types/srs";
+
+const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
+  { value: "word_order", label: "Sắp xếp câu" },
+  { value: "multiple_choice", label: "Trắc nghiệm" },
+  { value: "fill_in_blank", label: "Điền từ" },
+  { value: "matching", label: "Nối cặp" },
+  { value: "listen_choice", label: "Nghe chọn đáp án" },
+  { value: "listen_word_order", label: "Nghe xếp câu" },
+  { value: "pinyin_choice", label: "Chọn Pinyin" },
+  { value: "short_translate", label: "Dịch câu ngắn" },
+];
 
 export default function LevelDetailPage() {
   const params = useParams();
@@ -25,6 +42,9 @@ export default function LevelDetailPage() {
   const [topicExams, setTopicExams] = useState<Record<string, Exam[]>>({});
   const [progress, setProgress] = useState<Record<string, { bestScore: number; attempts: number }>>({});
   const [levelProg, setLevelProg] = useState<LevelProgressInfo | null>(null);
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [dueItems, setDueItems] = useState<SrsReviewItem[]>([]);
+  const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionType>("multiple_choice");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +67,13 @@ export default function LevelDetailPage() {
 
         const lp = await repository.getLevelProgress(levelId);
         setLevelProg(lp);
+
+        const [lessons, due] = await Promise.all([
+          repository.getCompletedLessons(),
+          repository.getDueSrsItems(),
+        ]);
+        setCompletedLessons(lessons);
+        setDueItems(due);
       } catch (e) {
         console.error("Lỗi tải trang cấp độ:", e);
       } finally {
@@ -55,6 +82,19 @@ export default function LevelDetailPage() {
     }
     load();
   }, [levelId]);
+
+  useEffect(() => {
+    const refreshLearningProgress = () => {
+      Promise.all([repository.getCompletedLessons(), repository.getDueSrsItems()])
+        .then(([lessons, due]) => {
+          setCompletedLessons(lessons);
+          setDueItems(due);
+        })
+        .catch((error: unknown) => console.error("Lỗi tải tiến độ học:", error));
+    };
+    window.addEventListener("focus", refreshLearningProgress);
+    return () => window.removeEventListener("focus", refreshLearningProgress);
+  }, []);
 
   if (loading) {
     return (
@@ -154,10 +194,46 @@ export default function LevelDetailPage() {
         </Link>
       </div>
 
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-black text-charcoal">Chọn chế độ luyện</h2>
+          <p className="text-sm text-charcoal/60">Luyện có phản hồi, thi thử có giờ, luyện nhanh, ôn SRS hoặc tập trung vào một dạng câu.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <ModeCard href="#topic-paths" icon={<BookOpen size={20} />} title="Luyện tập" detail="Phản hồi và giải thích ngay sau mỗi câu" tone="mint" />
+          <ModeCard href={`/practice/random-exam-${level.id}?mode=exam`} icon={<Timer size={20} />} title="Thi thử" detail="12 câu tổng hợp, có đồng hồ, xem điểm cuối bài" tone="coral" />
+          <ModeCard href={`/practice/random-exam-${level.id}?mode=quick`} icon={<Shuffle size={20} />} title="Luyện nhanh" detail="8 câu trộn, phản hồi tức thì" tone="amber" />
+          <ModeCard href="/review" icon={<RotateCcw size={20} />} title="Ôn lỗi sai" detail="Ôn câu hỏi và từ vựng đến hạn theo SRS" tone="purple" />
+          <div className="rounded-2xl border border-cream-300 bg-white p-4 shadow-sm space-y-3">
+            <div className="flex items-center gap-2 font-black text-sm text-charcoal"><Target size={20} className="text-coral" />Theo dạng bài</div>
+            <p className="text-xs text-charcoal/60">Tập trung luyện một dạng câu hỏi.</p>
+            <select aria-label="Chọn dạng bài" value={selectedQuestionType} onChange={(event) => setSelectedQuestionType(event.target.value as QuestionType)} className="w-full rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-xs font-semibold text-charcoal">
+              {QUESTION_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <Link href={`/practice/type-practice-${level.id}-${selectedQuestionType}?mode=type`} className="inline-flex items-center gap-1 text-xs font-bold text-coral hover:text-coral-dark">
+              Bắt đầu luyện <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* TOPICS & EXAMS LIST */}
-      <div className="space-y-10">
+      <div id="topic-paths" className="space-y-10 scroll-mt-24">
         {topics.map((topic) => {
           const exams = topicExams[topic.id] || [];
+          const practiceOne = exams[0];
+          const practiceTwo = exams[1];
+          const topicTest = exams.length > 2 ? exams[exams.length - 1] : undefined;
+          const lessonDone = completedLessons.includes(topic.id);
+          const practiceOneDone = !!practiceOne && (progress[practiceOne.id]?.attempts ?? 0) > 0;
+          const practiceTwoDone = !!practiceTwo && (progress[practiceTwo.id]?.attempts ?? 0) > 0;
+          const topicDueCount = dueItems.filter((item) => item.kind === "question"
+            ? item.question.topicId === topic.id
+            : item.vocabulary.topicId === topic.id).length;
+          const reviewDone = practiceTwoDone && topicDueCount === 0;
+          const reviewUnlocked = practiceTwoDone;
+          const testUnlocked = practiceTwoDone && reviewDone;
+          const topicTestDone = !!topicTest && (progress[topicTest.id]?.attempts ?? 0) > 0;
 
           return (
             <div key={topic.id} className="space-y-4">
@@ -174,12 +250,39 @@ export default function LevelDetailPage() {
                 </div>
               </div>
 
+              <Link
+                href={`/learn/${topic.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-mint/10 border border-mint/30 text-mint-dark font-bold text-sm hover:bg-mint/20 transition-colors"
+              >
+                <BookOpen size={16} />
+                Học từ vựng
+                <ArrowRight size={15} />
+              </Link>
+
+              <section aria-label={`Lộ trình ${topic.name}`} className="rounded-2xl border border-cream-300 bg-cream-50 p-4 space-y-3">
+                <h3 className="flex items-center gap-2 text-sm font-black text-charcoal"><ListChecks size={17} className="text-coral" />Lộ trình chủ đề</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                  <PathStep title="1 · Bài học" done={lessonDone} href={`/learn/${topic.id}`} enabled icon={<BookOpen size={16} />} action={lessonDone ? "Xem lại" : "Bắt đầu"} />
+                  <PathStep title="2 · Luyện 1" done={practiceOneDone} href={practiceOne ? `/practice/${practiceOne.id}?mode=practice` : undefined} enabled={(lessonDone || practiceOneDone) && !!practiceOne} icon={<ArrowRight size={16} />} action={practiceOneDone ? "Luyện lại" : "Mở bài"} />
+                  <PathStep title="3 · Luyện 2" done={practiceTwoDone} href={practiceTwo ? `/practice/${practiceTwo.id}?mode=practice` : undefined} enabled={(practiceOneDone || practiceTwoDone) && !!practiceTwo} icon={<ArrowRight size={16} />} action={practiceTwoDone ? "Luyện lại" : "Mở bài"} />
+                  <PathStep title="4 · Ôn SRS" done={reviewDone} href={`/review?topicId=${topic.id}&returnTo=${encodeURIComponent(`/levels/${level.id}`)}`} enabled={reviewUnlocked && !reviewDone} icon={<RotateCcw size={16} />} action={reviewDone ? "Không có mục đến hạn" : `${topicDueCount} mục đến hạn`} />
+                  <PathStep title="5 · Kiểm tra chủ đề" done={topicTestDone} href={topicTest ? `/practice/${topicTest.id}?mode=exam` : undefined} enabled={(testUnlocked || topicTestDone) && !!topicTest} icon={<Trophy size={16} />} action="Thi thử" />
+                </div>
+                {!topicTest && <p className="text-xs text-charcoal/60">Chủ đề này chưa có đề kiểm tra riêng để làm bước cuối.</p>}
+              </section>
+
               {/* Exams Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {exams.map((exam, idx) => {
                   const p = progress[exam.id];
                   const hasDone = p && p.attempts > 0;
                   const isHigh = p && p.bestScore >= 80;
+                  const previousExam = exams[idx - 1];
+                  const previousStepDone = idx === 0
+                    ? lessonDone
+                    : !!previousExam && (progress[previousExam.id]?.attempts ?? 0) > 0;
+                  const isFinalTopicTest = topicTest?.id === exam.id;
+                  const canOpenExam = previousStepDone && (!isFinalTopicTest || testUnlocked || (progress[exam.id]?.attempts ?? 0) > 0);
 
                   return (
                     <div
@@ -221,13 +324,20 @@ export default function LevelDetailPage() {
                       </div>
 
                       <div className="pt-4">
-                        <Link
-                          href={`/practice/${exam.id}`}
-                          className="w-full py-2.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 border border-coral/30 hover:border-coral"
-                        >
-                          <span>{hasDone ? "Luyện lại đề" : "Bắt đầu làm bài"}</span>
-                          <ArrowRight size={14} />
-                        </Link>
+                        {canOpenExam ? (
+                          <Link
+                            href={`/practice/${exam.id}?mode=${isFinalTopicTest ? "exam" : "practice"}`}
+                            className="w-full py-2.5 rounded-xl bg-coral/10 hover:bg-coral text-coral hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 border border-coral/30 hover:border-coral"
+                          >
+                            <span>{hasDone ? "Luyện lại đề" : "Bắt đầu làm bài"}</span>
+                            <ArrowRight size={14} />
+                          </Link>
+                        ) : (
+                          <button type="button" disabled className="w-full py-2.5 rounded-xl bg-cream-100 text-charcoal/40 font-bold text-xs flex items-center justify-center gap-1.5 border border-cream-300 cursor-not-allowed">
+                            <Lock size={14} />
+                            <span>{isFinalTopicTest ? "Hoàn thành ôn SRS để mở" : "Hoàn thành bước trước để mở"}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -239,4 +349,61 @@ export default function LevelDetailPage() {
       </div>
     </div>
   );
+}
+
+function ModeCard({
+  href,
+  icon,
+  title,
+  detail,
+  tone,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  detail: string;
+  tone: "mint" | "coral" | "amber" | "purple";
+}) {
+  const tones = {
+    mint: "border-mint/30 bg-mint-light/50 text-mint-dark",
+    coral: "border-coral/30 bg-coral/5 text-coral-dark",
+    amber: "border-amber-300 bg-amber-50 text-amber-800",
+    purple: "border-purple-200 bg-purple-50 text-purple-700",
+  };
+  return (
+    <Link href={href} className={`rounded-2xl border p-4 shadow-sm hover:-translate-y-0.5 transition-transform ${tones[tone]}`}>
+      <div className="flex items-center gap-2 font-black text-sm">{icon}{title}</div>
+      <p className="mt-2 text-xs leading-relaxed text-charcoal/70">{detail}</p>
+    </Link>
+  );
+}
+
+function PathStep({
+  title,
+  done,
+  href,
+  enabled,
+  icon,
+  action,
+}: {
+  title: string;
+  done: boolean;
+  href?: string;
+  enabled: boolean;
+  icon: React.ReactNode;
+  action: string;
+}) {
+  const className = `min-h-28 rounded-xl border p-3 flex flex-col justify-between ${done ? "border-mint/40 bg-mint-light/60" : enabled ? "border-coral/30 bg-white" : "border-cream-300 bg-cream-100 text-charcoal/45"}`;
+  const content = (
+    <>
+      <span className="text-xs font-black">{title}</span>
+      <span className={`mt-2 inline-flex items-center gap-1 text-[11px] font-bold ${done ? "text-mint-dark" : enabled ? "text-coral" : "text-charcoal/40"}`}>
+        {!enabled && !done ? <Lock size={13} /> : icon}
+        {done ? "Hoàn tất" : action}
+      </span>
+    </>
+  );
+  return enabled && href
+    ? <Link href={href} className={`${className} hover:border-coral/50 transition-colors`}>{content}</Link>
+    : <div aria-disabled="true" className={className}>{content}</div>;
 }

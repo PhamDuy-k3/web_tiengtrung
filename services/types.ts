@@ -11,8 +11,13 @@ import {
   LevelProgressInfo,
   QuestionResult,
   AnswerValue,
+  DailyMissionProgress,
+  QuestionType,
+  QuestionReport,
 } from "@/types";
+import type { GrammarLesson } from "@/types/grammar";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
+import type { VocabularyItem } from "@/data/mock/vocabulary";
 
 export interface IRepository {
   // Levels & Topics
@@ -20,14 +25,19 @@ export interface IRepository {
   getLevel(levelId: LevelId): Promise<Level | null>;
   getTopics(levelId: LevelId): Promise<Topic[]>;
   getTopic(topicId: string): Promise<Topic | null>;
+  getGrammarLesson(grammarPointId: string): Promise<GrammarLesson | null>;
 
   // Exams & Tests
   getExams(topicId: string): Promise<Exam[]>;
   getExam(examId: string): Promise<Exam | null>;
+  generateVocabularyExam(topicId: string): Promise<Exam>;
   getAllExams(): Promise<Exam[]>;
   generateLevelTest(levelId: LevelId, seed?: number): Promise<Exam>;
   generatePlacementTest(): Promise<Exam>;
   generateRandomExam(levelId: LevelId): Promise<Exam>;
+  generateQuestionTypeExam(levelId: LevelId, questionType: QuestionType): Promise<Exam>;
+  generateWeakAreaExam(attemptId: string, count?: number): Promise<Exam | null>;
+  generateAdaptiveExam(levelId: LevelId, count?: number): Promise<Exam>;
   generateMistakeExam(): Promise<Exam | null>;
 
   // Exam Attempts & Grading
@@ -38,9 +48,11 @@ export interface IRepository {
     examTitle: string;
     answers: Record<string, QuestionResult>;
     durationSeconds: number;
+    questionDurations?: Record<string, number>;
   }): Promise<ExamAttempt>;
   getAttempts(): Promise<ExamAttempt[]>;
   getAttempt(id: string): Promise<ExamAttempt | null>;
+  reportQuestion(report: Omit<QuestionReport, "id" | "createdAt">): Promise<QuestionReport>;
 
   // Mistakes & Spaced Repetition
   getMistakes(): Promise<MistakeEntry[]>;
@@ -59,6 +71,12 @@ export interface IRepository {
   getDueSrsItems(now?: string): Promise<SrsReviewItem[]>;
   addVocabularyToSrs(vocabularyId: string): Promise<SrsCard | null>;
   reviewSrsItem(itemId: string, quality: SrsQuality, reviewedAt?: string): Promise<SrsCard | null>;
+  getDailyMissionProgress(date?: string): Promise<DailyMissionProgress>;
+
+  // Vocabulary learning
+  getVocabularyForTopic(topicId: string): Promise<VocabularyItem[]>;
+  getCompletedLessons(): Promise<string[]>;
+  completeTopicLesson(topicId: string, vocabularyIds: string[]): Promise<void>;
 
   // Progress & Profile
   getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>>;

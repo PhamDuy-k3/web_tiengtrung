@@ -30,7 +30,19 @@ export type QuestionType =
   | "listen_choice"
   | "listen_word_order"
   | "pinyin_choice"
-  | "short_translate";
+  | "short_translate"
+  | "hanzi_write";
+
+export type PracticeMode = "practice" | "exam" | "quick" | "type";
+export type DailyMissionId = "review-10" | "exam-1";
+
+export interface DailyMissionProgress {
+  date: string;
+  reviewsCompleted: number;
+  examsCompleted: number;
+  reviewRewardClaimed: boolean;
+  examRewardClaimed: boolean;
+}
 
 export interface MatchingPair {
   id: string;
@@ -66,6 +78,7 @@ export interface Question {
   vocabIds?: string[];
   wrongExplanations?: Record<string, string>;
   needsReview?: boolean;
+  generated?: boolean;
   explanation: string;
 }
 
@@ -112,6 +125,8 @@ export interface ExamAttempt {
   incorrectCount: number;
   answers: Record<string, QuestionResult>;
   durationSeconds: number;
+  /** Per-question elapsed seconds; absent on attempts created before detailed timing was introduced. */
+  questionDurations?: Record<string, number>;
   createdAt: string;
   passed?: boolean;
 }
@@ -131,12 +146,25 @@ export interface MistakeEntry {
 }
 
 export interface LocalStorageData {
-  version: "2.1";
+  version: "2.4";
   profile: UserProfile;
   attempts: ExamAttempt[];
   mistakes: Record<string, MistakeEntry>;
   progress: Record<string, { bestScore: number; attempts: number }>;
   srs: Record<string, SrsCard>;
+  completedLessons: string[];
+  dailyMissionRewards: Record<string, DailyMissionId[]>;
+  reportedQuestions: QuestionReport[];
+}
+
+export interface QuestionReport {
+  id: string;
+  questionId: string;
+  examId?: string;
+  prompt: string;
+  reason: string;
+  details?: string;
+  createdAt: string;
 }
 
 export interface Badge {

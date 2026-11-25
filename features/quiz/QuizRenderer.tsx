@@ -10,6 +10,9 @@ import { ListenChoiceQuestion } from "./ListenChoiceQuestion";
 import { ListenWordOrderQuestion } from "./ListenWordOrderQuestion";
 import { PinyinChoiceQuestion } from "./PinyinChoiceQuestion";
 import { ShortTranslateQuestion } from "./ShortTranslateQuestion";
+import { HanziWriteQuestion } from "./HanziWriteQuestion";
+import Link from "next/link";
+import type { QuestionReport } from "@/types";
 import { AudioButton } from "./AudioButton";
 import { getLevelDifficultyConfig } from "@/lib/difficulty";
 import { Eye, EyeOff, Bookmark, BookmarkCheck, Command } from "lucide-react";
@@ -21,6 +24,7 @@ interface QuizRendererProps {
   disabled?: boolean;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onReport?: (report: Pick<QuestionReport, "reason" | "details">) => Promise<void>;
 }
 
 // Badge colour per HSK level (new colour system)
@@ -43,12 +47,17 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
   disabled = false,
   isBookmarked = false,
   onToggleBookmark,
+  onReport,
 }) => {
   const isListeningType =
     question.type === "listen_choice" || question.type === "listen_word_order";
 
   const diffConfig = getLevelDifficultyConfig(question.hskLevel);
   const [showPinyinHint, setShowPinyinHint] = useState(diffConfig.showPinyinByDefault);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("Sai Ä‘Ã¡p Ã¡n");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportState, setReportState] = useState("");
 
   const badgeClass = getLevelBadgeClass(question.hskLevel);
   const levelLabel = getLevelLabel(question.hskLevel);
@@ -76,7 +85,7 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Audio play button for non-listening types */}
-          {!isListeningType && question.chineseText && (
+          {!isListeningType && question.type !== "hanzi_write" && question.chineseText && (
             <AudioButton text={question.chineseText} size="sm" />
           )}
 
@@ -115,7 +124,7 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
         </h2>
 
         {/* ── Hanzi box with adaptive Pinyin ── */}
-        {!isListeningType && question.chineseText && (
+        {!isListeningType && question.type !== "hanzi_write" && question.chineseText && (
           <div className="p-4 sm:p-5 bg-white rounded-2xl border border-parchment-300 shadow-inner-soft space-y-2">
             <div className="hanzi-box font-chinese text-2xl sm:text-3xl font-bold text-ink">
               {question.chineseText}
@@ -181,11 +190,33 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
               return <PinyinChoiceQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             case "short_translate":
               return <ShortTranslateQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
+            case "hanzi_write":
+              return <HanziWriteQuestion question={question} value={value} onChange={onChange} disabled={disabled} />;
             default:
               return <div className="text-ink-light text-sm">Dạng câu hỏi chưa được hỗ trợ.</div>;
           }
         })()}
       </div>
+      {question.grammarPointId && <Link href={`/grammar/${question.grammarPointId}`} className="inline-flex rounded-xl bg-celadon-50 px-3 py-2 text-sm font-bold text-celadon-dark hover:underline">Xem ghi chÃº ngá»¯ phÃ¡p</Link>}
+      {onReport && <div className="border-t border-parchment-200 pt-3">
+        {!reportOpen ? <button type="button" onClick={() => setReportOpen(true)} className="text-sm font-semibold text-ink-muted underline">BÃ¡o cÃ¢u há»i cÃ³ lá»—i</button> :
+          <form className="space-y-2" onSubmit={async (event) => {
+            event.preventDefault(); setReportState("");
+            try { await onReport({ reason: reportReason, details: reportDetails.trim() || undefined }); setReportState("ÄÃ£ ghi nháº­n bÃ¡o cÃ¡o."); setReportOpen(false); }
+            catch { setReportState("ChÆ°a lÆ°u Ä‘Æ°á»£c. HÃ£y thá»­ láº¡i."); }
+          }}>
+            <label className="block text-sm font-semibold">LÃ½ do
+              <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2">
+                {["Sai Ä‘Ã¡p Ã¡n", "Lá»—i chÃ­nh táº£/Pinyin", "CÃ¢u há»i khÃ³ hiá»ƒu", "LÃ½ do khÃ¡c"].map((reason) => <option key={reason}>{reason}</option>)}
+              </select>
+            </label>
+            <label className="block text-sm font-semibold">Ghi chÃº (khÃ´ng báº¯t buá»™c)
+              <textarea value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} maxLength={500} className="mt-1 block w-full rounded-xl border border-parchment-300 bg-white p-2" rows={2} />
+            </label>
+            <div className="flex gap-2"><button type="submit" className="rounded-xl bg-ink px-3 py-2 text-sm font-bold text-white">Gá»­i bÃ¡o cÃ¡o</button><button type="button" onClick={() => setReportOpen(false)} className="rounded-xl border px-3 py-2 text-sm">Há»§y</button></div>
+          </form>}
+        {reportState && <p role="status" className="mt-2 text-sm">{reportState}</p>}
+      </div>}
     </div>
   );
 };

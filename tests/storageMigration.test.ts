@@ -65,7 +65,8 @@ describe("migrateStorageData", () => {
   it("migrates v1 attempts, mistakes, and profile without dropping progress", () => {
     const source = legacyData();
     const migrated = migrateStorageData(source);
-    expect(migrated?.version).toBe("2.1");
+    expect(migrated?.version).toBe("2.4");
+    expect(migrated?.reportedQuestions).toEqual([]);
     expect(migrated?.profile.name).toBe("Người học cũ");
     expect(migrated?.profile.totalXp).toBe(250);
     expect(migrated?.attempts[0].answers["basic-greeting-1"].score).toBe(100);
@@ -81,6 +82,39 @@ describe("migrateStorageData", () => {
     const question = migrated?.attempts[0].answers["basic-greeting-1"].question;
     expect(question?.version).toBe(1);
     expect(question?.difficulty).toBe(1);
+  });
+
+  it("preserves lesson progress and daily mission rewards when migrating v2.2 data", () => {
+    const migrated = migrateStorageData({
+      ...legacyData(),
+      version: "2.2",
+      completedLessons: ["basic-chao-hoi"],
+      dailyMissionRewards: { "2026-11-25": ["exam-1"] },
+    });
+    expect(migrated?.completedLessons).toEqual(["basic-chao-hoi"]);
+    expect(migrated?.dailyMissionRewards["2026-11-25"]).toEqual(["exam-1"]);
+  });
+
+  it("keeps question timing on newer attempts and leaves older attempts compatible", () => {
+    const source = legacyData();
+    Object.assign(source.attempts[0], { questionDurations: { "basic-greeting-1": 24 } });
+    const migrated = migrateStorageData(source);
+    expect(migrated?.attempts[0].questionDurations).toEqual({ "basic-greeting-1": 24 });
+    expect(migrateStorageData(legacyData())?.attempts[0].questionDurations).toBeUndefined();
+  });
+
+  it("preserves valid local question reports while migrating into v2.4", () => {
+    const migrated = migrateStorageData({
+      ...legacyData(),
+      version: "2.3",
+      reportedQuestions: [{
+        id: "report-1", questionId: "basic-greeting-1", examId: "exam-1",
+        prompt: "Question prompt", reason: "Sai đáp án", details: "Ghi chú", createdAt: "2026-11-25T00:00:00.000Z",
+      }, { questionId: "invalid" }],
+    });
+    expect(migrated?.version).toBe("2.4");
+    expect(migrated?.reportedQuestions).toHaveLength(1);
+    expect(migrated?.reportedQuestions[0].details).toBe("Ghi chú");
   });
 
   it("remaps the one duplicated legacy question ID by its stored sentence", () => {

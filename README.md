@@ -20,6 +20,10 @@ Website luyện tập tiếng Trung thuần thực hành dành cho người Vi�
 - **Bài kiểm tra lên cấp (Level-Up Exam)**: Đề thi tổng hợp 40 câu hỏi phủ khắp các chủ đề, giới hạn thời gian. Đạt từ 80% trở lên sẽ kích hoạt pháo giấy chúc mừng, trao huy hiệu và mở khóa cấp độ tiếp theo.
 - **Bài kiểm tra xếp lớp đầu vào (Placement Test)**: 30 câu hỏi từ sơ cấp đến cao cấp giúp học viên mới xếp đúng trình độ ngay tức thì.
 - **Ôn tập cách quãng (SRS)**: Tự động đưa câu làm sai vào lịch ôn SM-2 rút gọn; có thể thêm thẻ từ vựng qua repository. Mục được xem là "Đã thuộc" khi khoảng ôn đạt ít nhất 21 ngày. Phiên ôn nằm tại `/review`.
+- **5 chế độ luyện đề**: Luyện tập có phản hồi ngay, thi thử có giờ và chỉ xem kết quả cuối, luyện nhanh 8 câu, ôn lỗi sai/từ đến hạn qua SRS, và luyện theo dạng câu hỏi.
+- **Lộ trình chủ đề và nhiệm vụ ngày**: Mở dần Bài học → Luyện 1 → Luyện 2 → Ôn SRS → Kiểm tra; nhiệm vụ ôn 10 mục và làm 1 đề thưởng thêm XP một lần mỗi ngày.
+- **Phân tích sau đề và luyện thích ứng**: Thống kê điểm yếu theo tag, thời gian trung bình/câu và câu làm chậm; đề 10 câu ưu tiên phần vừa sai, còn đề thích ứng cân lỗi lặp, SRS đến hạn và độ khó hiện tại.
+- **Học từ vựng theo chủ đề**: Thẻ từ có chữ Hán, Pinyin, âm Hán Việt, ví dụ và phát âm thường/chậm; mini-quiz nhận diện 5 câu. Hoàn thành từ 4/5 câu sẽ lưu tiến độ và đưa từ vào SRS. Bài học nằm tại `/learn/[topicId]`.
 - **Báo cáo tiến độ & Biểu đồ**: Biểu đồ điểm số theo thời gian, tỷ lệ chính xác theo từng dạng bài và từng chủ đề, chuỗi ngày học liên tục (Streak) và điểm kinh nghiệm (XP).
 - **Sao lưu & Phục hồi**: Xuất/nhập dữ liệu dưới dạng JSON, hỗ trợ Reset dữ liệu sạch sẽ.
 - **Trò chuyện với AI (`/chat`)**: Nói chuyện tiếng Trung tự nhiên với một người bạn AI (Claude), chọn được cấp độ (HSK 1-2 / 3-4 / 5-6) và tình huống (tán gẫu, quán cà phê, mua sắm, hỏi đường, làm quen, phỏng vấn). Có nói bằng micro (nhận giọng `zh-CN`), tự đọc câu trả lời, bật/tắt Pinyin và nghĩa tiếng Việt, và góp ý khi bạn dùng sai. Cần `ANTHROPIC_API_KEY` trong `.env.local` (xem `.env.example`).
@@ -36,15 +40,17 @@ app_lear/
 │   ├── page.tsx                      # Trang chủ (Lời chào, Streak, 3 Level Cards, Ôn từ sai)
 │   ├── levels/
 │   │   └── [levelId]/page.tsx        # Danh sách chủ đề & đề thi của từng cấp độ
+│   ├── learn/
+│   │   └── [topicId]/page.tsx         # Thẻ từ vựng, mini-quiz và hoàn thành bài học
 │   ├── practice/
-│   │   ├── [examId]/page.tsx         # Trình làm bài tương tác (Timer, QuestionPalette, 8 dạng)
+│   │   ├── [examId]/page.tsx         # Luyện tập, thi thử, luyện nhanh và theo dạng
 │   │   └── [examId]/result/
 │   │       └── [attemptId]/page.tsx  # Trang kết quả (Điểm số, Pháo giấy, Xem giải thích chi tiết)
 │   ├── level-test/
 │   │   └── [levelId]/page.tsx        # Bài kiểm tra lên cấp (40 câu, tính năng mở khóa cấp mới)
 │   ├── placement-test/page.tsx       # Bài kiểm tra phân loại đầu vào (30 câu)
 │   ├── mistakes/page.tsx             # Sổ lỗi sai thông minh (Theo dõi câu sai & Đã thuộc)
-│   ├── review/page.tsx               # Phiên ôn SRS cho câu hỏi và từ vựng
+│   ├── review/page.tsx               # Phiên ôn SRS, hỗ trợ lọc theo chủ đề
 │   ├── history/page.tsx              # Lịch sử các lần làm bài
 │   ├── stats/page.tsx                # Thống kê tiến độ & Biểu đồ Recharts
 │   ├── sources/page.tsx              # Nguồn học liệu chính thống (Hanban, BLCU)

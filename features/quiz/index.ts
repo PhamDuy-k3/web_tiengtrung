@@ -7,6 +7,7 @@ export * from "./ListenChoiceQuestion";
 export * from "./ListenWordOrderQuestion";
 export * from "./PinyinChoiceQuestion";
 export * from "./ShortTranslateQuestion";
+export * from "./HanziWriteQuestion";
 export * from "./QuizRenderer";
 export * from "./QuestionPalette";
 export * from "./QuizTimer";

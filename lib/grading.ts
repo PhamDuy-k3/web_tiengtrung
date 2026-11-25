@@ -90,7 +90,7 @@ function scoreSequence(answer: string[], expected: string[]): number {
   return Math.round((matched / expected.length) * 100);
 }
 
-/** Grade all eight quiz types and return full/partial credit plus feedback. */
+/** Grade all supported quiz types and return full/partial credit plus feedback. */
 export function gradeQuestion(
   question: Question,
   userAnswer: AnswerValue | null | undefined

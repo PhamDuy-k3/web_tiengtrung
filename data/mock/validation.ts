@@ -9,6 +9,7 @@ const questionTypes: QuestionType[] = [
   "listen_word_order",
   "pinyin_choice",
   "short_translate",
+  "hanzi_write",
 ];
 
 function isRecord(value: unknown): value is Record<string, string> {
@@ -68,6 +69,12 @@ export function validateExamData(exams: Exam[]): string[] {
           if (typeof question.correctAnswer !== "string" && !Array.isArray(question.correctAnswer)) {
             errors.push(`${label}: dạng ${question.type} cần đáp án chuỗi hoặc danh sách đáp án.`);
           }
+          break;
+        case "hanzi_write":
+          if (!question.chineseText?.trim() || Array.from(question.chineseText).length !== 1) {
+            errors.push(`${label}: hanzi_write cáº§n Ä‘Ãºng má»™t chá»¯ HÃ¡n trong chineseText.`);
+          }
+          if (typeof question.correctAnswer !== "string") errors.push(`${label}: hanzi_write cáº§n Ä‘Ã¡p Ã¡n chuá»—i.`);
           break;
       }
     }

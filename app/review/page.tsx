@@ -25,14 +25,25 @@ export default function ReviewPage() {
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [returnTo, setReturnTo] = useState("/");
 
   useEffect(() => {
     let active = true;
+    const params = new URLSearchParams(window.location.search);
+    const topicId = params.get("topicId");
+    const requestedReturnTo = params.get("returnTo") || "/";
+    const safeReturnTo = requestedReturnTo.startsWith("/levels/") ? requestedReturnTo : "/";
+    setReturnTo(safeReturnTo);
     repository.getDueSrsItems()
       .then((dueItems) => {
         if (active) {
-          setItems(dueItems);
-          setTotalItems(dueItems.length);
+          const filteredItems = topicId
+            ? dueItems.filter((item) => item.kind === "question"
+              ? item.question.topicId === topicId
+              : item.vocabulary.topicId === topicId)
+            : dueItems;
+          setItems(filteredItems);
+          setTotalItems(filteredItems.length);
         }
       })
       .catch((cause: unknown) => {
@@ -75,7 +86,7 @@ export default function ReviewPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
-      <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-ink-muted hover:text-ink">
+      <Link href={returnTo} className="inline-flex items-center gap-2 text-sm font-bold text-ink-muted hover:text-ink">
         <ArrowLeft size={17} /> Về trang chủ
       </Link>
 
@@ -108,7 +119,7 @@ export default function ReviewPage() {
             <CheckCircle2 size={38} className="mx-auto text-celadon" />
             <h2 className="text-xl font-black text-ink">Bạn đã hoàn tất phần ôn hôm nay</h2>
             <p className="text-sm text-ink-muted">Khi có mục đến hạn, chúng sẽ xuất hiện ở đây.</p>
-            <Link href="/" className="inline-flex mt-2 px-5 py-2.5 rounded-xl bg-celadon text-white font-bold">Về trang chủ</Link>
+            <Link href={returnTo} className="inline-flex mt-2 px-5 py-2.5 rounded-xl bg-celadon text-white font-bold">Quay lại lộ trình</Link>
           </section>
         )
       ) : (

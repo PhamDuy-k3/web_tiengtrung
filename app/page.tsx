@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 import { repository } from "@/services";
-import { Level, LevelProgressInfo, MistakeEntry } from "@/types";
+import { DailyMissionProgress, Level, LevelProgressInfo, MistakeEntry } from "@/types";
 
 // ── Decorative Hanzi in background ──────────────────────────────
 const BgHanzi = ({ char, className }: { char: string; className?: string }) => (
@@ -106,10 +106,17 @@ export default function HomePage() {
   const [levelProgresses, setLevelProgresses] = useState<Record<string, LevelProgressInfo>>({});
   const [mistakes, setMistakes] = useState<MistakeEntry[]>([]);
   const [dueSrsCount, setDueSrsCount] = useState(0);
+  const [dailyMissions, setDailyMissions] = useState<DailyMissionProgress | null>(null);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     loadProfile();
+    const refreshDailyMissions = () => {
+      repository.getDailyMissionProgress()
+        .then(setDailyMissions)
+        .catch((error: unknown) => console.error("Lỗi tải nhiệm vụ ngày:", error));
+    };
+    window.addEventListener("focus", refreshDailyMissions);
     async function fetch() {
       try {
         const lvls = await repository.getLevels();
@@ -119,9 +126,11 @@ export default function HomePage() {
         setLevelProgresses(progs);
         setMistakes(await repository.getMistakes());
         setDueSrsCount((await repository.getDueSrsItems()).length);
+        setDailyMissions(await repository.getDailyMissionProgress());
       } finally { setLoading(false); }
     }
     fetch();
+    return () => window.removeEventListener("focus", refreshDailyMissions);
   }, [loadProfile]);
 
   const badMistakes = mistakes.filter((m) => !m.isMastered).length;
@@ -208,6 +217,33 @@ export default function HomePage() {
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="daily-missions-heading">
+        <div>
+          <h2 id="daily-missions-heading" className="text-xl font-black text-ink">Nhiệm vụ hôm nay</h2>
+          <p className="text-xs text-ink-light mt-1">Hoàn thành để duy trì streak và nhận XP thưởng một lần mỗi ngày.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DailyMissionCard
+            title="Ôn 10 mục SRS"
+            progress={dailyMissions?.reviewsCompleted ?? 0}
+            target={10}
+            reward={20}
+            claimed={dailyMissions?.reviewRewardClaimed ?? false}
+            href="/review"
+            action="Vào phiên ôn"
+          />
+          <DailyMissionCard
+            title="Hoàn thành 1 đề"
+            progress={dailyMissions?.examsCompleted ?? 0}
+            target={1}
+            reward={15}
+            claimed={dailyMissions?.examRewardClaimed ?? false}
+            href="/practice/random-exam-basic?mode=quick"
+            action="Làm đề nhanh"
+          />
         </div>
       </section>
 
@@ -419,5 +455,43 @@ export default function HomePage() {
       </div>
 
     </div>
+  );
+}
+
+function DailyMissionCard({
+  title,
+  progress,
+  target,
+  reward,
+  claimed,
+  href,
+  action,
+}: {
+  title: string;
+  progress: number;
+  target: number;
+  reward: number;
+  claimed: boolean;
+  href: string;
+  action: string;
+}) {
+  const completed = progress >= target;
+  const shownProgress = Math.min(progress, target);
+  return (
+    <article className="rounded-2xl border border-parchment-300 bg-white p-5 shadow-soft space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-black text-ink">{title}</h3>
+          <p className="mt-1 text-xs text-ink-muted">{shownProgress}/{target} · Thưởng {reward} XP{claimed ? " · Đã nhận" : ""}</p>
+        </div>
+        {completed ? <CheckCircle2 size={21} className="text-celadon shrink-0" /> : <Sparkles size={20} className="text-gilt-deep shrink-0" />}
+      </div>
+      <div className="h-2 rounded-full bg-parchment-200 overflow-hidden" role="progressbar" aria-valuenow={shownProgress} aria-valuemin={0} aria-valuemax={target} aria-label={`${title}: ${shownProgress}/${target}`}>
+        <div className="h-full rounded-full bg-celadon transition-all" style={{ width: `${(shownProgress / target) * 100}%` }} />
+      </div>
+      <Link href={href} className="inline-flex items-center gap-1.5 text-xs font-bold text-celadon-dark hover:text-celadon">
+        {completed ? "Xem tiến độ" : action}<ArrowRight size={14} />
+      </Link>
+    </article>
   );
 }

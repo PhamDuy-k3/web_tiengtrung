@@ -1,169 +1,351 @@
 export interface VocabularyItem {
   id: string;
+  topicId: string;
   hanzi: string;
   pinyin: string;
   vietnamese: string;
+  hanViet: string;
   hskLevel: number;
   partOfSpeech: string;
   exampleZh: string;
+  examplePinyin: string;
   exampleVn: string;
+  measureWord?: string;
+  radical?: string;
+  needsReview?: boolean;
 }
 
-export const mockVocabulary: VocabularyItem[] = [
+const existingVocabulary: VocabularyItem[] = [
   // HSK 1
   {
     id: "v-hsk1-1",
+    topicId: "basic-chao-hoi",
     hanzi: "你好",
     pinyin: "nǐ hǎo",
     vietnamese: "Xin chào",
+    hanViet: "Nhĩ hảo",
     hskLevel: 1,
     partOfSpeech: "thán từ",
     exampleZh: "你好，很高兴认识你！",
+    examplePinyin: "Nǐ hǎo, hěn gāoxìng rènshi nǐ!",
     exampleVn: "Xin chào, rất vui được làm quen với bạn!",
   },
   {
     id: "v-hsk1-2",
+    topicId: "basic-chao-hoi",
     hanzi: "谢谢",
     pinyin: "xièxie",
     vietnamese: "Cảm ơn",
+    hanViet: "Tạ tạ",
     hskLevel: 1,
     partOfSpeech: "động từ",
     exampleZh: "太谢谢你的帮助了。",
+    examplePinyin: "Tài xièxie nǐ de bāngzhù le.",
     exampleVn: "Rất cảm ơn sự giúp đỡ của bạn.",
   },
   {
     id: "v-hsk1-3",
+    topicId: "basic-chao-hoi",
     hanzi: "老师",
     pinyin: "lǎoshī",
     vietnamese: "Thầy/Cô giáo",
+    hanViet: "Lão sư",
     hskLevel: 1,
     partOfSpeech: "danh từ",
     exampleZh: "王老师教我们汉语。",
+    examplePinyin: "Wáng lǎoshī jiāo wǒmen Hànyǔ.",
     exampleVn: "Thầy Vương dạy chúng tôi tiếng Trung.",
   },
   {
     id: "v-hsk1-4",
+    topicId: "basic-chao-hoi",
     hanzi: "学生",
     pinyin: "xuésheng",
     vietnamese: "Học sinh, sinh viên",
+    hanViet: "Học sinh",
     hskLevel: 1,
     partOfSpeech: "danh từ",
     exampleZh: "我是河内大学的学生。",
+    examplePinyin: "Wǒ shì Hénèi dàxué de xuésheng.",
     exampleVn: "Tôi là sinh viên trường Đại học Hà Nội.",
   },
   {
     id: "v-hsk1-5",
+    topicId: "basic-chao-hoi",
     hanzi: "中国",
     pinyin: "Zhōngguó",
     vietnamese: "Trung Quốc",
+    hanViet: "Trung Quốc",
     hskLevel: 1,
     partOfSpeech: "danh từ riêng",
     exampleZh: "他下个月去中国旅游。",
+    examplePinyin: "Tā xià ge yuè qù Zhōngguó lǚyóu.",
     exampleVn: "Tháng sau anh ấy đi Trung Quốc du lịch.",
   },
   // HSK 2
   {
     id: "v-hsk2-1",
+    topicId: "basic-mua-sam",
     hanzi: "便宜",
     pinyin: "piányi",
     vietnamese: "Rẻ",
+    hanViet: "Tiện nghi",
     hskLevel: 2,
     partOfSpeech: "tính từ",
     exampleZh: "这件衣服又好看又便宜。",
+    examplePinyin: "Zhè jiàn yīfu yòu hǎokàn yòu piányi.",
     exampleVn: "Bộ quần áo này vừa đẹp vừa rẻ.",
   },
   {
     id: "v-hsk2-2",
+    topicId: "basic-thoi-gian",
     hanzi: "准备",
     pinyin: "zhǔnbèi",
     vietnamese: "Chuẩn bị",
+    hanViet: "Chuẩn bị",
     hskLevel: 2,
     partOfSpeech: "động từ",
     exampleZh: "你准备好考试了吗？",
+    examplePinyin: "Nǐ zhǔnbèi hǎo kǎoshì le ma?",
     exampleVn: "Bạn đã chuẩn bị tốt cho kỳ thi chưa?",
   },
   {
     id: "v-hsk2-3",
+    topicId: "inter-suc-khoe",
     hanzi: "运动",
     pinyin: "yùndòng",
     vietnamese: "Vận động, thể thao",
+    hanViet: "Vận động",
     hskLevel: 2,
     partOfSpeech: "danh từ/động từ",
     exampleZh: "多运动对身体好。",
+    examplePinyin: "Duō yùndòng duì shēntǐ hǎo.",
     exampleVn: "Vận động nhiều rất tốt cho sức khỏe.",
   },
   // HSK 3
   {
     id: "v-hsk3-1",
+    topicId: "inter-cong-viec",
     hanzi: "解决",
     pinyin: "jiějué",
     vietnamese: "Giải quyết",
+    hanViet: "Giải quyết",
     hskLevel: 3,
     partOfSpeech: "động từ",
     exampleZh: "这个问题很难解决。",
+    examplePinyin: "Zhège wèntí hěn nán jiějué.",
     exampleVn: "Vấn đề này rất khó giải quyết.",
   },
   {
     id: "v-hsk3-2",
+    topicId: "inter-giai-tri",
     hanzi: "热情",
     pinyin: "rèqíng",
     vietnamese: "Nhiệt tình",
+    hanViet: "Nhiệt tình",
     hskLevel: 3,
     partOfSpeech: "tính từ",
     exampleZh: "这里的服务员很热情。",
+    examplePinyin: "Zhèlǐ de fúwùyuán hěn rèqíng.",
     exampleVn: "Nhân viên phục vụ ở đây rất nhiệt tình.",
   },
   // HSK 4
   {
     id: "v-hsk4-1",
+    topicId: "adv-xa-hoi",
     hanzi: "坚持",
     pinyin: "jiānchí",
     vietnamese: "Kiên trì",
+    hanViet: "Kiên trì",
     hskLevel: 4,
     partOfSpeech: "động từ",
     exampleZh: "只要坚持，就一定会成功。",
+    examplePinyin: "Zhǐyào jiānchí, jiù yídìng huì chénggōng.",
     exampleVn: "Chỉ cần kiên trì thì nhất định sẽ thành công.",
   },
   {
     id: "v-hsk4-2",
+    topicId: "inter-cong-viec",
     hanzi: "严格",
     pinyin: "yángé",
     vietnamese: "Nghiêm khắc, chặt chẽ",
+    hanViet: "Nghiêm cách",
     hskLevel: 4,
     partOfSpeech: "tính từ",
     exampleZh: "王经理对工作要求非常严格。",
+    examplePinyin: "Wáng jīnglǐ duì gōngzuò yāoqiú fēicháng yángé.",
     exampleVn: "Giám đốc Vương yêu cầu rất nghiêm khắc với công việc.",
   },
   // HSK 5
   {
     id: "v-hsk5-1",
+    topicId: "adv-kinh-te",
     hanzi: "投资",
     pinyin: "tóuzī",
     vietnamese: "Đầu tư",
+    hanViet: "Đầu tư",
     hskLevel: 5,
     partOfSpeech: "động từ/danh từ",
     exampleZh: "投资教育是明智的选择。",
+    examplePinyin: "Tóuzī jiàoyù shì míngzhì de xuǎnzé.",
     exampleVn: "Đầu tư vào giáo dục là sự lựa chọn sáng suốt.",
   },
   {
     id: "v-hsk5-2",
+    topicId: "adv-xa-hoi",
     hanzi: "措施",
     pinyin: "cuòshī",
     vietnamese: "Biện pháp",
+    hanViet: "Thố thi",
     hskLevel: 5,
     partOfSpeech: "danh từ",
     exampleZh: "政府采取了积极的环保措施。",
+    examplePinyin: "Zhèngfǔ cǎiqǔ le jījí de huánbǎo cuòshī.",
     exampleVn: "Chính phủ đã áp dụng những biện pháp bảo vệ môi trường tích cực.",
   },
   // HSK 6
   {
     id: "v-hsk6-1",
+    topicId: "adv-van-hoa",
     hanzi: "精益求精",
     pinyin: "jīng yì qiú jīng",
     vietnamese: "Đã tinh xảo càng muốn tinh xảo hơn (luôn phấn đấu hoàn hảo)",
+    hanViet: "Tinh ích cầu tinh",
     hskLevel: 6,
     partOfSpeech: "thành ngữ",
     exampleZh: "他在工艺制作上始终精益求精。",
+    examplePinyin: "Tā zài gōngyì zhìzuò shàng shǐzhōng jīngyìqiújīng.",
     exampleVn: "Anh ấy trong kỹ thuật chế tác luôn luôn phấn đấu hoàn hảo hơn.",
   },
+].map((item) => ({
+  ...item,
+  // Hán Việt and example Pinyin were added for this learning flow and need editorial verification.
+  needsReview: true,
+}));
+
+type VocabularySeed = [
+  id: string,
+  topicId: string,
+  hanzi: string,
+  pinyin: string,
+  vietnamese: string,
+  hanViet: string,
+  hskLevel: number,
+  partOfSpeech: string,
+  exampleZh: string,
+  examplePinyin: string,
+  exampleVn: string,
+  measureWord?: string,
+  radical?: string,
 ];
+
+function reviewedLater(seed: VocabularySeed): VocabularyItem {
+  const [id, topicId, hanzi, pinyin, vietnamese, hanViet, hskLevel, partOfSpeech, exampleZh, examplePinyin, exampleVn, measureWord, radical] = seed;
+  return {
+    id,
+    topicId,
+    hanzi,
+    pinyin,
+    vietnamese,
+    hanViet,
+    hskLevel,
+    partOfSpeech,
+    exampleZh,
+    examplePinyin,
+    exampleVn: exampleVn.replace(/。$/g, ".").replace(/？$/g, "?"),
+    measureWord,
+    radical,
+    needsReview: true,
+  };
+}
+
+// These additions are marked for native-speaker review before being treated as final course material.
+const additionalVocabularySeeds: VocabularySeed[] = [
+  ["v-basic-greet-6", "basic-chao-hoi", "朋友", "péngyou", "Bạn bè", "Bằng hữu", 1, "danh từ", "我们是朋友。", "Wǒmen shì péngyou.", "Chúng tôi là bạn bè.", "位"],
+  ["v-basic-greet-7", "basic-chao-hoi", "认识", "rènshi", "Làm quen, biết", "Nhận thức", 1, "động từ", "我认识你的朋友。", "Wǒ rènshi nǐ de péngyou.", "Tôi quen bạn của bạn.", undefined, "讠"],
+  ["v-basic-greet-8", "basic-chao-hoi", "名字", "míngzi", "Tên", "Danh tự", 1, "danh từ", "你的名字是什么？", "Nǐ de míngzi shì shénme?", "Tên của bạn là gì？"],
+
+  ["v-basic-family-1", "basic-gia-dinh", "爸爸", "bàba", "Bố, ba", "Bá bá", 1, "danh từ", "我爸爸在家。", "Wǒ bàba zài jiā.", "Bố tôi ở nhà。", "位", "父"],
+  ["v-basic-family-2", "basic-gia-dinh", "妈妈", "māma", "Mẹ", "Ma ma", 1, "danh từ", "妈妈喜欢喝茶。", "Māma xǐhuan hē chá.", "Mẹ thích uống trà。", "位", "女"],
+  ["v-basic-family-3", "basic-gia-dinh", "哥哥", "gēge", "Anh trai", "Ca ca", 1, "danh từ", "我哥哥在学校学习。", "Wǒ gēge zài xuéxiào xuéxí.", "Anh trai tôi học ở trường。", "位"],
+  ["v-basic-family-4", "basic-gia-dinh", "姐姐", "jiějie", "Chị gái", "Tỷ tỷ", 1, "danh từ", "姐姐今天很忙。", "Jiějie jīntiān hěn máng.", "Hôm nay chị gái rất bận。", "位"],
+  ["v-basic-family-5", "basic-gia-dinh", "弟弟", "dìdi", "Em trai", "Đệ đệ", 1, "danh từ", "弟弟喜欢看书。", "Dìdi xǐhuan kàn shū.", "Em trai thích đọc sách。", "个"],
+  ["v-basic-family-6", "basic-gia-dinh", "妹妹", "mèimei", "Em gái", "Muội muội", 1, "danh từ", "妹妹和我一起回家。", "Mèimei hé wǒ yìqǐ huí jiā.", "Em gái về nhà cùng tôi。", "个"],
+  ["v-basic-family-7", "basic-gia-dinh", "父亲", "fùqīn", "Cha, bố", "Phụ thân", 2, "danh từ", "父亲每天早上工作。", "Fùqīn měitiān zǎoshang gōngzuò.", "Cha làm việc mỗi sáng。", "位"],
+  ["v-basic-family-8", "basic-gia-dinh", "母亲", "mǔqīn", "Mẹ, mẫu thân", "Mẫu thân", 2, "danh từ", "母亲在厨房做饭。", "Mǔqīn zài chúfáng zuòfàn.", "Mẹ nấu cơm trong bếp。", "位"],
+
+  ["v-basic-shop-2", "basic-mua-sam", "贵", "guì", "Đắt", "Quý", 1, "tính từ", "这件衣服很贵。", "Zhè jiàn yīfu hěn guì.", "Bộ quần áo này rất đắt。"],
+  ["v-basic-shop-3", "basic-mua-sam", "价格", "jiàgé", "Giá cả", "Giá cách", 2, "danh từ", "这个价格很便宜。", "Zhège jiàgé hěn piányi.", "Mức giá này rất rẻ。"],
+  ["v-basic-shop-4", "basic-mua-sam", "买", "mǎi", "Mua", "Mãi", 1, "động từ", "我想买水果。", "Wǒ xiǎng mǎi shuǐguǒ.", "Tôi muốn mua trái cây。"],
+  ["v-basic-shop-5", "basic-mua-sam", "卖", "mài", "Bán", "Mại", 2, "động từ", "他在商店卖水果。", "Tā zài shāngdiàn mài shuǐguǒ.", "Anh ấy bán trái cây ở cửa hàng。"],
+  ["v-basic-shop-6", "basic-mua-sam", "水果", "shuǐguǒ", "Trái cây", "Thủy quả", 1, "danh từ", "我每天吃水果。", "Wǒ měitiān chī shuǐguǒ.", "Tôi ăn trái cây mỗi ngày。", "个", "木"],
+  ["v-basic-shop-7", "basic-mua-sam", "米饭", "mǐfàn", "Cơm", "Mễ phạn", 1, "danh từ", "我每天吃米饭。", "Wǒ měitiān chī mǐfàn.", "Tôi ăn cơm mỗi ngày。", "碗", "米"],
+  ["v-basic-shop-8", "basic-mua-sam", "好吃", "hǎochī", "Ngon", "Hảo cật", 1, "tính từ", "这个菜很好吃。", "Zhège cài hěn hǎochī.", "Món này rất ngon。"],
+
+  ["v-basic-time-2", "basic-thoi-gian", "时间", "shíjiān", "Thời gian", "Thời gian", 1, "danh từ", "我没有时间。", "Wǒ méiyǒu shíjiān.", "Tôi không có thời gian。"],
+  ["v-basic-time-3", "basic-thoi-gian", "今天", "jīntiān", "Hôm nay", "Kim thiên", 1, "danh từ", "今天是星期一。", "Jīntiān shì xīngqīyī.", "Hôm nay là thứ Hai。"],
+  ["v-basic-time-4", "basic-thoi-gian", "明天", "míngtiān", "Ngày mai", "Minh thiên", 1, "danh từ", "明天我们去学校。", "Míngtiān wǒmen qù xuéxiào.", "Ngày mai chúng tôi đi học。"],
+  ["v-basic-time-5", "basic-thoi-gian", "星期", "xīngqī", "Tuần; thứ", "Tinh kỳ", 1, "danh từ", "星期天我在家休息。", "Xīngqītiān wǒ zài jiā xiūxi.", "Chủ nhật tôi nghỉ ở nhà。"],
+  ["v-basic-time-6", "basic-thoi-gian", "早上", "zǎoshang", "Buổi sáng", "Tảo thượng", 1, "danh từ", "我早上七点起床。", "Wǒ zǎoshang qī diǎn qǐchuáng.", "Tôi thức dậy lúc bảy giờ sáng。"],
+  ["v-basic-time-7", "basic-thoi-gian", "晚上", "wǎnshang", "Buổi tối", "Vãn thượng", 1, "danh từ", "晚上我在家看书。", "Wǎnshang wǒ zài jiā kàn shū.", "Buổi tối tôi đọc sách ở nhà。"],
+  ["v-basic-time-8", "basic-thoi-gian", "起床", "qǐchuáng", "Thức dậy", "Khởi sàng", 1, "động từ", "我每天六点起床。", "Wǒ měitiān liù diǎn qǐchuáng.", "Ngày nào tôi cũng thức dậy lúc sáu giờ。"],
+
+  ["v-inter-travel-1", "inter-giao-thong", "交通", "jiāotōng", "Giao thông", "Giao thông", 2, "danh từ", "这里的交通很方便。", "Zhèlǐ de jiāotōng hěn fāngbiàn.", "Giao thông ở đây rất thuận tiện。"],
+  ["v-inter-travel-2", "inter-giao-thong", "火车", "huǒchē", "Tàu hỏa", "Hỏa xa", 2, "danh từ", "我们坐火车去北京。", "Wǒmen zuò huǒchē qù Běijīng.", "Chúng tôi đi tàu hỏa đến Bắc Kinh。", "列"],
+  ["v-inter-travel-3", "inter-giao-thong", "飞机", "fēijī", "Máy bay", "Phi cơ", 2, "danh từ", "他坐飞机去上海。", "Tā zuò fēijī qù Shànghǎi.", "Anh ấy đi máy bay đến Thượng Hải。", "架"],
+  ["v-inter-travel-4", "inter-giao-thong", "车站", "chēzhàn", "Nhà ga, bến xe", "Xa trạm", 2, "danh từ", "火车站在哪里？", "Huǒchēzhàn zài nǎlǐ?", "Nhà ga ở đâu？"],
+  ["v-inter-travel-5", "inter-giao-thong", "车票", "chēpiào", "Vé xe, vé tàu", "Xa phiếu", 2, "danh từ", "请买两张车票。", "Qǐng mǎi liǎng zhāng chēpiào.", "Làm ơn mua hai vé。", "张"],
+  ["v-inter-travel-6", "inter-giao-thong", "旅行", "lǚxíng", "Du lịch", "Lữ hành", 2, "động từ/danh từ", "我喜欢和家人一起旅行。", "Wǒ xǐhuan hé jiārén yìqǐ lǚxíng.", "Tôi thích đi du lịch cùng gia đình。"],
+  ["v-inter-travel-7", "inter-giao-thong", "方便", "fāngbiàn", "Thuận tiện", "Phương tiện", 2, "tính từ", "从这里到车站很方便。", "Cóng zhèlǐ dào chēzhàn hěn fāngbiàn.", "Từ đây đến nhà ga rất thuận tiện。"],
+  ["v-inter-travel-8", "inter-giao-thong", "到达", "dàodá", "Đến nơi", "Đáo đạt", 3, "động từ", "我们下午到达北京。", "Wǒmen xiàwǔ dàodá Běijīng.", "Buổi chiều chúng tôi đến Bắc Kinh。"],
+
+  ["v-inter-work-1", "inter-cong-viec", "工作", "gōngzuò", "Công việc; làm việc", "Công tác", 2, "danh từ/động từ", "我每天去公司工作。", "Wǒ měitiān qù gōngsī gōngzuò.", "Ngày nào tôi cũng đến công ty làm việc。"],
+  ["v-inter-work-2", "inter-cong-viec", "公司", "gōngsī", "Công ty", "Công ty", 2, "danh từ", "我在一家公司工作。", "Wǒ zài yì jiā gōngsī gōngzuò.", "Tôi làm việc tại một công ty。", "家"],
+  ["v-inter-work-3", "inter-cong-viec", "经理", "jīnglǐ", "Quản lý, giám đốc", "Kinh lý", 3, "danh từ", "经理正在开会。", "Jīnglǐ zhèngzài kāihuì.", "Giám đốc đang họp。", "位"],
+  ["v-inter-work-4", "inter-cong-viec", "经验", "jīngyàn", "Kinh nghiệm", "Kinh nghiệm", 3, "danh từ", "他有很多工作经验。", "Tā yǒu hěn duō gōngzuò jīngyàn.", "Anh ấy có nhiều kinh nghiệm làm việc。"],
+  ["v-inter-work-5", "inter-cong-viec", "面试", "miànshì", "Phỏng vấn", "Diện thí", 4, "danh từ/động từ", "我明天要参加面试。", "Wǒ míngtiān yào cānjiā miànshì.", "Ngày mai tôi sẽ tham gia phỏng vấn。"],
+  ["v-inter-work-6", "inter-cong-viec", "同事", "tóngshì", "Đồng nghiệp", "Đồng sự", 3, "danh từ", "我的同事很热情。", "Wǒ de tóngshì hěn rèqíng.", "Đồng nghiệp của tôi rất nhiệt tình。", "位"],
+
+  ["v-inter-health-1", "inter-suc-khoe", "健康", "jiànkāng", "Sức khỏe; khỏe mạnh", "Kiện khang", 2, "danh từ/tính từ", "健康很重要。", "Jiànkāng hěn zhòngyào.", "Sức khỏe rất quan trọng。"],
+  ["v-inter-health-2", "inter-suc-khoe", "身体", "shēntǐ", "Cơ thể, sức khỏe", "Thân thể", 2, "danh từ", "运动对身体有好处。", "Yùndòng duì shēntǐ yǒu hǎochù.", "Vận động có lợi cho cơ thể。"],
+  ["v-inter-health-3", "inter-suc-khoe", "医生", "yīshēng", "Bác sĩ", "Y sinh", 2, "danh từ", "医生在医院工作。", "Yīshēng zài yīyuàn gōngzuò.", "Bác sĩ làm việc ở bệnh viện。", "位"],
+  ["v-inter-health-4", "inter-suc-khoe", "医院", "yīyuàn", "Bệnh viện", "Y viện", 2, "danh từ", "我今天去医院看医生。", "Wǒ jīntiān qù yīyuàn kàn yīshēng.", "Hôm nay tôi đến bệnh viện khám bác sĩ。", "家"],
+  ["v-inter-health-5", "inter-suc-khoe", "休息", "xiūxi", "Nghỉ ngơi", "Hưu tức", 2, "động từ", "我今天在家休息。", "Wǒ jīntiān zài jiā xiūxi.", "Hôm nay tôi nghỉ ngơi ở nhà。"],
+  ["v-inter-health-6", "inter-suc-khoe", "睡眠", "shuìmián", "Giấc ngủ", "Thụy miên", 4, "danh từ", "睡眠对身体很重要。", "Shuìmián duì shēntǐ hěn zhòngyào.", "Giấc ngủ rất quan trọng đối với cơ thể。"],
+  ["v-inter-health-7", "inter-suc-khoe", "重要", "zhòngyào", "Quan trọng", "Trọng yếu", 2, "tính từ", "每天运动很重要。", "Měitiān yùndòng hěn zhòngyào.", "Vận động mỗi ngày rất quan trọng。"],
+
+  ["v-inter-ent-1", "inter-giai-tri", "电影", "diànyǐng", "Phim điện ảnh", "Điện ảnh", 2, "danh từ", "我们晚上看电影。", "Wǒmen wǎnshang kàn diànyǐng.", "Buổi tối chúng tôi xem phim。", "部"],
+  ["v-inter-ent-2", "inter-giai-tri", "音乐", "yīnyuè", "Âm nhạc", "Âm nhạc", 2, "danh từ", "她喜欢听音乐。", "Tā xǐhuan tīng yīnyuè.", "Cô ấy thích nghe nhạc。"],
+  ["v-inter-ent-3", "inter-giai-tri", "演员", "yǎnyuán", "Diễn viên", "Diễn viên", 3, "danh từ", "这位演员很有名。", "Zhè wèi yǎnyuán hěn yǒumíng.", "Diễn viên này rất nổi tiếng。", "位"],
+  ["v-inter-ent-4", "inter-giai-tri", "表演", "biǎoyǎn", "Biểu diễn", "Biểu diễn", 3, "động từ/danh từ", "他们在舞台上表演。", "Tāmen zài wǔtái shàng biǎoyǎn.", "Họ biểu diễn trên sân khấu。"],
+  ["v-inter-ent-5", "inter-giai-tri", "兴趣", "xìngqù", "Sở thích, hứng thú", "Hứng thú", 3, "danh từ", "我的兴趣是画画。", "Wǒ de xìngqù shì huàhuà.", "Sở thích của tôi là vẽ tranh。"],
+  ["v-inter-ent-6", "inter-giai-tri", "文化", "wénhuà", "Văn hóa", "Văn hóa", 3, "danh từ", "我们学习中国文化。", "Wǒmen xuéxí Zhōngguó wénhuà.", "Chúng tôi học văn hóa Trung Quốc。"],
+  ["v-inter-ent-7", "inter-giai-tri", "节日", "jiérì", "Ngày lễ, ngày hội", "Tiết nhật", 3, "danh từ", "春节是中国的传统节日。", "Chūnjié shì Zhōngguó de chuántǒng jiérì.", "Tết Xuân là ngày lễ truyền thống của Trung Quốc。", "个"],
+
+  ["v-adv-social-1", "adv-xa-hoi", "社会", "shèhuì", "Xã hội", "Xã hội", 4, "danh từ", "社会发展需要大家合作。", "Shèhuì fāzhǎn xūyào dàjiā hézuò.", "Sự phát triển xã hội cần mọi người cùng hợp tác。"],
+  ["v-adv-social-2", "adv-xa-hoi", "环境", "huánjìng", "Môi trường; hoàn cảnh", "Hoàn cảnh", 4, "danh từ", "我们要保护环境。", "Wǒmen yào bǎohù huánjìng.", "Chúng ta cần bảo vệ môi trường。"],
+  ["v-adv-social-3", "adv-xa-hoi", "保护", "bǎohù", "Bảo vệ", "Bảo hộ", 4, "động từ", "保护自然资源很重要。", "Bǎohù zìrán zīyuán hěn zhòngyào.", "Bảo vệ tài nguyên thiên nhiên rất quan trọng。"],
+  ["v-adv-social-4", "adv-xa-hoi", "污染", "wūrǎn", "Ô nhiễm; làm ô nhiễm", "Ô nhiễm", 5, "danh từ/động từ", "空气污染影响健康。", "Kōngqì wūrǎn yǐngxiǎng jiànkāng.", "Ô nhiễm không khí ảnh hưởng đến sức khỏe。"],
+  ["v-adv-social-5", "adv-xa-hoi", "资源", "zīyuán", "Tài nguyên", "Tư nguyên", 5, "danh từ", "水是重要的自然资源。", "Shuǐ shì zhòngyào de zìrán zīyuán.", "Nước là tài nguyên thiên nhiên quan trọng。"],
+  ["v-adv-social-6", "adv-xa-hoi", "责任", "zérèn", "Trách nhiệm", "Trách nhiệm", 5, "danh từ", "保护环境是大家的责任。", "Bǎohù huánjìng shì dàjiā de zérèn.", "Bảo vệ môi trường là trách nhiệm của mọi người。"],
+
+  ["v-adv-econ-1", "adv-kinh-te", "经济", "jīngjì", "Kinh tế", "Kinh tế", 4, "danh từ", "这个城市的经济发展很快。", "Zhège chéngshì de jīngjì fāzhǎn hěn kuài.", "Kinh tế của thành phố này phát triển nhanh。"],
+  ["v-adv-econ-2", "adv-kinh-te", "市场", "shìchǎng", "Thị trường", "Thị trường", 4, "danh từ", "这个市场很大。", "Zhège shìchǎng hěn dà.", "Thị trường này rất lớn。"],
+  ["v-adv-econ-3", "adv-kinh-te", "合同", "hétong", "Hợp đồng", "Hợp đồng", 5, "danh từ", "我们已经签了合同。", "Wǒmen yǐjīng qiān le hétong.", "Chúng tôi đã ký hợp đồng。", "份"],
+  ["v-adv-econ-4", "adv-kinh-te", "贸易", "màoyì", "Thương mại", "Mậu dịch", 5, "danh từ", "两国之间有很多贸易。", "Liǎng guó zhījiān yǒu hěn duō màoyì.", "Hai nước có nhiều hoạt động thương mại。"],
+  ["v-adv-econ-5", "adv-kinh-te", "成本", "chéngběn", "Chi phí, giá thành", "Thành bản", 5, "danh từ", "我们要控制成本。", "Wǒmen yào kòngzhì chéngběn.", "Chúng ta cần kiểm soát chi phí。"],
+  ["v-adv-econ-6", "adv-kinh-te", "利润", "lìrùn", "Lợi nhuận", "Lợi nhuận", 5, "danh từ", "公司的利润增加了。", "Gōngsī de lìrùn zēngjiā le.", "Lợi nhuận của công ty đã tăng。"],
+  ["v-adv-econ-7", "adv-kinh-te", "合作", "hézuò", "Hợp tác", "Hợp tác", 4, "động từ/danh từ", "两家公司合作开发新产品。", "Liǎng jiā gōngsī hézuò kāifā xīn chǎnpǐn.", "Hai công ty hợp tác phát triển sản phẩm mới。"],
+
+  ["v-adv-culture-1", "adv-van-hoa", "成语", "chéngyǔ", "Thành ngữ", "Thành ngữ", 5, "danh từ", "这个成语很有意思。", "Zhège chéngyǔ hěn yǒu yìsi.", "Thành ngữ này rất thú vị。"],
+  ["v-adv-culture-2", "adv-van-hoa", "故事", "gùshi", "Câu chuyện", "Cố sự", 2, "danh từ", "我喜欢听故事。", "Wǒ xǐhuan tīng gùshi.", "Tôi thích nghe kể chuyện。", "个"],
+  ["v-adv-culture-3", "adv-van-hoa", "历史", "lìshǐ", "Lịch sử", "Lịch sử", 4, "danh từ", "这座城市有很长的历史。", "Zhè zuò chéngshì yǒu hěn cháng de lìshǐ.", "Thành phố này có lịch sử lâu đời。"],
+  ["v-adv-culture-4", "adv-van-hoa", "传统", "chuántǒng", "Truyền thống", "Truyền thống", 4, "danh từ/tính từ", "中国有很多传统节日。", "Zhōngguó yǒu hěn duō chuántǒng jiérì.", "Trung Quốc có nhiều ngày lễ truyền thống。"],
+  ["v-adv-culture-5", "adv-van-hoa", "寓言", "yùyán", "Truyện ngụ ngôn", "Ngụ ngôn", 5, "danh từ", "寓言故事常常告诉我们一个道理。", "Yùyán gùshi chángcháng gàosu wǒmen yí ge dàolǐ.", "Truyện ngụ ngôn thường kể cho chúng ta một đạo lý。", "则"],
+  ["v-adv-culture-6", "adv-van-hoa", "影响", "yǐngxiǎng", "Ảnh hưởng", "Ảnh hưởng", 4, "động từ/danh từ", "这本书对我影响很大。", "Zhè běn shū duì wǒ yǐngxiǎng hěn dà.", "Cuốn sách này ảnh hưởng đến tôi rất nhiều。"],
+  ["v-adv-culture-7", "adv-van-hoa", "学习", "xuéxí", "Học tập", "Học tập", 1, "động từ", "我们每天学习汉语。", "Wǒmen měitiān xuéxí Hànyǔ.", "Ngày nào chúng tôi cũng học tiếng Trung。"],
+];
+
+const additionalVocabulary: VocabularyItem[] = additionalVocabularySeeds.map(reviewedLater);
+
+export const mockVocabulary: VocabularyItem[] = [...existingVocabulary, ...additionalVocabulary];

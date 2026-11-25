@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,12 +15,25 @@ import {
   Sparkles,
 } from "lucide-react";
 import { repository } from "@/services";
-import { AnswerValue, Exam, QuestionResult } from "@/types";
+import { AnswerValue, Exam, PracticeMode, QuestionResult } from "@/types";
 import { QuizRenderer, QuestionPalette, QuizTimer } from "@/features/quiz";
 import { gradeQuestion } from "@/lib/grading";
 import { soundService } from "@/lib/sound";
 import { speechService } from "@/lib/speech";
 import { useQuizDraftStore } from "@/store/useQuizDraftStore";
+
+function getQuestionDurationSnapshot(
+  currentQuestionId: string | undefined,
+  currentStartedAt: number,
+  previousDurations: Record<string, number>
+): Record<string, number> {
+  const durations = { ...previousDurations };
+  if (currentQuestionId && currentStartedAt > 0) {
+    const seconds = Math.max(0, Math.round((Date.now() - currentStartedAt) / 1000));
+    durations[currentQuestionId] = (durations[currentQuestionId] ?? 0) + seconds;
+  }
+  return durations;
+}
 
 export default function ExamPracticePage() {
   const params = useParams();
@@ -28,12 +41,16 @@ export default function ExamPracticePage() {
   const examId = (params.examId as string) || "";
 
   const [exam, setExam] = useState<Exam | null>(null);
+  const [mode, setMode] = useState<PracticeMode>("practice");
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [showSubmitWarning, setShowSubmitWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const questionStartedAt = useRef(0);
+  const sessionStartedAt = useRef(Date.now());
+  const sessionStartElapsed = useRef(0);
 
   // Instant check feedback state for current question
   const [checkedFeedback, setCheckedFeedback] = useState<{
@@ -44,6 +61,7 @@ export default function ExamPracticePage() {
   const {
     savedAnswers,
     elapsedSeconds,
+    addQuestionDuration,
     initExam,
     setDraftAnswer,
     setIndex,
@@ -82,10 +100,24 @@ export default function ExamPracticePage() {
 
   useEffect(() => {
     initExam(examId);
+    setCurrentIndex(useQuizDraftStore.getState().currentQuestionIndex);
+    sessionStartedAt.current = Date.now();
+    sessionStartElapsed.current = useQuizDraftStore.getState().elapsedSeconds;
     async function load() {
       try {
-        const data = await repository.getExam(examId);
-        setExam(data);
+        const requestedMode = new URLSearchParams(window.location.search).get("mode");
+        const pageMode: PracticeMode = requestedMode === "exam" || requestedMode === "quick" || requestedMode === "type"
+          ? requestedMode
+          : "practice";
+        setMode(pageMode);
+        sessionStartedAt.current = Date.now();
+        sessionStartElapsed.current = useQuizDraftStore.getState().elapsedSeconds;
+        const loaded = await repository.getExam(examId);
+        if (loaded && pageMode === "quick") {
+          setExam({ ...loaded, title: `Luyện nhanh · ${loaded.title}`, questions: loaded.questions.slice(0, 8), timeLimitSeconds: undefined });
+        } else {
+          setExam(loaded);
+        }
       } catch (e) {
         console.error("Lỗi tải đề thi:", e);
       } finally {
@@ -95,9 +127,28 @@ export default function ExamPracticePage() {
     load();
   }, [examId, initExam]);
 
+  useEffect(() => {
+    if (mode === "exam") return;
+    const interval = window.setInterval(() => {
+      setElapsed(sessionStartElapsed.current + Math.max(0, Math.floor((Date.now() - sessionStartedAt.current) / 1000)));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [mode, setElapsed]);
+
   const totalQuestions = exam?.questions?.length || 0;
   const currentQuestion = exam?.questions?.[currentIndex];
+  const activeQuestionId = currentQuestion?.id;
   const currentAnswer = currentQuestion ? savedAnswers[currentQuestion.id] : undefined;
+
+  useEffect(() => {
+    if (!activeQuestionId) return;
+    const questionId = activeQuestionId;
+    questionStartedAt.current = Date.now();
+    return () => {
+      const seconds = Math.max(0, Math.round((Date.now() - questionStartedAt.current) / 1000));
+      addQuestionDuration(questionId, seconds);
+    };
+  }, [activeQuestionId, addQuestionDuration]);
 
   const answeredCount = Object.keys(savedAnswers).filter(
     (k) =>
@@ -122,9 +173,11 @@ export default function ExamPracticePage() {
     }
   };
 
-  // Check current question instant answer & auto save mistake if wrong
+  const isMockExam = mode === "exam";
+
+  // Check current question instantly in practice modes.
   const handleCheckCurrentQuestion = async () => {
-    if (!currentQuestion || !exam) return;
+    if (isMockExam || !currentQuestion || !exam) return;
     if (currentAnswer === undefined || currentAnswer === null || currentAnswer === "") {
       return;
     }
@@ -159,13 +212,15 @@ export default function ExamPracticePage() {
       (!Array.isArray(currentAnswer) || currentAnswer.length > 0) &&
       (typeof currentAnswer !== "object" || Object.keys(currentAnswer).length > 0)
     ) {
-      const grade = gradeQuestion(currentQuestion, currentAnswer);
-      if (!grade.correct && repository.recordSingleMistake) {
-        await repository.recordSingleMistake(currentQuestion, currentAnswer, {
-          examId: exam.id,
-          examTitle: exam.title,
-          levelId: exam.levelId,
-        });
+      if (!isMockExam) {
+        const grade = gradeQuestion(currentQuestion, currentAnswer);
+        if (!grade.correct && repository.recordSingleMistake) {
+          await repository.recordSingleMistake(currentQuestion, currentAnswer, {
+            examId: exam.id,
+            examTitle: exam.title,
+            levelId: exam.levelId,
+          });
+        }
       }
     }
     setCurrentIndex(targetIndex);
@@ -209,7 +264,15 @@ export default function ExamPracticePage() {
         topicId: exam.topicId,
         examTitle: exam.title,
         answers: answersResult,
-        durationSeconds: elapsedSeconds,
+        durationSeconds: Math.max(
+          elapsedSeconds,
+          sessionStartElapsed.current + Math.max(0, Math.round((Date.now() - sessionStartedAt.current) / 1000))
+        ),
+        questionDurations: getQuestionDurationSnapshot(
+          currentQuestion?.id,
+          questionStartedAt.current,
+          useQuizDraftStore.getState().questionDurations
+        ),
       });
 
       // Clear draft on successful submit
@@ -250,7 +313,7 @@ export default function ExamPracticePage() {
 
       if (e.key === "Enter") {
         e.preventDefault();
-        if (hasSelectedAnswer && !currentQCheck?.checked) {
+        if (!isMockExam && hasSelectedAnswer && !currentQCheck?.checked) {
           handleCheckCurrentQuestion();
         } else {
           if (currentIndex < totalQuestions - 1) {
@@ -275,7 +338,7 @@ export default function ExamPracticePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [exam, currentQuestion, hasSelectedAnswer, currentQCheck, currentIndex, totalQuestions]);
+  }, [exam, currentQuestion, hasSelectedAnswer, currentQCheck, currentIndex, totalQuestions, isMockExam]);
 
   if (loading) {
     return (
@@ -321,6 +384,7 @@ export default function ExamPracticePage() {
             <div className="flex-1 space-y-1.5 min-w-0">
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="truncate text-ink">
+                  {isMockExam && <span className="mr-1 rounded-full bg-vermillion-light px-2 py-0.5 text-vermillion-deep">Thi thử</span>}
                   {exam.title} · <span className="text-celadon-dark font-black">Câu {currentIndex + 1}/{totalQuestions}</span>
                 </span>
                 <span className="text-ink-muted shrink-0 ml-2">
@@ -336,12 +400,12 @@ export default function ExamPracticePage() {
             </div>
 
             {/* Timer */}
-            <QuizTimer
+            {isMockExam && <QuizTimer
               initialSeconds={elapsedSeconds}
-              timeLimitSeconds={exam.timeLimitSeconds}
+              timeLimitSeconds={exam.timeLimitSeconds ?? totalQuestions * 60}
               onTick={(sec) => setElapsed(sec)}
               onTimeUp={() => handleSubmitAttempt()}
-            />
+            />}
 
             {/* Mobile-only Question Palette Trigger Button */}
             <button
@@ -362,10 +426,16 @@ export default function ExamPracticePage() {
             onChange={handleAnswerChange}
             isBookmarked={bookmarkedIds.has(currentQuestion.id)}
             onToggleBookmark={() => handleToggleBookmark(currentQuestion.id)}
+            onReport={(report) => repository.reportQuestion({
+              questionId: currentQuestion.id,
+              examId: exam.id,
+              prompt: currentQuestion.prompt,
+              ...report,
+            }).then(() => undefined)}
           />
 
           {/* Instant feedback card if checked */}
-          {currentQCheck?.checked && (
+          {!isMockExam && currentQCheck?.checked && (
             <div
               className={`p-4 sm:p-5 rounded-3xl border transition-all animate-fadeIn ${
                 currentQCheck.isCorrect
@@ -416,7 +486,7 @@ export default function ExamPracticePage() {
 
             <div className="flex items-center gap-2">
               {/* Check Answer Button (Duolingo style) */}
-              {hasSelectedAnswer && !currentQCheck?.checked && (
+              {!isMockExam && hasSelectedAnswer && !currentQCheck?.checked && (
                 <button
                   type="button"
                   onClick={handleCheckCurrentQuestion}

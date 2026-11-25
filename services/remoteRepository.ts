@@ -12,8 +12,13 @@ import {
   QuestionResult,
   Question,
   AnswerValue,
+  DailyMissionProgress,
+  QuestionType,
+  QuestionReport,
 } from "@/types";
+import type { GrammarLesson } from "@/types/grammar";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
+import type { VocabularyItem } from "@/data/mock/vocabulary";
 
 /**
  * RemoteRepository: Sẵn sàng để kết nối API thật sau này.
@@ -47,6 +52,10 @@ export class RemoteRepository implements IRepository {
     throw new Error("Remote API chưa được kết nối.");
   }
 
+  async getGrammarLesson(_grammarPointId: string): Promise<GrammarLesson | null> {
+    throw new Error("Remote API chÆ°a há»— trá»£ bÃ i há»c ngá»¯ phÃ¡p.");
+  }
+
   async getExams(topicId: string): Promise<Exam[]> {
     // TODO: fetch(`${this.baseUrl}/topics/${topicId}/exams`)
     throw new Error("Remote API chưa được kết nối.");
@@ -55,6 +64,10 @@ export class RemoteRepository implements IRepository {
   async getExam(examId: string): Promise<Exam | null> {
     // TODO: fetch(`${this.baseUrl}/exams/${examId}`)
     throw new Error("Remote API chưa được kết nối.");
+  }
+
+  async generateVocabularyExam(_topicId: string): Promise<Exam> {
+    throw new Error("Remote API chÆ°a há»— trá»£ táº¡o cÃ¢u há»i tá»« vá»±ng.");
   }
 
   async getAllExams(): Promise<Exam[]> {
@@ -77,6 +90,21 @@ export class RemoteRepository implements IRepository {
     throw new Error("Remote API chưa được kết nối.");
   }
 
+  async generateQuestionTypeExam(_levelId: LevelId, _questionType: QuestionType): Promise<Exam> {
+    // TODO: post(`${this.baseUrl}/practice/type`, { levelId, questionType })
+    throw new Error("Remote API chưa hỗ trợ sinh đề theo dạng câu hỏi.");
+  }
+
+  async generateWeakAreaExam(_attemptId: string, _count = 10): Promise<Exam | null> {
+    // TODO: post(`${this.baseUrl}/adaptive/weak-area`, { attemptId, count })
+    throw new Error("Remote API chưa hỗ trợ sinh đề theo phần yếu.");
+  }
+
+  async generateAdaptiveExam(_levelId: LevelId, _count = 10): Promise<Exam> {
+    // TODO: post(`${this.baseUrl}/adaptive/exams`, { levelId, count })
+    throw new Error("Remote API chưa hỗ trợ sinh đề thích ứng.");
+  }
+
   async generateMistakeExam(): Promise<Exam | null> {
     // TODO: post(`${this.baseUrl}/mistakes/exam/generate`)
     throw new Error("Remote API chưa được kết nối.");
@@ -89,6 +117,7 @@ export class RemoteRepository implements IRepository {
     examTitle: string;
     answers: Record<string, QuestionResult>;
     durationSeconds: number;
+    questionDurations?: Record<string, number>;
   }): Promise<ExamAttempt> {
     // TODO: post(`${this.baseUrl}/attempts`, payload)
     throw new Error("Remote API chưa được kết nối.");
@@ -102,6 +131,10 @@ export class RemoteRepository implements IRepository {
   async getAttempt(id: string): Promise<ExamAttempt | null> {
     // TODO: fetch(`${this.baseUrl}/attempts/${id}`)
     throw new Error("Remote API chưa được kết nối.");
+  }
+
+  async reportQuestion(_report: Omit<QuestionReport, "id" | "createdAt">): Promise<QuestionReport> {
+    throw new Error("Remote API chÆ°a há»— trá»£ bÃ¡o lá»—i cÃ¢u há»i.");
   }
 
   async getMistakes(): Promise<MistakeEntry[]> {
@@ -144,6 +177,26 @@ export class RemoteRepository implements IRepository {
   async reviewSrsItem(_itemId: string, _quality: SrsQuality, _reviewedAt?: string): Promise<SrsCard | null> {
     // TODO: post(`${this.baseUrl}/srs/reviews`, { itemId, quality, reviewedAt })
     throw new Error("Remote API chưa hỗ trợ SRS.");
+  }
+
+  async getDailyMissionProgress(_date?: string): Promise<DailyMissionProgress> {
+    // TODO: fetch(`${this.baseUrl}/daily-missions`)
+    throw new Error("Remote API chưa hỗ trợ nhiệm vụ hằng ngày.");
+  }
+
+  async getVocabularyForTopic(_topicId: string): Promise<VocabularyItem[]> {
+    // TODO: fetch(`${this.baseUrl}/topics/${topicId}/vocabulary`)
+    throw new Error("Remote API chưa hỗ trợ bài học từ vựng.");
+  }
+
+  async getCompletedLessons(): Promise<string[]> {
+    // TODO: fetch(`${this.baseUrl}/learning/completed`)
+    throw new Error("Remote API chưa hỗ trợ tiến độ bài học.");
+  }
+
+  async completeTopicLesson(_topicId: string, _vocabularyIds: string[]): Promise<void> {
+    // TODO: post(`${this.baseUrl}/learning/complete`, { topicId, vocabularyIds })
+    throw new Error("Remote API chưa hỗ trợ tiến độ bài học.");
   }
 
   async getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>> {

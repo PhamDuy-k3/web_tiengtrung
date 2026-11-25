@@ -14,6 +14,9 @@ import {
   Badge,
   LocalStorageData,
   AnswerValue,
+  DailyMissionId,
+  DailyMissionProgress,
+  QuestionType,
 } from "@/types";
 import {
   mockLevels,
@@ -27,6 +30,9 @@ import {
 import { shuffleArray } from "@/lib/shuffle";
 import { migrateStorageData } from "@/lib/storageMigration";
 import { createSrsCard, getSrsItemId, isSrsMastered, scheduleSrsReview } from "@/lib/srs";
+import { selectAdaptiveQuestions } from "@/services/adaptiveExamGenerator";
+import { generateVocabularyExam as buildVocabularyExam } from "@/services/vocabularyQuestionGenerator";
+import type { GrammarLesson } from "@/types/grammar";
 import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 const STORAGE_KEY = "hanyu:v2";
@@ -52,14 +58,27 @@ const DEFAULT_PROFILE: UserProfile = {
 
 function createInitialStorage(): LocalStorageData {
   return {
-    version: "2.1",
+    version: "2.4",
     profile: { ...DEFAULT_PROFILE },
     attempts: [],
     mistakes: {},
     progress: {},
     srs: {},
+    completedLessons: [],
+    dailyMissionRewards: {},
+    reportedQuestions: [],
   };
 }
+
+const QUESTION_TYPES: QuestionType[] = [
+  "word_order", "multiple_choice", "fill_in_blank", "matching",
+  "listen_choice", "listen_word_order", "pinyin_choice", "short_translate", "hanzi_write",
+];
+
+const DAILY_MISSION_XP: Record<DailyMissionId, number> = {
+  "review-10": 20,
+  "exam-1": 15,
+};
 
 class LocalRepository implements IRepository {
   private artificialDelay(ms: number = 150): Promise<void> {
@@ -80,7 +99,7 @@ class LocalRepository implements IRepository {
           const storedVersion = typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
             ? (parsed as Record<string, unknown>).version
             : undefined;
-          if (storedVersion !== "2.1") this.saveStorage(current);
+          if (storedVersion !== "2.4") this.saveStorage(current);
           return current;
         }
       } catch {
@@ -137,6 +156,25 @@ class LocalRepository implements IRepository {
     return mockTopics.find((t) => t.id === topicId) || null;
   }
 
+  async getGrammarLesson(grammarPointId: string): Promise<GrammarLesson | null> {
+    const source = (await import("@/data/mock/grammarLessons")).grammarLessons.find((lesson) => lesson.id === grammarPointId);
+    if (!source) return null;
+    const questions = allMockExams.flatMap((exam) => exam.questions);
+    const examples = source.sourceQuestionIds.flatMap((id) => {
+      const question = questions.find((item) => item.id === id);
+      if (!question) return [];
+      const chinese = question.chineseText ?? (Array.isArray(question.correctAnswer)
+        ? question.correctAnswer.join("")
+        : typeof question.correctAnswer === "string" && /[\u3400-\u9fff]/.test(question.correctAnswer)
+          ? question.correctAnswer
+          : question.tiles?.join(""));
+      if (!chinese) return [];
+      const vietnamese = source.exampleTranslations?.[id] ?? question.prompt.match(/[‘']([^’']+)[’']/)?.[1] ?? question.prompt;
+      return [{ sourceQuestionId: id, chinese, pinyin: question.pinyin, vietnamese }];
+    });
+    return { ...source, examples };
+  }
+
   async getExams(topicId: string): Promise<Exam[]> {
     await this.artificialDelay(120);
     return allMockExams.filter((e) => e.topicId === topicId);
@@ -148,10 +186,32 @@ class LocalRepository implements IRepository {
     const found = allMockExams.find((e) => e.id === examId);
     if (found) return found;
 
+    if (examId.startsWith("generated-vocab-")) {
+      return this.generateVocabularyExam(examId.slice("generated-vocab-".length));
+    }
+
     // 2. Check if it's a level test
     if (examId.startsWith("level-test-")) {
       const levelId = examId.replace("level-test-", "") as LevelId;
       return buildLevelTest(levelId);
+    }
+
+    if (examId.startsWith("type-practice-")) {
+      const [rawLevelId, ...rawType] = examId.slice("type-practice-".length).split("-");
+      const levelId = rawLevelId as LevelId;
+      const questionType = rawType.join("-") as QuestionType;
+      if (["basic", "intermediate", "advanced"].includes(levelId) && QUESTION_TYPES.includes(questionType)) {
+        return this.generateQuestionTypeExam(levelId, questionType);
+      }
+    }
+
+    if (examId.startsWith("weak-area-")) {
+      return this.generateWeakAreaExam(examId.slice("weak-area-".length));
+    }
+
+    if (examId.startsWith("adaptive-")) {
+      const levelId = examId.slice("adaptive-".length) as LevelId;
+      if (["basic", "intermediate", "advanced"].includes(levelId)) return this.generateAdaptiveExam(levelId);
     }
 
     // 3. Check if it's placement test
@@ -182,6 +242,12 @@ class LocalRepository implements IRepository {
     return [...allMockExams];
   }
 
+  async generateVocabularyExam(topicId: string): Promise<Exam> {
+    await this.artificialDelay(100);
+    const vocabulary = mockVocabulary.filter((word) => word.topicId === topicId);
+    return buildVocabularyExam(topicId, vocabulary);
+  }
+
   async generateLevelTest(levelId: LevelId, seed?: number): Promise<Exam> {
     await this.artificialDelay(150);
     return buildLevelTest(levelId, seed);
@@ -209,6 +275,128 @@ class LocalRepository implements IRepository {
       isRandom: true,
       timeLimitSeconds: 15 * 60,
     };
+  }
+
+  async generateQuestionTypeExam(levelId: LevelId, questionType: QuestionType): Promise<Exam> {
+    await this.artificialDelay(120);
+    if (!QUESTION_TYPES.includes(questionType)) throw new Error("Dạng câu hỏi không hợp lệ.");
+    const questions = shuffleArray(getQuestionsByLevel(levelId).filter((question) => question.type === questionType)).slice(0, 10);
+    if (questions.length === 0) throw new Error("Cấp độ này chưa có câu hỏi thuộc dạng đã chọn.");
+    const levelName = mockLevels.find((level) => level.id === levelId)?.name || levelId;
+    return {
+      id: `type-practice-${levelId}-${questionType}`,
+      topicId: `type-practice-${questionType}`,
+      levelId,
+      title: `Luyện dạng ${questionType} · ${levelName}`,
+      description: `Phiên luyện tập gồm ${questions.length} câu thuộc dạng ${questionType}.`,
+      questions,
+      isRandom: true,
+    };
+  }
+
+  async generateWeakAreaExam(attemptId: string, count = 10): Promise<Exam | null> {
+    await this.artificialDelay(120);
+    const attempt = this.loadStorage().attempts.find((item) => item.id === attemptId);
+    if (!attempt) return null;
+    const incorrect = Object.values(attempt.answers).filter((answer) => !answer.isCorrect);
+    if (incorrect.length === 0) return null;
+
+    const focusTags = Array.from(new Set(incorrect.flatMap((answer) => answer.question.tags)));
+    const tagWeights: Record<string, number> = {};
+    for (const answer of incorrect) {
+      for (const tag of answer.question.tags) tagWeights[tag] = (tagWeights[tag] ?? 0) + 2;
+    }
+    const targetDifficulty = Math.round(
+      incorrect.reduce((sum, answer) => sum + answer.question.difficulty, 0) / incorrect.length
+    );
+    const questions = selectAdaptiveQuestions({
+      questions: getQuestionsByLevel(attempt.levelId),
+      count,
+      focusTags,
+      tagWeights,
+      targetDifficulty,
+    });
+    return {
+      id: `weak-area-${attempt.id}`,
+      topicId: attempt.topicId ?? `weak-area-${attempt.id}`,
+      levelId: attempt.levelId,
+      title: "Luyện lại phần còn yếu",
+      description: `Đề ${questions.length} câu ưu tiên các tag bạn vừa làm sai: ${focusTags.join(", ")}.`,
+      questions,
+      isRandom: true,
+    };
+  }
+
+  async generateAdaptiveExam(levelId: LevelId, count = 10): Promise<Exam> {
+    await this.artificialDelay(120);
+    const store = this.loadStorage();
+    const levelAttempts = store.attempts.filter((attempt) => attempt.levelId === levelId).slice(0, 10);
+    const recentAttempts = levelAttempts.slice(0, 5);
+    const averageScore = recentAttempts.length > 0
+      ? recentAttempts.reduce((sum, attempt) => sum + attempt.score, 0) / recentAttempts.length
+      : levelId === "basic" ? 35 : levelId === "intermediate" ? 60 : 85;
+    const targetDifficulty = Math.min(5, Math.max(1, Math.ceil(averageScore / 20)));
+    const tagWeights: Record<string, number> = {};
+
+    for (const mistake of Object.values(store.mistakes)) {
+      const questionLevel = mistake.question.hskLevel <= 2 ? "basic" : mistake.question.hskLevel <= 4 ? "intermediate" : "advanced";
+      if (questionLevel !== levelId || mistake.isMastered) continue;
+      for (const tag of mistake.question.tags) tagWeights[tag] = (tagWeights[tag] ?? 0) + Math.max(1, mistake.timesWrong);
+    }
+    for (const attempt of levelAttempts) {
+      for (const answer of Object.values(attempt.answers)) {
+        if (answer.isCorrect) continue;
+        for (const tag of answer.question.tags) tagWeights[tag] = (tagWeights[tag] ?? 0) + 1;
+      }
+    }
+
+    const questionById = new Map(allMockExams.flatMap((exam) => exam.questions).map((question) => [question.id, question]));
+    const now = Date.now();
+    const dueQuestionIds: string[] = [];
+    for (const card of Object.values(store.srs)) {
+      if (card.itemType !== "question" || Date.parse(card.dueAt) > now) continue;
+      const questionId = card.itemId.slice("question:".length);
+      const question = store.mistakes[questionId]?.question ?? questionById.get(questionId);
+      if (!question) continue;
+      const questionLevel = question.hskLevel <= 2 ? "basic" : question.hskLevel <= 4 ? "intermediate" : "advanced";
+      if (questionLevel !== levelId) continue;
+      dueQuestionIds.push(questionId);
+      for (const tag of question.tags) tagWeights[tag] = (tagWeights[tag] ?? 0) + 3;
+    }
+
+    const questions = selectAdaptiveQuestions({
+      questions: getQuestionsByLevel(levelId),
+      count,
+      tagWeights,
+      dueQuestionIds,
+      targetDifficulty,
+    });
+    return {
+      id: `adaptive-${levelId}`,
+      topicId: `adaptive-${levelId}`,
+      levelId,
+      title: "Đề luyện thích ứng",
+      description: `Đề ${questions.length} câu cân theo năng lực hiện tại (độ khó mục tiêu ${targetDifficulty}/5), lỗi lặp và SRS đến hạn.`,
+      questions,
+      isRandom: true,
+    };
+  }
+
+  private updateStreak(store: LocalStorageData, date: string): void {
+    if (store.profile.lastActiveDate === date) return;
+    const yesterday = new Date(`${date}T00:00:00.000Z`);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayKey = yesterday.toISOString().slice(0, 10);
+    store.profile.streak = store.profile.lastActiveDate === yesterdayKey ? store.profile.streak + 1 : 1;
+    store.profile.lastActiveDate = date;
+  }
+
+  private claimDailyMission(store: LocalStorageData, date: string, missionId: DailyMissionId): boolean {
+    const rewards = store.dailyMissionRewards[date] ?? [];
+    if (rewards.includes(missionId)) return false;
+    store.dailyMissionRewards[date] = [...rewards, missionId];
+    store.profile.totalXp += DAILY_MISSION_XP[missionId];
+    return true;
   }
 
   async generateMistakeExam(levelId?: LevelId): Promise<Exam | null> {
@@ -260,6 +448,7 @@ class LocalRepository implements IRepository {
     examTitle: string;
     answers: Record<string, QuestionResult>;
     durationSeconds: number;
+    questionDurations?: Record<string, number>;
   }): Promise<ExamAttempt> {
     await this.artificialDelay(200);
     const store = this.loadStorage();
@@ -289,6 +478,7 @@ class LocalRepository implements IRepository {
       incorrectCount: totalQuestions - correctCount,
       answers: payload.answers,
       durationSeconds: payload.durationSeconds,
+      questionDurations: payload.questionDurations,
       createdAt: new Date().toISOString(),
       passed,
     };
@@ -309,14 +499,9 @@ class LocalRepository implements IRepository {
 
     // Update Streak
     const today = new Date().toISOString().split("T")[0];
-    if (store.profile.lastActiveDate !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-      if (store.profile.lastActiveDate === yesterday) {
-        store.profile.streak += 1;
-      } else {
-        store.profile.streak = 1;
-      }
-      store.profile.lastActiveDate = today;
+    this.updateStreak(store, today);
+    if (store.attempts.filter((saved) => saved.createdAt.slice(0, 10) === today).length >= 1) {
+      this.claimDailyMission(store, today, "exam-1");
     }
 
     // Check Level-up unlock
@@ -379,6 +564,14 @@ class LocalRepository implements IRepository {
     await this.artificialDelay(80);
     const store = this.loadStorage();
     return store.attempts.find((a) => a.id === id) || null;
+  }
+
+  async reportQuestion(report: Omit<LocalStorageData["reportedQuestions"][number], "id" | "createdAt">) {
+    const store = this.loadStorage();
+    const saved = { ...report, id: `report-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, createdAt: new Date().toISOString() };
+    store.reportedQuestions.push(saved);
+    if (!this.saveStorage(store)) throw new Error("KhÃ´ng lÆ°u Ä‘Æ°á»£c bÃ¡o cÃ¡o vÃ o thiáº¿t bá»‹ nÃ y.");
+    return saved;
   }
 
   async getMistakes(): Promise<MistakeEntry[]> {
@@ -570,6 +763,13 @@ class LocalRepository implements IRepository {
     const updated = scheduleSrsReview(existing, quality, reviewedAt);
     store.srs[itemId] = updated;
 
+    const reviewDate = new Date(reviewedAt).toISOString().slice(0, 10);
+    this.updateStreak(store, reviewDate);
+    const reviewsCompleted = Object.values(store.srs).filter(
+      (card) => card.lastReviewedAt?.slice(0, 10) === reviewDate
+    ).length;
+    if (reviewsCompleted >= 10) this.claimDailyMission(store, reviewDate, "review-10");
+
     if (existing.itemType === "question") {
       const questionId = itemId.slice("question:".length);
       const mistake = store.mistakes[questionId];
@@ -587,6 +787,52 @@ class LocalRepository implements IRepository {
     }
     this.saveStorage(store);
     return updated;
+  }
+
+  async getDailyMissionProgress(date: string = new Date().toISOString().slice(0, 10)): Promise<DailyMissionProgress> {
+    await this.artificialDelay(40);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Ngày nhiệm vụ không hợp lệ.");
+    const store = this.loadStorage();
+    const reviewsCompleted = Object.values(store.srs).filter(
+      (card) => card.lastReviewedAt?.slice(0, 10) === date
+    ).length;
+    const examsCompleted = store.attempts.filter((attempt) => attempt.createdAt.slice(0, 10) === date).length;
+    const rewards = store.dailyMissionRewards[date] ?? [];
+    return {
+      date,
+      reviewsCompleted,
+      examsCompleted,
+      reviewRewardClaimed: rewards.includes("review-10"),
+      examRewardClaimed: rewards.includes("exam-1"),
+    };
+  }
+
+  async getVocabularyForTopic(topicId: string) {
+    await this.artificialDelay(60);
+    return mockVocabulary.filter((item) => item.topicId === topicId);
+  }
+
+  async getCompletedLessons(): Promise<string[]> {
+    await this.artificialDelay(40);
+    return [...this.loadStorage().completedLessons];
+  }
+
+  async completeTopicLesson(topicId: string, vocabularyIds: string[]): Promise<void> {
+    const topicVocabulary = mockVocabulary.filter(
+      (item) => item.topicId === topicId && vocabularyIds.includes(item.id)
+    );
+    if (topicVocabulary.length !== vocabularyIds.length) {
+      throw new Error("Bài học có từ vựng không thuộc chủ đề này.");
+    }
+
+    const store = this.loadStorage();
+    if (!store.completedLessons.includes(topicId)) store.completedLessons.push(topicId);
+    const now = new Date().toISOString();
+    for (const item of topicVocabulary) {
+      const itemId = getSrsItemId("vocabulary", item.id);
+      store.srs[itemId] ??= createSrsCard(itemId, "vocabulary", now);
+    }
+    this.saveStorage(store);
   }
 
   async getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>> {

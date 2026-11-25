@@ -6,6 +6,7 @@ import {
   Question,
   QuestionResult,
   UserProfile,
+  DailyMissionId,
 } from "@/types";
 import { createSrsCard } from "@/lib/srs";
 import type { SrsCard } from "@/types/srs";
@@ -99,6 +100,14 @@ function migrateAttempt(value: unknown): ExamAttempt | null {
     if (!result) return null;
     answers[result.question.id || id] = result;
   }
+  const questionDurations: Record<string, number> = {};
+  if (isRecord(value.questionDurations)) {
+    for (const [questionId, seconds] of Object.entries(value.questionDurations)) {
+      if (answers[questionId] && typeof seconds === "number" && Number.isFinite(seconds) && seconds >= 0) {
+        questionDurations[questionId] = Math.round(seconds);
+      }
+    }
+  }
   const score = typeof value.score === "number" ? value.score : 0;
   return {
     ...value,
@@ -112,6 +121,7 @@ function migrateAttempt(value: unknown): ExamAttempt | null {
     incorrectCount: typeof value.incorrectCount === "number" ? value.incorrectCount : Object.values(answers).filter((a) => !a.isCorrect).length,
     answers,
     durationSeconds: typeof value.durationSeconds === "number" ? value.durationSeconds : 0,
+    questionDurations: Object.keys(questionDurations).length > 0 ? questionDurations : undefined,
     createdAt: typeof value.createdAt === "string" ? value.createdAt : new Date(0).toISOString(),
   };
 }
@@ -130,6 +140,23 @@ function migrateMistake(value: unknown): MistakeEntry | null {
     isMastered: value.isMastered === true,
     lastUserAnswer: isAnswerValue(value.lastUserAnswer) ? value.lastUserAnswer : null,
   };
+}
+
+function migrateQuestionReports(value: unknown): LocalStorageData["reportedQuestions"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((report) => {
+    if (!isRecord(report) || typeof report.questionId !== "string" ||
+      typeof report.prompt !== "string" || typeof report.reason !== "string") return [];
+    return [{
+      id: typeof report.id === "string" ? report.id : `report-${report.questionId}-${Date.now()}`,
+      questionId: report.questionId,
+      ...(typeof report.examId === "string" ? { examId: report.examId } : {}),
+      prompt: report.prompt,
+      reason: report.reason,
+      ...(typeof report.details === "string" ? { details: report.details } : {}),
+      createdAt: typeof report.createdAt === "string" ? report.createdAt : new Date(0).toISOString(),
+    }];
+  });
 }
 
 function isSrsCard(value: unknown, itemId: string): value is SrsCard {
@@ -223,13 +250,28 @@ export function migrateStorageData(value: unknown): LocalStorageData | null {
   const now = new Date().toISOString();
   const srs = migrateSrsCards(value.srs, mistakes, now);
   if (!srs) return null;
+  const completedLessons = Array.isArray(value.completedLessons)
+    ? value.completedLessons.filter((topicId): topicId is string => typeof topicId === "string")
+    : [];
+  const dailyMissionRewards: LocalStorageData["dailyMissionRewards"] = {};
+  if (isRecord(value.dailyMissionRewards)) {
+    for (const [date, rawRewards] of Object.entries(value.dailyMissionRewards)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Array.isArray(rawRewards)) continue;
+      dailyMissionRewards[date] = rawRewards.filter(
+        (reward): reward is DailyMissionId => reward === "review-10" || reward === "exam-1"
+      );
+    }
+  }
 
   return {
-    version: "2.1",
+    version: "2.4",
     profile: value.profile,
     attempts,
     mistakes,
     progress,
     srs,
+    completedLessons,
+    dailyMissionRewards,
+    reportedQuestions: migrateQuestionReports(value.reportedQuestions),
   };
 }

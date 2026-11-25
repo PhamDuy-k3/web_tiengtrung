@@ -7,10 +7,12 @@ interface QuizDraftState {
   activeExamId: string | null;
   savedAnswers: Record<string, AnswerValue>;
   elapsedSeconds: number;
+  questionDurations: Record<string, number>;
   currentQuestionIndex: number;
   setDraftAnswer: (examId: string, questionId: string, answer: AnswerValue) => void;
   setIndex: (index: number) => void;
   setElapsed: (seconds: number) => void;
+  addQuestionDuration: (questionId: string, seconds: number) => void;
   initExam: (examId: string) => void;
   clearDraft: (examId: string) => void;
 }
@@ -28,6 +30,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
   activeExamId: null,
   savedAnswers: {},
   elapsedSeconds: 0,
+  questionDurations: {},
   currentQuestionIndex: 0,
 
   initExam: (examId: string) => {
@@ -45,10 +48,18 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
             if (isAnswerValue(answer)) answers[id] = answer;
           }
         }
+        const rawDurations = draft.questionDurations;
+        const questionDurations: Record<string, number> = {};
+        if (rawDurations && typeof rawDurations === "object" && !Array.isArray(rawDurations)) {
+          for (const [id, seconds] of Object.entries(rawDurations)) {
+            if (typeof seconds === "number" && Number.isFinite(seconds) && seconds >= 0) questionDurations[id] = Math.round(seconds);
+          }
+        }
         set({
           activeExamId: examId,
           savedAnswers: answers,
           elapsedSeconds: typeof draft.elapsedSeconds === "number" ? draft.elapsedSeconds : 0,
+          questionDurations,
           currentQuestionIndex: typeof draft.currentQuestionIndex === "number" ? draft.currentQuestionIndex : 0,
         });
         return;
@@ -60,6 +71,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
       activeExamId: examId,
       savedAnswers: {},
       elapsedSeconds: 0,
+      questionDurations: {},
       currentQuestionIndex: 0,
     });
   },
@@ -77,6 +89,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
             JSON.stringify({
               savedAnswers: updated,
               elapsedSeconds: state.elapsedSeconds,
+              questionDurations: state.questionDurations,
               currentQuestionIndex: state.currentQuestionIndex,
             })
           );
@@ -97,6 +110,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
             JSON.stringify({
               savedAnswers: state.savedAnswers,
               elapsedSeconds: state.elapsedSeconds,
+              questionDurations: state.questionDurations,
               currentQuestionIndex: index,
             })
           );
@@ -107,7 +121,41 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
   },
 
   setElapsed: (seconds: number) => {
-    set({ elapsedSeconds: seconds });
+    set((state) => {
+      const elapsedSeconds = Math.max(0, Math.floor(seconds));
+      if (state.activeExamId && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`${DRAFT_STORAGE_PREFIX}${state.activeExamId}`, JSON.stringify({
+            savedAnswers: state.savedAnswers,
+            elapsedSeconds,
+            questionDurations: state.questionDurations,
+            currentQuestionIndex: state.currentQuestionIndex,
+          }));
+        } catch {}
+      }
+      return { elapsedSeconds };
+    });
+  },
+
+  addQuestionDuration: (questionId: string, seconds: number) => {
+    set((state) => {
+      if (!Number.isFinite(seconds) || seconds <= 0) return state;
+      const questionDurations = {
+        ...state.questionDurations,
+        [questionId]: (state.questionDurations[questionId] ?? 0) + Math.round(seconds),
+      };
+      if (state.activeExamId && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`${DRAFT_STORAGE_PREFIX}${state.activeExamId}`, JSON.stringify({
+            savedAnswers: state.savedAnswers,
+            elapsedSeconds: state.elapsedSeconds,
+            questionDurations,
+            currentQuestionIndex: state.currentQuestionIndex,
+          }));
+        } catch {}
+      }
+      return { questionDurations };
+    });
   },
 
   clearDraft: (examId: string) => {
@@ -120,6 +168,7 @@ export const useQuizDraftStore = create<QuizDraftState>((set, get) => ({
       activeExamId: null,
       savedAnswers: {},
       elapsedSeconds: 0,
+      questionDurations: {},
       currentQuestionIndex: 0,
     });
   },
