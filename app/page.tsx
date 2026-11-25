@@ -15,6 +15,7 @@ import {
   Sparkles,
   ChevronRight,
   Calendar,
+  RotateCcw,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 import { repository } from "@/services";
@@ -104,6 +105,7 @@ export default function HomePage() {
   const [levels, setLevels]     = useState<Level[]>([]);
   const [levelProgresses, setLevelProgresses] = useState<Record<string, LevelProgressInfo>>({});
   const [mistakes, setMistakes] = useState<MistakeEntry[]>([]);
+  const [dueSrsCount, setDueSrsCount] = useState(0);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function HomePage() {
         for (const l of lvls) progs[l.id] = await repository.getLevelProgress(l.id);
         setLevelProgresses(progs);
         setMistakes(await repository.getMistakes());
+        setDueSrsCount((await repository.getDueSrsItems()).length);
       } finally { setLoading(false); }
     }
     fetch();
@@ -166,8 +169,15 @@ export default function HomePage() {
               {/* CTA buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
-                  href="/placement-test"
+                  href="/review"
                   className="btn-primary text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                >
+                  <RotateCcw size={16} />
+                  Hôm nay cần ôn {dueSrsCount} mục
+                </Link>
+                <Link
+                  href="/placement-test"
+                  className="btn-ghost text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
                 >
                   <Compass size={16} />
                   Kiểm tra trình độ HSK

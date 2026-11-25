@@ -7,6 +7,8 @@ import {
   QuestionResult,
   UserProfile,
 } from "@/types";
+import { createSrsCard } from "@/lib/srs";
+import type { SrsCard } from "@/types/srs";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -130,6 +132,51 @@ function migrateMistake(value: unknown): MistakeEntry | null {
   };
 }
 
+function isSrsCard(value: unknown, itemId: string): value is SrsCard {
+  if (!isRecord(value)) return false;
+  return value.itemId === itemId &&
+    (value.itemType === "question" || value.itemType === "vocabulary") &&
+    typeof value.intervalDays === "number" && value.intervalDays >= 0 &&
+    typeof value.repetitions === "number" && value.repetitions >= 0 &&
+    typeof value.easeFactor === "number" && value.easeFactor >= 1.3 &&
+    typeof value.dueAt === "string" && !Number.isNaN(Date.parse(value.dueAt)) &&
+    typeof value.createdAt === "string" && !Number.isNaN(Date.parse(value.createdAt)) &&
+    (value.lastReviewedAt === undefined || (typeof value.lastReviewedAt === "string" && !Number.isNaN(Date.parse(value.lastReviewedAt))));
+}
+
+function migrateSrsCards(
+  value: unknown,
+  mistakes: Record<string, MistakeEntry>,
+  now: string
+): Record<string, SrsCard> | null {
+  if (value !== undefined) {
+    if (!isRecord(value)) return null;
+    const cards: Record<string, SrsCard> = {};
+    for (const [itemId, rawCard] of Object.entries(value)) {
+      if (!isSrsCard(rawCard, itemId)) return null;
+      cards[itemId] = rawCard;
+    }
+    return cards;
+  }
+
+  const cards: Record<string, SrsCard> = {};
+  for (const mistake of Object.values(mistakes)) {
+    const itemId = `question:${mistake.questionId}`;
+    const initial = createSrsCard(itemId, "question", now);
+    cards[itemId] = mistake.isMastered
+      ? {
+          ...initial,
+          intervalDays: 21,
+          repetitions: 3,
+          dueAt: new Date(Date.parse(now) + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          lastReviewedAt: now,
+          lastQuality: 5,
+        }
+      : initial;
+  }
+  return cards;
+}
+
 function isProfile(value: unknown): value is UserProfile {
   return isRecord(value) &&
     typeof value.name === "string" &&
@@ -173,11 +220,16 @@ export function migrateStorageData(value: unknown): LocalStorageData | null {
     }
   }
 
+  const now = new Date().toISOString();
+  const srs = migrateSrsCards(value.srs, mistakes, now);
+  if (!srs) return null;
+
   return {
-    version: "2.0",
+    version: "2.1",
     profile: value.profile,
     attempts,
     mistakes,
     progress,
+    srs,
   };
 }

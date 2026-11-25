@@ -1,4 +1,5 @@
 export type LevelId = "basic" | "intermediate" | "advanced";
+import type { SrsCard } from "./srs";
 
 export interface Level {
   id: LevelId;
@@ -130,11 +131,12 @@ export interface MistakeEntry {
 }
 
 export interface LocalStorageData {
-  version: "2.0";
+  version: "2.1";
   profile: UserProfile;
   attempts: ExamAttempt[];
   mistakes: Record<string, MistakeEntry>;
   progress: Record<string, { bestScore: number; attempts: number }>;
+  srs: Record<string, SrsCard>;
 }
 
 export interface Badge {

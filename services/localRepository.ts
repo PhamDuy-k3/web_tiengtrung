@@ -22,9 +22,12 @@ import {
   buildLevelTest,
   buildPlacementTest,
   getQuestionsByLevel,
+  mockVocabulary,
 } from "@/data/mock";
 import { shuffleArray } from "@/lib/shuffle";
 import { migrateStorageData } from "@/lib/storageMigration";
+import { createSrsCard, getSrsItemId, isSrsMastered, scheduleSrsReview } from "@/lib/srs";
+import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 const STORAGE_KEY = "hanyu:v2";
 const LEGACY_STORAGE_KEY = "hanyu:v1";
@@ -49,11 +52,12 @@ const DEFAULT_PROFILE: UserProfile = {
 
 function createInitialStorage(): LocalStorageData {
   return {
-    version: "2.0",
+    version: "2.1",
     profile: { ...DEFAULT_PROFILE },
     attempts: [],
     mistakes: {},
     progress: {},
+    srs: {},
   };
 }
 
@@ -72,7 +76,7 @@ class LocalRepository implements IRepository {
       try {
         const current = migrateStorageData(JSON.parse(currentRaw) as unknown);
         if (current) {
-          if (current.version !== "2.0") this.saveStorage(current);
+          if (current.version !== "2.1") this.saveStorage(current);
           return current;
         }
       } catch {
@@ -350,8 +354,8 @@ class LocalRepository implements IRepository {
       });
     }
 
-    // Update mistakes with exam info & level
-    await this.updateMistakes(payload.answers, {
+    // Update mistakes and SRS cards in the same storage transaction as the attempt.
+    this.recordQuestionMistakes(store, payload.answers, {
       examId: payload.examId,
       examTitle: payload.examTitle,
       levelId: payload.levelId,
@@ -376,7 +380,73 @@ class LocalRepository implements IRepository {
   async getMistakes(): Promise<MistakeEntry[]> {
     await this.artificialDelay(120);
     const store = this.loadStorage();
-    return Object.values(store.mistakes);
+    return Object.values(store.mistakes).map((mistake) => {
+      const card = store.srs[getSrsItemId("question", mistake.questionId)];
+      return card ? { ...mistake, isMastered: isSrsMastered(card) } : mistake;
+    });
+  }
+
+  private queueQuestionForSrs(store: LocalStorageData, question: Question, now: string): void {
+    const itemId = getSrsItemId("question", question.id);
+    const existing = store.srs[itemId];
+    store.srs[itemId] = existing
+      ? {
+          ...existing,
+          intervalDays: 0,
+          repetitions: 0,
+          easeFactor: Math.max(1.3, existing.easeFactor - 0.2),
+          dueAt: now,
+          lastQuality: 1,
+        }
+      : createSrsCard(itemId, "question", now);
+  }
+
+  private recordQuestionMistakes(
+    store: LocalStorageData,
+    answers: Record<string, QuestionResult>,
+    context?: { examId?: string; examTitle?: string; levelId?: LevelId }
+  ): void {
+    const now = new Date().toISOString();
+
+    for (const qId of Object.keys(answers)) {
+      const result = answers[qId];
+      if (result.isCorrect) continue;
+      const existing = store.mistakes[qId];
+      const levelId: LevelId = context?.levelId ||
+        (result.question.hskLevel <= 2 ? "basic" : result.question.hskLevel <= 4 ? "intermediate" : "advanced");
+      const levelName = levelId === "basic"
+        ? "Cơ bản (HSK 1-2)"
+        : levelId === "intermediate"
+          ? "Trung cấp (HSK 3-4)"
+          : "Nâng cao (HSK 5-6)";
+
+      if (existing) {
+        existing.timesWrong += 1;
+        existing.consecutiveCorrect = 0;
+        existing.lastWrongAt = now;
+        existing.isMastered = false;
+        existing.lastUserAnswer = result.userAnswer;
+        if (context?.examId) existing.examId = context.examId;
+        if (context?.examTitle) existing.examTitle = context.examTitle;
+        existing.levelId = levelId;
+        existing.levelName = levelName;
+      } else {
+        store.mistakes[qId] = {
+          questionId: qId,
+          question: result.question,
+          timesWrong: 1,
+          consecutiveCorrect: 0,
+          lastWrongAt: now,
+          isMastered: false,
+          examId: context?.examId,
+          examTitle: context?.examTitle,
+          levelId,
+          levelName,
+          lastUserAnswer: result.userAnswer,
+        };
+      }
+      this.queueQuestionForSrs(store, result.question, now);
+    }
   }
 
   async updateMistakes(
@@ -384,65 +454,7 @@ class LocalRepository implements IRepository {
     context?: { examId?: string; examTitle?: string; levelId?: LevelId }
   ): Promise<void> {
     const store = this.loadStorage();
-    const now = new Date().toISOString();
-
-    for (const qId of Object.keys(answers)) {
-      const res = answers[qId];
-      const existing = store.mistakes[qId];
-
-      const resolvedLevelId: LevelId =
-        context?.levelId ||
-        (res.question.hskLevel <= 2
-          ? "basic"
-          : res.question.hskLevel <= 4
-          ? "intermediate"
-          : "advanced");
-
-      const resolvedLevelName =
-        resolvedLevelId === "basic"
-          ? "Cơ bản (HSK 1-2)"
-          : resolvedLevelId === "intermediate"
-          ? "Trung cấp (HSK 3-4)"
-          : "Nâng cao (HSK 5-6)";
-
-      if (!res.isCorrect) {
-        // Wrong answer
-        if (existing) {
-          existing.timesWrong += 1;
-          existing.consecutiveCorrect = 0;
-          existing.lastWrongAt = now;
-          existing.isMastered = false;
-          existing.lastUserAnswer = res.userAnswer;
-          if (context?.examId) existing.examId = context.examId;
-          if (context?.examTitle) existing.examTitle = context.examTitle;
-          existing.levelId = resolvedLevelId;
-          existing.levelName = resolvedLevelName;
-        } else {
-          store.mistakes[qId] = {
-            questionId: qId,
-            question: res.question,
-            timesWrong: 1,
-            consecutiveCorrect: 0,
-            lastWrongAt: now,
-            isMastered: false,
-            examId: context?.examId,
-            examTitle: context?.examTitle,
-            levelId: resolvedLevelId,
-            levelName: resolvedLevelName,
-            lastUserAnswer: res.userAnswer,
-          };
-        }
-      } else {
-        // Correct answer
-        if (existing) {
-          existing.consecutiveCorrect += 1;
-          if (existing.consecutiveCorrect >= 3) {
-            existing.isMastered = true;
-          }
-        }
-      }
-    }
-
+    this.recordQuestionMistakes(store, answers, context);
     this.saveStorage(store);
   }
 
@@ -497,6 +509,7 @@ class LocalRepository implements IRepository {
       };
     }
 
+    this.queueQuestionForSrs(store, question, now);
     this.saveStorage(store);
   }
 
@@ -504,7 +517,65 @@ class LocalRepository implements IRepository {
     await this.artificialDelay(60);
     const store = this.loadStorage();
     delete store.mistakes[questionId];
+    delete store.srs[getSrsItemId("question", questionId)];
     this.saveStorage(store);
+  }
+
+  async getDueSrsItems(now: string = new Date().toISOString()): Promise<SrsReviewItem[]> {
+    await this.artificialDelay(80);
+    const store = this.loadStorage();
+    const nowTime = Date.parse(now);
+    if (Number.isNaN(nowTime)) throw new Error("Thời điểm SRS không hợp lệ.");
+
+    const vocabularyById = new Map(mockVocabulary.map((item) => [item.id, item]));
+    const questionsById = new Map(allMockExams.flatMap((exam) => exam.questions).map((question) => [question.id, question]));
+    const dueCards = Object.values(store.srs)
+      .filter((card) => Date.parse(card.dueAt) <= nowTime)
+      .sort((left, right) => left.dueAt.localeCompare(right.dueAt));
+
+    const items: SrsReviewItem[] = [];
+    for (const card of dueCards) {
+      if (card.itemType === "vocabulary") {
+        const vocabulary = vocabularyById.get(card.itemId.slice("vocabulary:".length));
+        if (vocabulary) items.push({ kind: "vocabulary", card, vocabulary });
+      } else {
+        const questionId = card.itemId.slice("question:".length);
+        const question = store.mistakes[questionId]?.question ?? questionsById.get(questionId);
+        if (question) items.push({ kind: "question", card, question });
+      }
+    }
+    return items;
+  }
+
+  async addVocabularyToSrs(vocabularyId: string): Promise<SrsCard | null> {
+    await this.artificialDelay(50);
+    if (!mockVocabulary.some((item) => item.id === vocabularyId)) return null;
+    const store = this.loadStorage();
+    const itemId = getSrsItemId("vocabulary", vocabularyId);
+    const card = store.srs[itemId] ?? createSrsCard(itemId, "vocabulary");
+    store.srs[itemId] = card;
+    this.saveStorage(store);
+    return card;
+  }
+
+  async reviewSrsItem(itemId: string, quality: SrsQuality, reviewedAt: string = new Date().toISOString()): Promise<SrsCard | null> {
+    await this.artificialDelay(60);
+    const store = this.loadStorage();
+    const existing = store.srs[itemId];
+    if (!existing) return null;
+    const updated = scheduleSrsReview(existing, quality, reviewedAt);
+    store.srs[itemId] = updated;
+
+    if (existing.itemType === "question") {
+      const questionId = itemId.slice("question:".length);
+      const mistake = store.mistakes[questionId];
+      if (mistake) {
+        mistake.consecutiveCorrect = updated.repetitions;
+        mistake.isMastered = isSrsMastered(updated);
+      }
+    }
+    this.saveStorage(store);
+    return updated;
   }
 
   async getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>> {

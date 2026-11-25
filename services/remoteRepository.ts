@@ -13,6 +13,7 @@ import {
   Question,
   AnswerValue,
 } from "@/types";
+import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 /**
  * RemoteRepository: Sẵn sàng để kết nối API thật sau này.
@@ -128,6 +129,21 @@ export class RemoteRepository implements IRepository {
   async resetMistake(questionId: string): Promise<void> {
     // TODO: delete(`${this.baseUrl}/mistakes/${questionId}`)
     throw new Error("Remote API chưa được kết nối.");
+  }
+
+  async getDueSrsItems(_now?: string): Promise<SrsReviewItem[]> {
+    // TODO: fetch(`${this.baseUrl}/srs/due`)
+    throw new Error("Remote API chưa hỗ trợ SRS.");
+  }
+
+  async addVocabularyToSrs(_vocabularyId: string): Promise<SrsCard | null> {
+    // TODO: post(`${this.baseUrl}/srs/vocabulary`, { vocabularyId })
+    throw new Error("Remote API chưa hỗ trợ SRS.");
+  }
+
+  async reviewSrsItem(_itemId: string, _quality: SrsQuality, _reviewedAt?: string): Promise<SrsCard | null> {
+    // TODO: post(`${this.baseUrl}/srs/reviews`, { itemId, quality, reviewedAt })
+    throw new Error("Remote API chưa hỗ trợ SRS.");
   }
 
   async getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>> {

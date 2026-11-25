@@ -12,6 +12,7 @@ import {
   QuestionResult,
   AnswerValue,
 } from "@/types";
+import type { SrsCard, SrsQuality, SrsReviewItem } from "@/types/srs";
 
 export interface IRepository {
   // Levels & Topics
@@ -53,6 +54,11 @@ export interface IRepository {
     context?: { examId?: string; examTitle?: string; levelId?: LevelId }
   ): Promise<void>;
   resetMistake(questionId: string): Promise<void>;
+
+  // Spaced repetition
+  getDueSrsItems(now?: string): Promise<SrsReviewItem[]>;
+  addVocabularyToSrs(vocabularyId: string): Promise<SrsCard | null>;
+  reviewSrsItem(itemId: string, quality: SrsQuality, reviewedAt?: string): Promise<SrsCard | null>;
 
   // Progress & Profile
   getProgress(): Promise<Record<string, { bestScore: number; attempts: number }>>;

@@ -65,12 +65,13 @@ describe("migrateStorageData", () => {
   it("migrates v1 attempts, mistakes, and profile without dropping progress", () => {
     const source = legacyData();
     const migrated = migrateStorageData(source);
-    expect(migrated?.version).toBe("2.0");
+    expect(migrated?.version).toBe("2.1");
     expect(migrated?.profile.name).toBe("Người học cũ");
     expect(migrated?.profile.totalXp).toBe(250);
     expect(migrated?.attempts[0].answers["basic-greeting-1"].score).toBe(100);
     expect(migrated?.mistakes["basic-greeting-1"].timesWrong).toBe(2);
     expect(migrated?.progress["exam-1"].attempts).toBe(1);
+    expect(migrated?.srs["question:basic-greeting-1"].dueAt).toBeTruthy();
     expect((source.attempts[0].answers["basic-greeting-1"].question as typeof legacyQuestion).id)
       .toBe("basic-greeting-1");
   });
