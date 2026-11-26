@@ -18,6 +18,7 @@ import {
 import { repository } from "@/services";
 import { useUserStore } from "@/store/useUserStore";
 import { AudioButton, QuizRenderer } from "@/features/quiz";
+import { VoicePronunciationChecker } from "@/components/voice/VoicePronunciationChecker";
 import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
 import { triggerConfetti } from "@/components/ui/Confetti";
 import { gradeQuestion } from "@/lib/grading";
@@ -421,6 +422,12 @@ export default function RoadmapLessonPage() {
                   <AudioButton text={currentCard.exampleZh} size="sm" />
                 </div>
               </div>
+
+              <VoicePronunciationChecker
+                targetText={currentCard.hanzi}
+                targetPinyin={currentCard.pinyin}
+                compact
+              />
 
               {/* Quick card selector pills */}
               <div className="flex flex-wrap gap-1.5 justify-center">

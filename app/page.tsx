@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Calendar,
   RotateCcw,
+  Mic,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 import { repository, REQUIRED_EXAMS_FOR_LEVEL_TEST } from "@/services";
@@ -252,7 +253,30 @@ export default function HomePage() {
       {/* ════════════════════════════════════════════════════════════
           QUICK-ACTION CARDS
       ════════════════════════════════════════════════════════════ */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        {/* Voice pronunciation card */}
+        <div className="card p-6 flex items-start gap-4 bg-gradient-to-br from-celadon-50/70 to-parchment-50 border border-celadon-200 hover:shadow-medium transition-shadow duration-200">
+          <div className="w-12 h-12 rounded-2xl bg-celadon-100 flex items-center justify-center shrink-0 border border-celadon-200 text-celadon-dark">
+            <Mic size={24} />
+          </div>
+          <div className="flex-1 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-bold text-base text-ink">Luyện phát âm Voice</h2>
+              <span className="badge badge-green">Mới</span>
+            </div>
+            <p className="text-xs text-ink-light leading-relaxed">
+              Mở mic đọc theo từ/câu, chấm đúng bao nhiêu %, chỉ rõ chữ sai và cách phát âm chuẩn.
+            </p>
+            <Link
+              href="/voice"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-celadon-dark hover:text-celadon transition-colors mt-1"
+            >
+              Mở phòng luyện nói
+              <ChevronRight size={15} />
+            </Link>
+          </div>
+        </div>
 
         {/* Mistakes card */}
         <div className="card p-6 flex items-start gap-5 group hover:shadow-medium transition-shadow duration-200">

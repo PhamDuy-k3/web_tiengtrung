@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import { repository } from "@/services";
 import { AudioButton } from "@/features/quiz";
+import { VoicePronunciationChecker } from "@/components/voice/VoicePronunciationChecker";
 import { shuffleArray } from "@/lib/shuffle";
 import type { Topic } from "@/types";
 import type { VocabularyItem } from "@/data/mock/vocabulary";
@@ -178,6 +179,11 @@ export default function LearnTopicPage() {
             <div className="text-sm text-ink-muted">{currentCard.exampleVn}</div>
             <AudioButton text={currentCard.exampleZh} size="sm" />
           </div>
+          <VoicePronunciationChecker
+            targetText={currentCard.hanzi}
+            targetPinyin={currentCard.pinyin}
+            compact
+          />
           <div className="flex items-center justify-between gap-3">
             <button type="button" disabled={cardIndex === 0} onClick={() => setCardIndex((index) => index - 1)} className="px-4 py-2.5 rounded-xl border border-parchment-300 font-bold text-sm text-ink disabled:opacity-40">Thẻ trước</button>
             {cardIndex < cards.length - 1 ? (
