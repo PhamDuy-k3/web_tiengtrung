@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -26,6 +26,25 @@ const CATEGORY_TABS: Array<{ id: AffiliateCategory; label: string }> = [
 export default function SupportPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<AffiliateCategory>("all");
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined") {
+      setIsMobileDevice(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    }
+  }, []);
+
+  const handleAffiliateClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    url: string
+  ) => {
+    if (!isMobileDevice) return;
+    // On mobile browsers (iOS Safari / Android Chrome), target="_blank" often
+    // traps short links inside a browser tab instead of triggering Universal/App Links.
+    // Top-level navigation allows the OS to hand off vt.tiktok.com directly to the TikTok app.
+    e.preventDefault();
+    window.location.assign(url);
+  };
 
   const visibleProducts = useMemo(() => {
     return AFFILIATE_PRODUCTS.filter((item) => {
@@ -141,8 +160,9 @@ export default function SupportPage() {
 
               <a
                 href={item.affiliateUrl}
-                target="_blank"
+                target={isMobileDevice ? undefined : "_blank"}
                 rel="noopener noreferrer sponsored"
+                onClick={(e) => handleAffiliateClick(e, item.affiliateUrl)}
                 className="px-4 py-2.5 rounded-xl bg-ink hover:bg-ink-dark text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-soft transition-all shrink-0"
               >
                 <span>Mở trên {item.platform}</span>
