@@ -32,7 +32,9 @@ const CATEGORY_TABS: Array<{ id: AffiliateCategory; label: string }> = [
 export default function SupportPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<AffiliateCategory>("all");
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [deviceType, setDeviceType] = useState<"desktop" | "ios" | "android">(
+    "desktop"
+  );
   const [activeQrProduct, setActiveQrProduct] =
     useState<AffiliateProduct | null>(null);
   const [copied, setCopied] = useState(false);
@@ -40,7 +42,10 @@ export default function SupportPage() {
 
   useEffect(() => {
     if (typeof navigator !== "undefined") {
-      setIsMobileDevice(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+      const ua = navigator.userAgent;
+      if (/Android/i.test(ua)) setDeviceType("android");
+      else if (/iPhone|iPad|iPod/i.test(ua)) setDeviceType("ios");
+      else setDeviceType("desktop");
     }
   }, []);
 
@@ -53,17 +58,25 @@ export default function SupportPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeQrProduct]);
 
+  const isMobileDevice = deviceType !== "desktop";
+
+  const getProductHref = (item: AffiliateProduct): string => {
+    if (deviceType === "android" && item.platform === "TikTok Shop") {
+      const stripped = item.affiliateUrl.replace(/^https?:\/\//, "");
+      return `intent://${stripped}#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
+        item.affiliateUrl
+      )};end`;
+    }
+    return item.affiliateUrl;
+  };
+
   const handleAffiliateClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     item: AffiliateProduct
   ) => {
-    if (isMobileDevice) {
-      // On mobile browsers (iOS Safari / Android Chrome), target="_blank" often
-      // traps short links inside a browser tab instead of triggering Universal/App Links.
-      e.preventDefault();
-      window.location.assign(item.affiliateUrl);
-      return;
-    }
+    // On mobile (iOS & Android), let the native <a href> click proceed WITHOUT
+    // e.preventDefault() or target="_blank" so iOS Universal Links / Android Intent work cleanly.
+    if (isMobileDevice) return;
 
     // On desktop browsers, TikTok Shop short links redirect to apps.apple.com.
     // Open a clean QR Code + Copy Link modal so users can scan with their phone.
@@ -198,7 +211,7 @@ export default function SupportPage() {
               </div>
 
               <a
-                href={item.affiliateUrl}
+                href={getProductHref(item)}
                 target={isMobileDevice ? undefined : "_blank"}
                 rel="noopener noreferrer sponsored"
                 onClick={(e) => handleAffiliateClick(e, item)}
