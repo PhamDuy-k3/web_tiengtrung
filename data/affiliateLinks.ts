@@ -119,19 +119,20 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
   //   affiliateUrl: "https://www.tiktok.com",
   //   enabled: true,
   // },
-  // {
-  //   id: "tt-desk-bottle",
-  //   title: "Bình giữ nhiệt Inox 304 dung tích lớn để bàn học",
-  //   subtitle: "Giữ nóng/lạnh 8–12 tiếng suốt buổi học",
-  //   description:
-  //     "Giữ nước mát hoặc trà/cà phê nóng suốt cả ngày ngồi máy tính học bài và đi làm.",
-  //   category: "desk",
-  //   tagLabel: "Đồ dùng hằng ngày",
-  //   platform: "TikTok Shop",
-  //   priceHint: "~95.000đ – 180.000đ",
-  //   affiliateUrl: "https://www.tiktok.com",
-  //   enabled: true,
-  // },
+  {
+    id: "tt-desk-bottle",
+    title: "Bình giữ nhiệt 500ml TOPGIA Inox 304 cao cấp có dây xách",
+    subtitle: "TikTok Mall chính hãng · Nắp thông minh tiện lợi",
+    description:
+      "Chất liệu Inox 304 an toàn, giữ nóng/lạnh suốt nhiều giờ cho cốc cà phê, trà hoặc nước mát khi ngồi học bài và làm việc.",
+    category: "desk",
+    tagLabel: "Đồ dùng hằng ngày",
+    platform: "TikTok Shop",
+    badge: "Mall · Bán chạy",
+    priceHint: "Giá mềm · Freeship",
+    affiliateUrl: "https://vt.tiktok.com/ZS9PpHQVWmGNr-Gl1N2/",
+    enabled: true,
+  },
   // {
   //   id: "tt-desk-cushion",
   //   title: "Gối tựa lưng cao su non công thái học cho ghế ngồi",
@@ -147,20 +148,34 @@ export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
   // },
 
   // // ── Học tiếng Trung (cốt lõi, không tải PDF được) ──
-  // {
-  //   id: "tt-cn-copybook",
-  //   title: "Bộ Vở tập viết chữ Hán ô Mễ (米字格) + Bút mực bay màu",
-  //   subtitle: "Luyện nét chữ Hán tái sử dụng nhiều lần",
-  //   description:
-  //     "Rãnh chìm định hướng nét chuẩn bút thuận, mực tự bay sau khi viết để luyện đi luyện lại rất tiết kiệm.",
-  //   category: "chinese",
-  //   tagLabel: "Học tiếng Trung",
-  //   platform: "TikTok Shop",
-  //   badge: "Tiết kiệm",
-  //   priceHint: "~45.000đ – 85.000đ",
-  //   affiliateUrl: "https://www.tiktok.com",
-  //   enabled: true,
-  // },
+  {
+    id: "tt-cn-copybook",
+    title: "Sách Tập Viết Chữ Hán - Phiên Bản Mới (MCBOOKS)",
+    subtitle: "TikTok Mall chính hãng · Luyện nét chuẩn ô ly",
+    description:
+      "Hướng dẫn viết chữ Hán bài bản theo đúng quy tắc bút thuận, phù hợp cho người mới bắt đầu luyện viết song song với bài học trên web.",
+    category: "chinese",
+    tagLabel: "Học tiếng Trung",
+    platform: "TikTok Shop",
+    badge: "Mall · 4.9★",
+    priceHint: "Đang sale · Freeship",
+    affiliateUrl: "https://vt.tiktok.com/ZS9Pp9R5xEBxU-hREg9/",
+    enabled: true,
+  },
+  {
+    id: "tt-cn-copybook",
+    title: "Sách Tập Viết Chữ Hán - Phiên Bản Mới (MCBOOKS)",
+    subtitle: "TikTok Mall chính hãng · Luyện nét chuẩn ô ly",
+    description:
+      "Hướng dẫn viết chữ Hán bài bản theo đúng quy tắc bút thuận, phù hợp cho người mới bắt đầu luyện viết song song với bài học trên web.",
+    category: "chinese",
+    tagLabel: "Học tiếng Trung",
+    platform: "TikTok Shop",
+    badge: "Mall · 4.9★",
+    priceHint: "Đang sale · Freeship",
+    affiliateUrl: "https://www.tiktok.com",
+    enabled: true,
+  },
   // {
   //   id: "tt-cn-flashcard",
   //   title: "Bộ Flashcard 214 Bộ thủ & Từ vựng HSK 1–2",
