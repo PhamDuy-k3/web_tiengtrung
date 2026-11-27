@@ -10,10 +10,16 @@ import {
   Tag,
   ArrowLeft,
   Info,
+  QrCode,
+  Copy,
+  Check,
+  X,
+  Smartphone,
 } from "lucide-react";
 import {
   AFFILIATE_PRODUCTS,
   type AffiliateCategory,
+  type AffiliateProduct,
 } from "@/data/affiliateLinks";
 
 const CATEGORY_TABS: Array<{ id: AffiliateCategory; label: string }> = [
@@ -27,6 +33,10 @@ export default function SupportPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<AffiliateCategory>("all");
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [activeQrProduct, setActiveQrProduct] =
+    useState<AffiliateProduct | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [qrFailed, setQrFailed] = useState(false);
 
   useEffect(() => {
     if (typeof navigator !== "undefined") {
@@ -34,16 +44,45 @@ export default function SupportPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!activeQrProduct) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveQrProduct(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeQrProduct]);
+
   const handleAffiliateClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
-    url: string
+    item: AffiliateProduct
   ) => {
-    if (!isMobileDevice) return;
-    // On mobile browsers (iOS Safari / Android Chrome), target="_blank" often
-    // traps short links inside a browser tab instead of triggering Universal/App Links.
-    // Top-level navigation allows the OS to hand off vt.tiktok.com directly to the TikTok app.
-    e.preventDefault();
-    window.location.assign(url);
+    if (isMobileDevice) {
+      // On mobile browsers (iOS Safari / Android Chrome), target="_blank" often
+      // traps short links inside a browser tab instead of triggering Universal/App Links.
+      e.preventDefault();
+      window.location.assign(item.affiliateUrl);
+      return;
+    }
+
+    // On desktop browsers, TikTok Shop short links redirect to apps.apple.com.
+    // Open a clean QR Code + Copy Link modal so users can scan with their phone.
+    if (item.platform === "TikTok Shop") {
+      e.preventDefault();
+      setCopied(false);
+      setQrFailed(false);
+      setActiveQrProduct(item);
+    }
+  };
+
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable
+    }
   };
 
   const visibleProducts = useMemo(() => {
@@ -162,16 +201,117 @@ export default function SupportPage() {
                 href={item.affiliateUrl}
                 target={isMobileDevice ? undefined : "_blank"}
                 rel="noopener noreferrer sponsored"
-                onClick={(e) => handleAffiliateClick(e, item.affiliateUrl)}
+                onClick={(e) => handleAffiliateClick(e, item)}
                 className="px-4 py-2.5 rounded-xl bg-ink hover:bg-ink-dark text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-soft transition-all shrink-0"
               >
-                <span>Mở trên {item.platform}</span>
-                <ExternalLink size={14} />
+                {!isMobileDevice && item.platform === "TikTok Shop" ? (
+                  <>
+                    <QrCode size={15} />
+                    <span>Quét mở TikTok Shop</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Mở trên {item.platform}</span>
+                    <ExternalLink size={14} />
+                  </>
+                )}
               </a>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Desktop QR Code Modal for TikTok Shop */}
+      {activeQrProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/45 backdrop-blur-xs"
+          onClick={() => setActiveQrProduct(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 border border-parchment-300 shadow-lifted space-y-5 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveQrProduct(null)}
+              aria-label="Đóng"
+              className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-parchment-100 hover:bg-parchment-200 flex items-center justify-center text-ink-light"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="space-y-1.5 pr-8">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-ink text-white text-[11px] font-bold">
+                <Smartphone size={12} />
+                TikTok Shop (App điện thoại)
+              </span>
+              <h3 className="text-lg font-black text-ink leading-snug">
+                {activeQrProduct.title}
+              </h3>
+            </div>
+
+            <p className="text-xs sm:text-sm text-ink-light leading-relaxed">
+              TikTok Shop chỉ hỗ trợ xem giỏ hàng và đặt mua trên ứng dụng điện thoại. Hãy quét mã QR dưới đây bằng{" "}
+              <strong className="text-ink">Camera điện thoại</strong> hoặc{" "}
+              <strong className="text-ink">app TikTok</strong> để mở thẳng sản phẩm:
+            </p>
+
+            {/* QR Box */}
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-parchment-50 border border-parchment-300">
+              {!qrFailed ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                      activeQrProduct.affiliateUrl
+                    )}`}
+                    alt={`Mã QR mở ${activeQrProduct.title} trên TikTok Shop`}
+                    width={200}
+                    height={200}
+                    onError={() => setQrFailed(true)}
+                    className="rounded-xl bg-white p-2 border border-parchment-200"
+                  />
+                </>
+              ) : (
+                <div className="py-6 text-center text-xs text-ink-muted">
+                  Không tải được ảnh QR. Bạn vui lòng sao chép link bên dưới để mở trên điện thoại.
+                </div>
+              )}
+            </div>
+
+            {/* Copy link bar */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={activeQrProduct.affiliateUrl}
+                aria-label="Liên kết TikTok Shop"
+                className="flex-1 px-3 py-2 rounded-xl bg-parchment-100 border border-parchment-300 text-xs font-mono text-ink-light truncate"
+              />
+              <button
+                type="button"
+                onClick={() => handleCopyUrl(activeQrProduct.affiliateUrl)}
+                className="px-3.5 py-2 rounded-xl bg-celadon hover:bg-celadon-600 text-white font-bold text-xs inline-flex items-center gap-1.5 shrink-0 transition-colors"
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copied ? "Đã copy" : "Copy link"}</span>
+              </button>
+            </div>
+
+            <div className="text-center pt-1">
+              <a
+                href={activeQrProduct.affiliateUrl}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink underline underline-offset-2"
+              >
+                <span>Vẫn mở trực tiếp trong tab mới</span>
+                <ExternalLink size={12} />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
