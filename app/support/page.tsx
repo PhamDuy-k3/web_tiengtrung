@@ -114,7 +114,7 @@ export default function SupportPage() {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-black text-ink leading-tight">
-          Đồ dùng góc học tập &amp; Tiện ích gợi ý
+          Đồ dùng góc học tập &amp; Tiện ích gợi ý.
         </h1>
 
         <p className="text-sm sm:text-base text-ink-light leading-relaxed max-w-3xl">
