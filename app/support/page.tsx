@@ -210,25 +210,42 @@ export default function SupportPage() {
                 <span>{item.priceHint || "Xem giá ưu đãi"}</span>
               </div>
 
-              <a
-                href={getProductHref(item)}
-                target={isMobileDevice ? undefined : "_blank"}
-                rel="noopener noreferrer sponsored"
-                onClick={(e) => handleAffiliateClick(e, item)}
-                className="px-4 py-2.5 rounded-xl bg-ink hover:bg-ink-dark text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-soft transition-all shrink-0"
-              >
-                {!isMobileDevice && item.platform === "TikTok Shop" ? (
-                  <>
-                    <QrCode size={15} />
-                    <span>Quét mở TikTok Shop</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Mở trên {item.platform}</span>
-                    <ExternalLink size={14} />
-                  </>
+              <div className="flex items-center gap-2 shrink-0">
+                {isMobileDevice && item.platform === "TikTok Shop" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCopied(false);
+                      setQrFailed(false);
+                      setActiveQrProduct(item);
+                    }}
+                    title="Copy link hoặc quét QR"
+                    aria-label="Copy link hoặc quét QR"
+                    className="p-2.5 rounded-xl bg-parchment-100 hover:bg-parchment-200 border border-parchment-300 text-ink transition-colors"
+                  >
+                    <QrCode size={16} />
+                  </button>
                 )}
-              </a>
+                <a
+                  href={getProductHref(item)}
+                  target={isMobileDevice ? undefined : "_blank"}
+                  rel="noopener noreferrer sponsored"
+                  onClick={(e) => handleAffiliateClick(e, item)}
+                  className="px-4 py-2.5 rounded-xl bg-ink hover:bg-ink-dark text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-soft transition-all shrink-0"
+                >
+                  {!isMobileDevice && item.platform === "TikTok Shop" ? (
+                    <>
+                      <QrCode size={15} />
+                      <span>Quét mở TikTok Shop</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Mở trên {item.platform}</span>
+                      <ExternalLink size={14} />
+                    </>
+                  )}
+                </a>
+              </div>
             </div>
           </div>
         ))}
