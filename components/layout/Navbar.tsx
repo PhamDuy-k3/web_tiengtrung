@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X, Compass, Mic, Heart } from "lucide-react";
+import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X, Compass, Mic, Heart, Clock } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 
 export const Navbar: React.FC = () => {
@@ -91,6 +91,20 @@ export const Navbar: React.FC = () => {
                 <span>{isHydrated ? profile?.totalXp || 0 : 0} XP</span>
               </div>
 
+              {/* History / Review past attempts */}
+              <Link
+                href="/history"
+                aria-label="Xem lại bài đã làm"
+                title="Xem lại bài đã làm"
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
+                  pathname === "/history"
+                    ? "bg-celadon-100 border-celadon-200 text-celadon"
+                    : "bg-parchment-100 border-parchment-300 text-ink-light hover:text-ink hover:bg-parchment-200"
+                }`}
+              >
+                <Clock size={16} />
+              </Link>
+
               {/* Support / Affiliate link */}
               <Link
                 href="/support"
@@ -160,6 +174,17 @@ export const Navbar: React.FC = () => {
                     </Link>
                   );
                 })}
+                <Link
+                  href="/history"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    pathname === "/history"
+                      ? "bg-celadon-100 text-celadon"
+                      : "text-ink-light hover:bg-parchment-200 hover:text-ink"
+                  }`}
+                >
+                  <Clock size={18} />
+                  <span>Xem lại bài đã làm</span>
+                </Link>
                 <Link
                   href="/support"
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${

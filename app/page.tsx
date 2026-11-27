@@ -17,6 +17,7 @@ import {
   Calendar,
   RotateCcw,
   Mic,
+  Clock,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 import { repository, REQUIRED_EXAMS_FOR_LEVEL_TEST } from "@/services";
@@ -199,6 +200,13 @@ export default function HomePage() {
                   >
                     <Calendar size={15} className="shrink-0" />
                     <span className="leading-tight">Lộ trình học theo tuần</span>
+                  </Link>
+                  <Link
+                    href="/history"
+                    className="btn-ghost w-full sm:w-auto justify-center text-center text-xs sm:text-sm py-2.5 px-2.5 sm:px-5 rounded-xl flex items-center gap-1.5 sm:gap-2 bg-white/70 sm:bg-transparent col-span-2 sm:col-span-1"
+                  >
+                    <Clock size={15} className="shrink-0" />
+                    <span className="leading-tight">Xem lại bài đã làm</span>
                   </Link>
                 </div>
               </div>

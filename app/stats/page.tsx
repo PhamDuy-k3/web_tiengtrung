@@ -96,11 +96,19 @@ export default function StatsPage() {
 
       {/* Chart 1: Điểm số qua các lần làm gần nhất */}
       <div className="bg-white p-6 rounded-3xl border border-cream-300 shadow-card space-y-4">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="text-coral" size={20} />
-          <h2 className="font-bold text-lg text-charcoal">
-            Biểu đồ điểm số (10 lần làm gần nhất)
-          </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="text-coral" size={20} />
+            <h2 className="font-bold text-lg text-charcoal">
+              Biểu đồ điểm số (10 lần làm gần nhất)
+            </h2>
+          </div>
+          <Link
+            href="/history"
+            className="text-xs font-bold text-celadon-dark hover:underline"
+          >
+            Xem lại tất cả bài đã làm →
+          </Link>
         </div>
         <ScoreHistoryChart data={stats?.scoreHistory || []} />
       </div>
