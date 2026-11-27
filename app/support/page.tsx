@@ -35,6 +35,8 @@ export default function SupportPage() {
   const [deviceType, setDeviceType] = useState<"desktop" | "ios" | "android">(
     "desktop"
   );
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [copiedPageUrl, setCopiedPageUrl] = useState(false);
   const [activeQrProduct, setActiveQrProduct] =
     useState<AffiliateProduct | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,6 +48,10 @@ export default function SupportPage() {
       if (/Android/i.test(ua)) setDeviceType("android");
       else if (/iPhone|iPad|iPod/i.test(ua)) setDeviceType("ios");
       else setDeviceType("desktop");
+
+      setIsInAppBrowser(
+        /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Zalo/i.test(ua)
+      );
     }
   }, []);
 
@@ -118,6 +124,50 @@ export default function SupportPage() {
           <span>Quay lại trang chủ</span>
         </Link>
       </div>
+
+      {/* In-app browser warning (Messenger / Facebook / Zalo) */}
+      {isInAppBrowser && (
+        <div className="bg-gilt-light border-2 border-gilt-soft rounded-3xl p-4 sm:p-5 space-y-3 text-xs sm:text-sm text-gilt-deep">
+          <div className="font-black flex items-center gap-2 text-sm sm:text-base">
+            <Smartphone size={18} className="shrink-0" />
+            <span>Bạn đang mở trong trình duyệt của Messenger / Facebook</span>
+          </div>
+          <p className="leading-relaxed text-ink">
+            Trình duyệt tích hợp trong Messenger/Facebook thường chặn chuyển thẳng sang app TikTok.
+            Để mở app TikTok mượt nhất, hãy bấm dấu{" "}
+            <strong>⋯</strong> (hoặc <strong>⋮</strong>) ở góc màn hình → chọn{" "}
+            <strong>&quot;Mở bằng trình duyệt bên ngoài (Safari / Chrome)&quot;</strong>, hoặc dùng nút{" "}
+            <strong>Copy link</strong> bên cạnh từng sản phẩm.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {deviceType === "android" && typeof window !== "undefined" && (
+              <a
+                href={`intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(
+                  window.location.href
+                )};end`}
+                className="px-3.5 py-2 rounded-xl bg-ink text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-soft"
+              >
+                <ExternalLink size={14} />
+                <span>Mở bằng Chrome</span>
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  setCopiedPageUrl(true);
+                  setTimeout(() => setCopiedPageUrl(false), 2000);
+                } catch {}
+              }}
+              className="px-3.5 py-2 rounded-xl bg-white border border-gilt-soft text-ink font-bold text-xs inline-flex items-center gap-1.5 shadow-soft"
+            >
+              {copiedPageUrl ? <Check size={14} className="text-celadon" /> : <Copy size={14} />}
+              <span>{copiedPageUrl ? "Đã copy link trang này!" : "Copy link mở bằng Safari / Chrome"}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero Banner */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-soft space-y-4">
