@@ -12,6 +12,7 @@ import {
   type RoadmapWeek,
 } from "@/lib/assessmentEngine";
 import { shuffleArray } from "@/lib/shuffle";
+import { getStrictLevelVocabPool, hskLevelToLevelId } from "@/lib/hskContentEngine";
 import type { LevelId, MistakeEntry, Question } from "@/types";
 
 export const ROADMAP_SAVED_STORAGE_KEY = "hanyu:saved_roadmap";
@@ -290,9 +291,7 @@ const FOUNDATIONAL_CARDS_BY_LESSON: Record<string, RoadmapStudyCard[]> = {
 };
 
 function toLevelId(hskLevel: number): LevelId {
-  if (hskLevel <= 2) return "basic";
-  if (hskLevel <= 4) return "intermediate";
-  return "advanced";
+  return hskLevelToLevelId(hskLevel);
 }
 
 function inferLessonHskLevel(week: RoadmapWeek, lesson: RoadmapLesson, roadmap: GenerateRoadmapResponse): 1 | 2 | 3 | 4 | 5 | 6 {
@@ -314,16 +313,6 @@ function extractMatchTokens(lesson: RoadmapLesson, week: RoadmapWeek): string[] 
     .split(/\s+/)
     .filter((token) => token.length >= 2);
   return Array.from(new Set([...hanziChunks, ...words]));
-}
-
-function scoreVocabularyRelevance(item: VocabularyItem, tokens: string[], targetHsk: number): number {
-  let score = item.hskLevel === targetHsk ? 10 : Math.abs(item.hskLevel - targetHsk) <= 1 ? 4 : 0;
-  const haystack = `${item.hanzi} ${item.pinyin} ${item.vietnamese} ${item.exampleZh} ${item.topicId}`.toLowerCase();
-  for (const token of tokens) {
-    if (item.hanzi.includes(token)) score += 12;
-    else if (haystack.includes(token)) score += 3;
-  }
-  return score;
 }
 
 function scoreQuestionRelevance(question: Question, tokens: string[], targetHsk: number, skills: string[]): number {
@@ -434,12 +423,8 @@ export function buildRoadmapLessonPlan(
   const levelId = toLevelId(hskLevel);
   const tokens = extractMatchTokens(lesson, week);
 
-  const levelVocab = mockVocabulary.filter((item) => item.hskLevel === hskLevel);
-  const poolVocab = levelVocab.length > 0 ? levelVocab : mockVocabulary;
-  const rankedVocab = [...poolVocab]
-    .sort((a, b) => scoreVocabularyRelevance(b, tokens, hskLevel) - scoreVocabularyRelevance(a, tokens, hskLevel));
-
   const desiredCardCount = Math.max(5, Math.min(8, lesson.new_words || 6));
+  const rankedVocab = getStrictLevelVocabPool(hskLevel, tokens, desiredCardCount);
   const curatedCards = FOUNDATIONAL_CARDS_BY_LESSON[lesson.id];
   const studyCards: RoadmapStudyCard[] = curatedCards
     ? curatedCards

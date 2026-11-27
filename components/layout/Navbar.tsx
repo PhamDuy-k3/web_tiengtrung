@@ -19,12 +19,12 @@ export const Navbar: React.FC = () => {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const navLinks = [
-    { href: "/",         label: "Học tập",    icon: BookOpen   },
-    { href: "/roadmap",  label: "Lộ trình",   icon: Compass    },
-    { href: "/voice",    label: "Luyện nói",  icon: Mic        },
-    { href: "/mistakes", label: "Sổ lỗi sai", icon: ShieldCheck },
-    { href: "/stats",    label: "Thống kê",   icon: BarChart2  },
-    { href: "/sources",  label: "Nguồn tham khảo", icon: null  },
+    { href: "/",         label: "Học tập",   icon: BookOpen   },
+    { href: "/roadmap",  label: "Lộ trình",  icon: Compass    },
+    { href: "/voice",    label: "Luyện nói", icon: Mic        },
+    { href: "/mistakes", label: "Sổ lỗi",   icon: ShieldCheck },
+    { href: "/stats",    label: "Thống kê",  icon: BarChart2  },
+    { href: "/sources",  label: "Tài liệu",  icon: null       },
   ];
 
   return (
@@ -115,31 +115,40 @@ export const Navbar: React.FC = () => {
 
         {/* ── MOBILE & TABLET DROPDOWN MENU ── */}
         {mobileOpen && (
-          <div className="lg:hidden absolute inset-x-0 top-16 bg-parchment-50 border-b border-parchment-300 shadow-lifted z-50 animate-fade-up">
-            <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
-              {navLinks.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                      isActive
-                        ? "bg-celadon-100 text-celadon"
-                        : "text-ink-light hover:bg-parchment-200 hover:text-ink"
-                    }`}
-                  >
-                    {Icon && <Icon size={18} />}
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-celadon" />
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+          <>
+            {/* Backdrop – click to close */}
+            <div
+              className="lg:hidden fixed inset-0 top-16 bg-ink/20 backdrop-blur-[2px] z-40"
+              onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Panel */}
+            <div className="lg:hidden absolute inset-x-0 top-16 bg-parchment-50 border-b border-parchment-300 shadow-lifted z-50 animate-fade-up">
+              <nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+                {navLinks.map((item) => {
+                  const isActive = pathname === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        isActive
+                          ? "bg-celadon-100 text-celadon"
+                          : "text-ink-light hover:bg-parchment-200 hover:text-ink"
+                      }`}
+                    >
+                      {Icon && <Icon size={18} />}
+                      <span>{item.label}</span>
+                      {isActive && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-celadon" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          </>
         )}
       </header>
       <div className="h-[65px] shrink-0" aria-hidden="true" />

@@ -29,6 +29,7 @@ import {
   grammarLessons,
 } from "@/data/mock";
 import { shuffleArray } from "@/lib/shuffle";
+import { hskLevelToLevelId } from "@/lib/hskContentEngine";
 import { migrateStorageData } from "@/lib/storageMigration";
 import { createSrsCard, getSrsItemId, isSrsMastered, scheduleSrsReview } from "@/lib/srs";
 import { selectAdaptiveQuestions } from "@/services/adaptiveExamGenerator";
@@ -288,7 +289,10 @@ class LocalRepository implements IRepository {
 
   async generateVocabularyExam(topicId: string): Promise<Exam> {
     await this.artificialDelay(100);
-    const vocabulary = mockVocabulary.filter((word) => word.topicId === topicId);
+    const topic = mockTopics.find((t) => t.id === topicId);
+    const vocabulary = mockVocabulary.filter(
+      (word) => word.topicId === topicId && (!topic || hskLevelToLevelId(word.hskLevel) === topic.levelId)
+    );
     return buildVocabularyExam(topicId, vocabulary);
   }
 
@@ -853,7 +857,10 @@ class LocalRepository implements IRepository {
 
   async getVocabularyForTopic(topicId: string) {
     await this.artificialDelay(60);
-    return mockVocabulary.filter((item) => item.topicId === topicId);
+    const topic = mockTopics.find((t) => t.id === topicId);
+    return mockVocabulary.filter(
+      (item) => item.topicId === topicId && (!topic || hskLevelToLevelId(item.hskLevel) === topic.levelId)
+    );
   }
 
   async getCompletedLessons(): Promise<string[]> {
