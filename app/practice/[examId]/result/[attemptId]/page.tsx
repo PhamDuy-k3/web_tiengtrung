@@ -21,6 +21,7 @@ import { AnswerValue, ExamAttempt } from "@/types";
 import { formatTime, formatDate } from "@/lib/utils";
 import { triggerConfetti } from "@/components/ui/Confetti";
 import { AudioButton, AnswerDiffViewer } from "@/features/quiz";
+import { buildWrongAnswerFeedback } from "@/lib/grading";
 import { MascotWithBubble } from "@/components/mascot/MascotWithBubble";
 
 export default function ExamResultPage() {
@@ -356,11 +357,23 @@ export default function ExamResultPage() {
                   isCorrect={isCorrect}
                 />
 
+                {/* Wrong-answer specific reason */}
+                {!isCorrect && (
+                  <div className="mt-3 p-3.5 bg-vermillion-light/60 rounded-2xl border border-vermillion-soft text-xs sm:text-sm text-vermillion-deep space-y-1">
+                    <span className="font-bold block">
+                      ❌ Lý do câu trả lời của bạn chưa đúng:
+                    </span>
+                    <p className="leading-relaxed">
+                      {buildWrongAnswerFeedback(q, item.userAnswer)}
+                    </p>
+                  </div>
+                )}
+
                 {/* Detailed Explanation */}
                 {q.explanation && (
                   <div className="mt-3 p-3.5 bg-parchment-100 rounded-2xl border border-parchment-200 text-xs sm:text-sm text-ink-light space-y-1">
                     <span className="font-bold text-ink block">
-                      💡 Giải thích &amp; Hướng dẫn:
+                      💡 Giải thích kiến thức chuẩn:
                     </span>
                     <p className="leading-relaxed opacity-90">{q.explanation}</p>
                   </div>

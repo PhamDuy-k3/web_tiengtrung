@@ -94,4 +94,23 @@ describe("gradeQuestion", () => {
     expect(gradeQuestion(question, undefined).score).toBe(0);
     expect(gradeQuestion(question, { unexpected: "record" }).score).toBe(0);
   });
+
+  it("explains why the user's specific wrong answer is incorrect", () => {
+    const mc = makeQuestion("multiple_choice", "贵");
+    const mcRes = gradeQuestion(mc, "便宜");
+    expect(mcRes.correct).toBe(false);
+    expect(mcRes.feedback).toContain("便宜");
+    expect(mcRes.feedback).toContain("Rẻ");
+
+    const wo = makeQuestion("word_order", ["我", "爱", "你"]);
+    const woRes = gradeQuestion(wo, ["我", "你", "爱"]);
+    expect(woRes.feedback).toContain("vị trí thứ 2");
+    expect(woRes.feedback).toContain("你");
+
+    const py = makeQuestion("pinyin_choice", "mài");
+    const pyRes = gradeQuestion(py, "lái");
+    expect(pyRes.correct).toBe(false);
+    expect(pyRes.feedback).toContain("lái");
+    expect(pyRes.feedback).toContain("mài");
+  });
 });
