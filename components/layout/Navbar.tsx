@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X, Compass, Mic } from "lucide-react";
+import { Flame, Zap, User, BookOpen, ShieldCheck, BarChart2, Menu, X, Compass, Mic, Heart } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
 
 export const Navbar: React.FC = () => {
@@ -91,6 +91,20 @@ export const Navbar: React.FC = () => {
                 <span>{isHydrated ? profile?.totalXp || 0 : 0} XP</span>
               </div>
 
+              {/* Support / Affiliate link */}
+              <Link
+                href="/support"
+                aria-label="Ủng hộ dự án"
+                title="Ủng hộ & Giáo trình gợi ý"
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
+                  pathname === "/support"
+                    ? "bg-vermillion-light border-vermillion-soft text-vermillion-deep"
+                    : "bg-parchment-100 border-parchment-300 text-vermillion hover:bg-vermillion-light/60"
+                }`}
+              >
+                <Heart size={16} className={pathname === "/support" ? "fill-vermillion" : ""} />
+              </Link>
+
               {/* Avatar */}
               <Link
                 href="/profile"
@@ -146,6 +160,17 @@ export const Navbar: React.FC = () => {
                     </Link>
                   );
                 })}
+                <Link
+                  href="/support"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    pathname === "/support"
+                      ? "bg-vermillion-light text-vermillion-deep"
+                      : "text-ink-light hover:bg-parchment-200 hover:text-ink"
+                  }`}
+                >
+                  <Heart size={18} className="text-vermillion" />
+                  <span>Ủng hộ & Giáo trình</span>
+                </Link>
               </nav>
             </div>
           </>

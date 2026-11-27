@@ -55,6 +55,7 @@ export const Footer: React.FC = () => {
                 { href: "/mistakes",       label: "Sổ lỗi sai thông minh" },
                 { href: "/history",        label: "Lịch sử làm bài"       },
                 { href: "/stats",          label: "Biểu đồ & Thống kê"    },
+                { href: "/support",        label: "Ủng hộ & Sách gợi ý"   },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="hover:text-celadon transition-colors hover:translate-x-0.5 inline-block">

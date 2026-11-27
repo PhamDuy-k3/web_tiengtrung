@@ -72,7 +72,10 @@ export const QuizRenderer: React.FC<QuizRendererProps> = ({
   const levelLabel = getLevelLabel(question.hskLevel);
 
   return (
-    <div className="bg-parchment-50 rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-soft space-y-6">
+    <div
+      data-question-id={question.id}
+      className="bg-parchment-50 rounded-3xl p-6 sm:p-8 border border-parchment-300 shadow-soft space-y-6"
+    >
       {/* ── Header: level badge + tags + audio + bookmark ── */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-parchment-200 pb-4">
         <div className="flex flex-wrap items-center gap-2">
